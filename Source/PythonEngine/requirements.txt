@@ -1,0 +1,5 @@
+xarray
+netCDF4
+numpy
+oafuncs
+requests
