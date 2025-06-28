@@ -1,0 +1,149 @@
+# ============================================================================
+# 洋流模拟系统Python引擎配置文件
+# 放置位置: Source/PythonEngine/config.yaml
+# ============================================================================
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  log_level: "info"
+  reload: false
+
+# 数据处理配置
+data:
+  netcdf_path: "./Data/NetCDF"
+  cache_path: "./Data/Cache/PythonCache"
+  chunk_size: 1000
+  compression: "gzip"
+  max_file_size_mb: 1000
+  enable_parallel_loading: true
+  max_workers: 4
+
+# C++接口配置
+cpp_interface:
+  library_path: "./Build/Release/Cpp"
+  enable_cuda: false
+  num_threads: -1  # -1 表示自动检测
+  use_vectorization: true
+  memory_pool_size: 1073741824  # 1GB
+  chunk_size: 1000
+
+# 机器学习模型配置
+models:
+  lstm_model_path: "./Data/Models/LSTM"
+  pinn_model_path: "./Data/Models/PINN"
+  cache_models: true
+  auto_load_models: false
+  training_data_path: "./Data/Models/TrainingData"
+
+# 性能监控配置
+performance:
+  enable_monitoring: true
+  monitoring_interval: 1.0  # 秒
+  max_history_length: 1000
+  enable_memory_profiling: true
+  enable_gpu_monitoring: true
+  cpu_alert_threshold: 90.0  # 百分比
+  memory_alert_threshold: 85.0  # 百分比
+  gpu_alert_threshold: 95.0  # 百分比
+  log_metrics: true
+
+# 缓存配置
+cache:
+  cache_max_size: 1000
+  enable_disk_cache: true
+  cache_ttl: 3600  # 秒
+  compression_level: 6
+
+# 数据质量控制配置
+quality_control:
+  outlier_threshold: 3.0
+  missing_threshold: 0.5
+  gradient_threshold: 5.0
+  temporal_threshold: 2.0
+  enable_repair: true
+  enable_median_filter: true
+  enable_extrapolation: false
+  
+  # 物理约束参数
+  physical_limits:
+    temperature: [-5.0, 50.0]     # 海表温度范围 (°C)
+    salinity: [0.0, 50.0]         # 盐度范围 (PSU)
+    speed: [0.0, 5.0]             # 流速范围 (m/s)
+    u_velocity: [-3.0, 3.0]       # U分量范围 (m/s)
+    v_velocity: [-3.0, 3.0]       # V分量范围 (m/s)
+    w_velocity: [-0.5, 0.5]       # W分量范围 (m/s)
+    ssh: [-3.0, 3.0]              # 海表高度异常 (m)
+    pressure: [0.0, 1100.0]       # 压强范围 (dbar)
+
+# 插值配置
+interpolation:
+  default_method: "linear"
+  cache_max_size: 50
+  default_fill_value: .nan
+  enable_bounds_check: true
+  enable_extrapolation: false
+
+# 坐标转换配置
+coordinate_transform:
+  cache_max_size: 50
+  default_source_crs: "EPSG:4326"
+  enable_auto_utm: true
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "detailed"
+  enable_file_logging: true
+  log_dir: "./Logs"
+  max_file_size_mb: 10
+  backup_count: 5
+  enable_json_format: false
+  enable_performance_logging: true
+
+# API配置
+api:
+  enable_cors: true
+  cors_origins: ["*"]
+  enable_compression: true
+  max_request_size_mb: 100
+  timeout_seconds: 300
+  enable_rate_limiting: false
+  rate_limit_per_minute: 60
+
+# 安全配置
+security:
+  enable_authentication: false
+  secret_key: "your-secret-key-here"
+  token_expire_hours: 24
+
+# 数据库配置（可选）
+database:
+  enable: false
+  url: "postgresql://user:password@localhost/oceandb"
+  pool_size: 5
+  max_overflow: 10
+  echo: false
+
+# 任务队列配置
+task_queue:
+  max_concurrent_tasks: 10
+  task_timeout_seconds: 3600
+  cleanup_completed_tasks_hours: 24
+
+# 导出配置
+export:
+  output_dir: "./Data/Export"
+  default_format: "netcdf"
+  enable_compression: true
+  max_export_size_gb: 5
+
+# 开发配置
+development:
+  debug: false
+  auto_reload: false
+  enable_profiling: false
+  mock_cpp_interface: false
+  synthetic_data: false

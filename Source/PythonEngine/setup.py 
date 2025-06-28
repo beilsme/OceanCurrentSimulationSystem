@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""
+洋流模拟系统Python引擎安装配置
+放置位置: Source/PythonEngine/setup.py
+"""
+
+from setuptools import setup, find_packages
+import os
+from pathlib import Path
+
+# 读取README文件
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text(encoding='utf-8') if (this_directory / "README.md").exists() else ""
+
+# 读取requirements.txt
+def read_requirements():
+    req_file = this_directory / "requirements.txt"
+    if req_file.exists():
+        with open(req_file, 'r', encoding='utf-8') as f:
+            requirements = []
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    requirements.append(line)
+            return requirements
+    return []
+
+# 读取版本号
+def get_version():
+    version_file = this_directory / "version.py"
+    if version_file.exists():
+        exec(open(version_file).read())
+        return locals()['__version__']
+    return "1.0.0"
+
+setup(
+    name="ocean-simulation-engine",
+    version=get_version(),
+    author="Ocean Simulation Team",
+    author_email="dev@oceansim.com",
+    description="高性能海洋流模拟与预测系统的Python计算引擎",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/oceansim/python-engine",
+    packages=find_packages(),
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Physics",
+        "Topic :: Scientific/Engineering :: Atmospheric Science",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.8",
+    install_requires=read_requirements(),
+    extras_require={
+        "dev": [
+            "pytest>=6.2.0",
+            "pytest-asyncio>=0.18.0",
+            "pytest-cov>=3.0.0",
+            "black>=21.0.0",
+            "flake8>=4.0.0",
+            "mypy>=0.910",
+            "pre-commit>=2.15.0",
+        ],
+        "ml": [
+            "tensorflow>=2.8.0",
+            "torch>=1.10.0",
+            "scikit-learn>=1.0.0",
+        ],
+        "viz": [
+            "matplotlib>=3.5.0",
+            "plotly>=5.5.0",
+            "bokeh>=2.4.0",
+        ],
+        "gpu": [
+            "cupy-cuda11x>=10.0.0",
+            "tensorflow-gpu>=2.8.0",
+        ]
+    },
+    entry_points={
+        "console_scripts": [
+            "ocean-sim=main:main",
+            "ocean-sim-setup=scripts.setup_environment:main",
+        ],
+    },
+    include_package_data=True,
+    package_data={
+        "": ["*.yaml", "*.json", "*.toml", "*.cfg"],
+    },
+    zip_safe=False,
+)
