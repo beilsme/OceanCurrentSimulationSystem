@@ -440,31 +440,6 @@ namespace OceanSimulation {
         
         lastGcTime_ = now;
     }
-        void* MemoryManager::allocateFromPools(size_t size, size_t alignment) {
-            // 尝试从现有池分配
-            for (size_t i = 0; i < memoryPools_.size(); ++i) {
-                void* ptr = allocateFromPool(size, alignment, i);
-                if (ptr) {
-                    updatePoolStats(i);
-                    return ptr;
-                }
-            }
-
-            // 创建新池
-            if (memoryPools_.size() < config_.maxPoolCount) {
-                size_t newPoolSize = std::max(config_.poolSize, size * 2);
-                size_t newPoolIndex = createNewPool(newPoolSize);
-                if (newPoolIndex != SIZE_MAX) {
-                    void* ptr = allocateFromPool(size, alignment, newPoolIndex);
-                    if (ptr) {
-                        updatePoolStats(newPoolIndex);
-                        return ptr;
-                    }
-                }
-            }
-
-            return allocateAligned(size, alignment);
-        }
 
 } // namespace Core
 } // namespace OceanSimulation
