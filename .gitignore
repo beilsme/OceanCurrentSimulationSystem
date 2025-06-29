@@ -1,3 +1,4 @@
 *.nc
 *.DS_Store
 .DS_Store
+/Source/CppCore/cmake-build-debug

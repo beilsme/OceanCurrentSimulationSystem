@@ -142,6 +142,21 @@ set(CORE_SOURCES
         src/utils/MathUtils.cpp
         src/utils/ThreadPool.cpp
         src/utils/Logger.cpp
+        
+        include/algorithms/FiniteDifferenceSolver.h
+        include/algorithms/RungeKuttaSolver.h
+        include/algorithms/ParallelComputeEngine.h
+        include/algorithms/VectorizedOperations.h
+        include/core/AdvectionDiffusionSolver.h
+        include/core/CurrentFieldSolver.h
+        include/core/ParticleSimulator.h
+        include/core/PerformanceProfiler.h
+        include/data/GridDataStructure.h
+        include/data/MemoryManager.h
+        include/data/DataExporter.h
+        include/utils/MathUtils.h
+        include/utils/ThreadPool.h
+        include/utils/Logger.h
 )
 
 # GPU源文件（如果启用）
