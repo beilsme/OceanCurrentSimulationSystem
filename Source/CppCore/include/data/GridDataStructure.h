@@ -145,7 +145,7 @@ namespace OceanSim {
             std::vector<std::string> getFieldNames() const;
             bool hasField(const std::string& field) const;
 
-        private:
+        protected:
             // 网格参数
             int nx_, ny_, nz_;
             CoordinateSystem coord_system_;

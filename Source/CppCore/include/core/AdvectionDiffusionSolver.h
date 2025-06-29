@@ -190,6 +190,8 @@ namespace OceanSim {
             // 稀疏矩阵求解（隐式方法）
             void setupImplicitMatrix(Eigen::SparseMatrix<double>& A,
                                      Eigen::VectorXd& b, double dt);
+            void setupCrankNicolsonMatrix(Eigen::SparseMatrix<double>& A,  
+                                          Eigen::VectorXd& b, double dt);
             void solveLinearSystem(const Eigen::SparseMatrix<double>& A,
                                    const Eigen::VectorXd& b,
                                    Eigen::VectorXd& x);
