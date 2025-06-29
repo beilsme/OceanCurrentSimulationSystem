@@ -6,7 +6,7 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /opt/homebrew/include/eigen3
 
-CXX_FLAGSarm64 = -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -Xclang -fopenmp
+CXX_FLAGSarm64 = -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -fPIC -Xclang -fopenmp
 
-CXX_FLAGS = -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -Xclang -fopenmp
+CXX_FLAGS = -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -fPIC -Xclang -fopenmp
 

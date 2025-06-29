@@ -224,12 +224,35 @@ bindings/csharp/CppCoreWrapper.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCSharp.dir/build.make CMakeFiles/OceanSimCSharp.dir/bindings/csharp/CppCoreWrapper.cpp.s
 .PHONY : bindings/csharp/CppCoreWrapper.cpp.s
 
+bindings/python/pybind_current_solver.o: bindings/python/pybind_current_solver.cpp.o
+.PHONY : bindings/python/pybind_current_solver.o
+
+# target to build an object file
+bindings/python/pybind_current_solver.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimPython.dir/build.make CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o
+.PHONY : bindings/python/pybind_current_solver.cpp.o
+
+bindings/python/pybind_current_solver.i: bindings/python/pybind_current_solver.cpp.i
+.PHONY : bindings/python/pybind_current_solver.i
+
+# target to preprocess a source file
+bindings/python/pybind_current_solver.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimPython.dir/build.make CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.i
+.PHONY : bindings/python/pybind_current_solver.cpp.i
+
+bindings/python/pybind_current_solver.s: bindings/python/pybind_current_solver.cpp.s
+.PHONY : bindings/python/pybind_current_solver.s
+
+# target to generate assembly for a file
+bindings/python/pybind_current_solver.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimPython.dir/build.make CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.s
+.PHONY : bindings/python/pybind_current_solver.cpp.s
+
 bindings/python/pybind_ocean_sim.o: bindings/python/pybind_ocean_sim.cpp.o
 .PHONY : bindings/python/pybind_ocean_sim.o
 
 # target to build an object file
 bindings/python/pybind_ocean_sim.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCSharp.dir/build.make CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimPython.dir/build.make CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o
 .PHONY : bindings/python/pybind_ocean_sim.cpp.o
 
@@ -238,7 +261,6 @@ bindings/python/pybind_ocean_sim.i: bindings/python/pybind_ocean_sim.cpp.i
 
 # target to preprocess a source file
 bindings/python/pybind_ocean_sim.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCSharp.dir/build.make CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimPython.dir/build.make CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.i
 .PHONY : bindings/python/pybind_ocean_sim.cpp.i
 
@@ -247,7 +269,6 @@ bindings/python/pybind_ocean_sim.s: bindings/python/pybind_ocean_sim.cpp.s
 
 # target to generate assembly for a file
 bindings/python/pybind_ocean_sim.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCSharp.dir/build.make CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimPython.dir/build.make CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.s
 .PHONY : bindings/python/pybind_ocean_sim.cpp.s
 
@@ -274,6 +295,102 @@ src/algorithms/FiniteDifferenceSolver.s: src/algorithms/FiniteDifferenceSolver.c
 src/algorithms/FiniteDifferenceSolver.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/FiniteDifferenceSolver.cpp.s
 .PHONY : src/algorithms/FiniteDifferenceSolver.cpp.s
+
+src/algorithms/ParallelComputeEngine.o: src/algorithms/ParallelComputeEngine.cpp.o
+.PHONY : src/algorithms/ParallelComputeEngine.o
+
+# target to build an object file
+src/algorithms/ParallelComputeEngine.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/ParallelComputeEngine.cpp.o
+.PHONY : src/algorithms/ParallelComputeEngine.cpp.o
+
+src/algorithms/ParallelComputeEngine.i: src/algorithms/ParallelComputeEngine.cpp.i
+.PHONY : src/algorithms/ParallelComputeEngine.i
+
+# target to preprocess a source file
+src/algorithms/ParallelComputeEngine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/ParallelComputeEngine.cpp.i
+.PHONY : src/algorithms/ParallelComputeEngine.cpp.i
+
+src/algorithms/ParallelComputeEngine.s: src/algorithms/ParallelComputeEngine.cpp.s
+.PHONY : src/algorithms/ParallelComputeEngine.s
+
+# target to generate assembly for a file
+src/algorithms/ParallelComputeEngine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/ParallelComputeEngine.cpp.s
+.PHONY : src/algorithms/ParallelComputeEngine.cpp.s
+
+src/algorithms/RungeKuttaSolver.o: src/algorithms/RungeKuttaSolver.cpp.o
+.PHONY : src/algorithms/RungeKuttaSolver.o
+
+# target to build an object file
+src/algorithms/RungeKuttaSolver.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/RungeKuttaSolver.cpp.o
+.PHONY : src/algorithms/RungeKuttaSolver.cpp.o
+
+src/algorithms/RungeKuttaSolver.i: src/algorithms/RungeKuttaSolver.cpp.i
+.PHONY : src/algorithms/RungeKuttaSolver.i
+
+# target to preprocess a source file
+src/algorithms/RungeKuttaSolver.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/RungeKuttaSolver.cpp.i
+.PHONY : src/algorithms/RungeKuttaSolver.cpp.i
+
+src/algorithms/RungeKuttaSolver.s: src/algorithms/RungeKuttaSolver.cpp.s
+.PHONY : src/algorithms/RungeKuttaSolver.s
+
+# target to generate assembly for a file
+src/algorithms/RungeKuttaSolver.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/RungeKuttaSolver.cpp.s
+.PHONY : src/algorithms/RungeKuttaSolver.cpp.s
+
+src/algorithms/VectorizedOperations.o: src/algorithms/VectorizedOperations.cpp.o
+.PHONY : src/algorithms/VectorizedOperations.o
+
+# target to build an object file
+src/algorithms/VectorizedOperations.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/VectorizedOperations.cpp.o
+.PHONY : src/algorithms/VectorizedOperations.cpp.o
+
+src/algorithms/VectorizedOperations.i: src/algorithms/VectorizedOperations.cpp.i
+.PHONY : src/algorithms/VectorizedOperations.i
+
+# target to preprocess a source file
+src/algorithms/VectorizedOperations.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/VectorizedOperations.cpp.i
+.PHONY : src/algorithms/VectorizedOperations.cpp.i
+
+src/algorithms/VectorizedOperations.s: src/algorithms/VectorizedOperations.cpp.s
+.PHONY : src/algorithms/VectorizedOperations.s
+
+# target to generate assembly for a file
+src/algorithms/VectorizedOperations.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/algorithms/VectorizedOperations.cpp.s
+.PHONY : src/algorithms/VectorizedOperations.cpp.s
+
+src/core/AdvectionDiffusionSolver.o: src/core/AdvectionDiffusionSolver.cpp.o
+.PHONY : src/core/AdvectionDiffusionSolver.o
+
+# target to build an object file
+src/core/AdvectionDiffusionSolver.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/core/AdvectionDiffusionSolver.cpp.o
+.PHONY : src/core/AdvectionDiffusionSolver.cpp.o
+
+src/core/AdvectionDiffusionSolver.i: src/core/AdvectionDiffusionSolver.cpp.i
+.PHONY : src/core/AdvectionDiffusionSolver.i
+
+# target to preprocess a source file
+src/core/AdvectionDiffusionSolver.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/core/AdvectionDiffusionSolver.cpp.i
+.PHONY : src/core/AdvectionDiffusionSolver.cpp.i
+
+src/core/AdvectionDiffusionSolver.s: src/core/AdvectionDiffusionSolver.cpp.s
+.PHONY : src/core/AdvectionDiffusionSolver.s
+
+# target to generate assembly for a file
+src/core/AdvectionDiffusionSolver.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/core/AdvectionDiffusionSolver.cpp.s
+.PHONY : src/core/AdvectionDiffusionSolver.cpp.s
 
 src/core/CurrentFieldSolver.o: src/core/CurrentFieldSolver.cpp.o
 .PHONY : src/core/CurrentFieldSolver.o
@@ -323,6 +440,102 @@ src/core/ParticleSimulator.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/core/ParticleSimulator.cpp.s
 .PHONY : src/core/ParticleSimulator.cpp.s
 
+src/core/PerformanceProfiler.o: src/core/PerformanceProfiler.cpp.o
+.PHONY : src/core/PerformanceProfiler.o
+
+# target to build an object file
+src/core/PerformanceProfiler.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/core/PerformanceProfiler.cpp.o
+.PHONY : src/core/PerformanceProfiler.cpp.o
+
+src/core/PerformanceProfiler.i: src/core/PerformanceProfiler.cpp.i
+.PHONY : src/core/PerformanceProfiler.i
+
+# target to preprocess a source file
+src/core/PerformanceProfiler.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/core/PerformanceProfiler.cpp.i
+.PHONY : src/core/PerformanceProfiler.cpp.i
+
+src/core/PerformanceProfiler.s: src/core/PerformanceProfiler.cpp.s
+.PHONY : src/core/PerformanceProfiler.s
+
+# target to generate assembly for a file
+src/core/PerformanceProfiler.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/core/PerformanceProfiler.cpp.s
+.PHONY : src/core/PerformanceProfiler.cpp.s
+
+src/data/DataExporter.o: src/data/DataExporter.cpp.o
+.PHONY : src/data/DataExporter.o
+
+# target to build an object file
+src/data/DataExporter.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/DataExporter.cpp.o
+.PHONY : src/data/DataExporter.cpp.o
+
+src/data/DataExporter.i: src/data/DataExporter.cpp.i
+.PHONY : src/data/DataExporter.i
+
+# target to preprocess a source file
+src/data/DataExporter.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/DataExporter.cpp.i
+.PHONY : src/data/DataExporter.cpp.i
+
+src/data/DataExporter.s: src/data/DataExporter.cpp.s
+.PHONY : src/data/DataExporter.s
+
+# target to generate assembly for a file
+src/data/DataExporter.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/DataExporter.cpp.s
+.PHONY : src/data/DataExporter.cpp.s
+
+src/data/GridDataStructure.o: src/data/GridDataStructure.cpp.o
+.PHONY : src/data/GridDataStructure.o
+
+# target to build an object file
+src/data/GridDataStructure.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/GridDataStructure.cpp.o
+.PHONY : src/data/GridDataStructure.cpp.o
+
+src/data/GridDataStructure.i: src/data/GridDataStructure.cpp.i
+.PHONY : src/data/GridDataStructure.i
+
+# target to preprocess a source file
+src/data/GridDataStructure.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/GridDataStructure.cpp.i
+.PHONY : src/data/GridDataStructure.cpp.i
+
+src/data/GridDataStructure.s: src/data/GridDataStructure.cpp.s
+.PHONY : src/data/GridDataStructure.s
+
+# target to generate assembly for a file
+src/data/GridDataStructure.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/GridDataStructure.cpp.s
+.PHONY : src/data/GridDataStructure.cpp.s
+
+src/data/MemoryManager.o: src/data/MemoryManager.cpp.o
+.PHONY : src/data/MemoryManager.o
+
+# target to build an object file
+src/data/MemoryManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/MemoryManager.cpp.o
+.PHONY : src/data/MemoryManager.cpp.o
+
+src/data/MemoryManager.i: src/data/MemoryManager.cpp.i
+.PHONY : src/data/MemoryManager.i
+
+# target to preprocess a source file
+src/data/MemoryManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/MemoryManager.cpp.i
+.PHONY : src/data/MemoryManager.cpp.i
+
+src/data/MemoryManager.s: src/data/MemoryManager.cpp.s
+.PHONY : src/data/MemoryManager.s
+
+# target to generate assembly for a file
+src/data/MemoryManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/data/MemoryManager.cpp.s
+.PHONY : src/data/MemoryManager.cpp.s
+
 src/utils/Logger.o: src/utils/Logger.cpp.o
 .PHONY : src/utils/Logger.o
 
@@ -347,6 +560,54 @@ src/utils/Logger.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.s
 .PHONY : src/utils/Logger.cpp.s
 
+src/utils/MathUtils.o: src/utils/MathUtils.cpp.o
+.PHONY : src/utils/MathUtils.o
+
+# target to build an object file
+src/utils/MathUtils.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/utils/MathUtils.cpp.o
+.PHONY : src/utils/MathUtils.cpp.o
+
+src/utils/MathUtils.i: src/utils/MathUtils.cpp.i
+.PHONY : src/utils/MathUtils.i
+
+# target to preprocess a source file
+src/utils/MathUtils.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/utils/MathUtils.cpp.i
+.PHONY : src/utils/MathUtils.cpp.i
+
+src/utils/MathUtils.s: src/utils/MathUtils.cpp.s
+.PHONY : src/utils/MathUtils.s
+
+# target to generate assembly for a file
+src/utils/MathUtils.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/utils/MathUtils.cpp.s
+.PHONY : src/utils/MathUtils.cpp.s
+
+src/utils/ThreadPool.o: src/utils/ThreadPool.cpp.o
+.PHONY : src/utils/ThreadPool.o
+
+# target to build an object file
+src/utils/ThreadPool.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/utils/ThreadPool.cpp.o
+.PHONY : src/utils/ThreadPool.cpp.o
+
+src/utils/ThreadPool.i: src/utils/ThreadPool.cpp.i
+.PHONY : src/utils/ThreadPool.i
+
+# target to preprocess a source file
+src/utils/ThreadPool.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/utils/ThreadPool.cpp.i
+.PHONY : src/utils/ThreadPool.cpp.i
+
+src/utils/ThreadPool.s: src/utils/ThreadPool.cpp.s
+.PHONY : src/utils/ThreadPool.s
+
+# target to generate assembly for a file
+src/utils/ThreadPool.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OceanSimCore.dir/build.make CMakeFiles/OceanSimCore.dir/src/utils/ThreadPool.cpp.s
+.PHONY : src/utils/ThreadPool.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -365,21 +626,54 @@ help:
 	@echo "... bindings/csharp/CppCoreWrapper.o"
 	@echo "... bindings/csharp/CppCoreWrapper.i"
 	@echo "... bindings/csharp/CppCoreWrapper.s"
+	@echo "... bindings/python/pybind_current_solver.o"
+	@echo "... bindings/python/pybind_current_solver.i"
+	@echo "... bindings/python/pybind_current_solver.s"
 	@echo "... bindings/python/pybind_ocean_sim.o"
 	@echo "... bindings/python/pybind_ocean_sim.i"
 	@echo "... bindings/python/pybind_ocean_sim.s"
 	@echo "... src/algorithms/FiniteDifferenceSolver.o"
 	@echo "... src/algorithms/FiniteDifferenceSolver.i"
 	@echo "... src/algorithms/FiniteDifferenceSolver.s"
+	@echo "... src/algorithms/ParallelComputeEngine.o"
+	@echo "... src/algorithms/ParallelComputeEngine.i"
+	@echo "... src/algorithms/ParallelComputeEngine.s"
+	@echo "... src/algorithms/RungeKuttaSolver.o"
+	@echo "... src/algorithms/RungeKuttaSolver.i"
+	@echo "... src/algorithms/RungeKuttaSolver.s"
+	@echo "... src/algorithms/VectorizedOperations.o"
+	@echo "... src/algorithms/VectorizedOperations.i"
+	@echo "... src/algorithms/VectorizedOperations.s"
+	@echo "... src/core/AdvectionDiffusionSolver.o"
+	@echo "... src/core/AdvectionDiffusionSolver.i"
+	@echo "... src/core/AdvectionDiffusionSolver.s"
 	@echo "... src/core/CurrentFieldSolver.o"
 	@echo "... src/core/CurrentFieldSolver.i"
 	@echo "... src/core/CurrentFieldSolver.s"
 	@echo "... src/core/ParticleSimulator.o"
 	@echo "... src/core/ParticleSimulator.i"
 	@echo "... src/core/ParticleSimulator.s"
+	@echo "... src/core/PerformanceProfiler.o"
+	@echo "... src/core/PerformanceProfiler.i"
+	@echo "... src/core/PerformanceProfiler.s"
+	@echo "... src/data/DataExporter.o"
+	@echo "... src/data/DataExporter.i"
+	@echo "... src/data/DataExporter.s"
+	@echo "... src/data/GridDataStructure.o"
+	@echo "... src/data/GridDataStructure.i"
+	@echo "... src/data/GridDataStructure.s"
+	@echo "... src/data/MemoryManager.o"
+	@echo "... src/data/MemoryManager.i"
+	@echo "... src/data/MemoryManager.s"
 	@echo "... src/utils/Logger.o"
 	@echo "... src/utils/Logger.i"
 	@echo "... src/utils/Logger.s"
+	@echo "... src/utils/MathUtils.o"
+	@echo "... src/utils/MathUtils.i"
+	@echo "... src/utils/MathUtils.s"
+	@echo "... src/utils/ThreadPool.o"
+	@echo "... src/utils/ThreadPool.i"
+	@echo "... src/utils/ThreadPool.s"
 .PHONY : help
 
 

@@ -72,10 +72,24 @@ include CMakeFiles/OceanSimPython.dir/flags.make
 CMakeFiles/OceanSimPython.dir/codegen:
 .PHONY : CMakeFiles/OceanSimPython.dir/codegen
 
+CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o: CMakeFiles/OceanSimPython.dir/flags.make
+CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_current_solver.cpp
+CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o: CMakeFiles/OceanSimPython.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o -MF CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o.d -o CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_current_solver.cpp
+
+CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_current_solver.cpp > CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.i
+
+CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_current_solver.cpp -o CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.s
+
 CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o: CMakeFiles/OceanSimPython.dir/flags.make
 CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_ocean_sim.cpp
 CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o: CMakeFiles/OceanSimPython.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o -MF CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o.d -o CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_ocean_sim.cpp
 
 CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.i: cmake_force
@@ -88,18 +102,20 @@ CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.s: cmake_forc
 
 # Object files for target OceanSimPython
 OceanSimPython_OBJECTS = \
+"CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o" \
 "CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o"
 
 # External object files for target OceanSimPython
 OceanSimPython_EXTERNAL_OBJECTS =
 
+OceanSimPython.cpython-312-darwin.so: CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o
 OceanSimPython.cpython-312-darwin.so: CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o
 OceanSimPython.cpython-312-darwin.so: CMakeFiles/OceanSimPython.dir/build.make
 OceanSimPython.cpython-312-darwin.so: libOceanSimCore.a
 OceanSimPython.cpython-312-darwin.so: /opt/homebrew/opt/libomp/lib/libomp.dylib
 OceanSimPython.cpython-312-darwin.so: /opt/homebrew/lib/libtbb.12.15.dylib
 OceanSimPython.cpython-312-darwin.so: CMakeFiles/OceanSimPython.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX shared module OceanSimPython.cpython-312-darwin.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX shared module OceanSimPython.cpython-312-darwin.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/OceanSimPython.dir/link.txt --verbose=$(VERBOSE)
 	/usr/bin/strip -x /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/OceanSimPython.cpython-312-darwin.so
 

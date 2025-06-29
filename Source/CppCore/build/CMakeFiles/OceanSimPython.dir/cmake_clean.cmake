@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o"
+  "CMakeFiles/OceanSimPython.dir/bindings/python/pybind_current_solver.cpp.o.d"
   "CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o"
   "CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o.d"
   "OceanSimPython.cpython-312-darwin.so"

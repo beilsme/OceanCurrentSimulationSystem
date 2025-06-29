@@ -1702,3 +1702,227 @@ events:
         
       exitCode: 1
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:219 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:487 (_OPENMP_GET_FLAGS)"
+      - "CMakeLists.txt:19 (find_package)"
+    description: "Detecting CXX OpenMP compiler info"
+    directories:
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -O3 -march=native"
+      CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "OpenMP_COMPILE_RESULT_CXX_Xclang fopenmp"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq'
+        
+        Run Build Command(s): /Applications/CLion.app/Contents/bin/ninja/mac/aarch64/ninja -v cmTC_b8565
+        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -MD -MT CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq/OpenMPTryFlag.cpp'
+        \x1b[31mFAILED: \x1b[0mCMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o 
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -MD -MT CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq/OpenMPTryFlag.cpp'
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: arm64-apple-darwin24.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name OpenMPTryFlag.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -mllvm -extra-vectorizer-passes -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +neon -target-feature +v8.5a -target-feature +zcm -target-feature +zcz -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O3 -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -std=gnu++17 -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -vectorize-loops -vectorize-slp -fopenmp -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_b8565.dir/OpenMPTryFlag.cpp.o -x c++ /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq/OpenMPTryFlag.cpp
+        clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target arm64-apple-darwin24.5.0
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)
+        End of search list.
+        /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jM0MEq/OpenMPTryFlag.cpp:2:10: fatal error: 'omp.h' file not found
+            2 | #include <omp.h>
+              |          ^~~~~~~
+        1 error generated.
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:219 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:487 (_OPENMP_GET_FLAGS)"
+      - "CMakeLists.txt:19 (find_package)"
+    description: "Detecting CXX OpenMP compiler info"
+    directories:
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -O3 -march=native"
+      CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "OpenMP_COMPILE_RESULT_CXX_Xclang fopenmp"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX'
+        
+        Run Build Command(s): /Applications/CLion.app/Contents/bin/ninja/mac/aarch64/ninja -v cmTC_1ea21
+        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -MD -MT CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX/OpenMPTryFlag.cpp'
+        \x1b[31mFAILED: \x1b[0mCMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o 
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -MD -MT CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX/OpenMPTryFlag.cpp'
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: arm64-apple-darwin24.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name OpenMPTryFlag.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -mllvm -extra-vectorizer-passes -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +neon -target-feature +v8.5a -target-feature +zcm -target-feature +zcz -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O3 -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -std=gnu++17 -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -vectorize-loops -vectorize-slp -fopenmp -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_1ea21.dir/OpenMPTryFlag.cpp.o -x c++ /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX/OpenMPTryFlag.cpp
+        clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target arm64-apple-darwin24.5.0
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)
+        End of search list.
+        /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-bH5rqX/OpenMPTryFlag.cpp:2:10: fatal error: 'omp.h' file not found
+            2 | #include <omp.h>
+              |          ^~~~~~~
+        1 error generated.
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:219 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:487 (_OPENMP_GET_FLAGS)"
+      - "CMakeLists.txt:19 (find_package)"
+    description: "Detecting CXX OpenMP compiler info"
+    directories:
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -O3 -march=native"
+      CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "OpenMP_COMPILE_RESULT_CXX_Xclang fopenmp"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj'
+        
+        Run Build Command(s): /Applications/CLion.app/Contents/bin/ninja/mac/aarch64/ninja -v cmTC_09448
+        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -MD -MT CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj/OpenMPTryFlag.cpp'
+        \x1b[31mFAILED: \x1b[0mCMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o 
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -MD -MT CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj/OpenMPTryFlag.cpp'
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: arm64-apple-darwin24.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name OpenMPTryFlag.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -mllvm -extra-vectorizer-passes -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +neon -target-feature +v8.5a -target-feature +zcm -target-feature +zcz -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O3 -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -std=gnu++17 -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -vectorize-loops -vectorize-slp -fopenmp -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_09448.dir/OpenMPTryFlag.cpp.o -x c++ /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj/OpenMPTryFlag.cpp
+        clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target arm64-apple-darwin24.5.0
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)
+        End of search list.
+        /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rVLpEj/OpenMPTryFlag.cpp:2:10: fatal error: 'omp.h' file not found
+            2 | #include <omp.h>
+              |          ^~~~~~~
+        1 error generated.
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:219 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/aarch64/share/cmake-3.29/Modules/FindOpenMP.cmake:487 (_OPENMP_GET_FLAGS)"
+      - "CMakeLists.txt:19 (find_package)"
+    description: "Detecting CXX OpenMP compiler info"
+    directories:
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " -O3 -march=native"
+      CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk"
+      CMAKE_POSITION_INDEPENDENT_CODE: "ON"
+    buildResult:
+      variable: "OpenMP_COMPILE_RESULT_CXX_Xclang fopenmp"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P'
+        
+        Run Build Command(s): /Applications/CLion.app/Contents/bin/ninja/mac/aarch64/ninja -v cmTC_45922
+        [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -fcolor-diagnostics -MD -MT CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P/OpenMPTryFlag.cpp'
+        FAILED: CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o 
+        /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++   -O3 -march=native -Xclang -fopenmp -v -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -fPIE -fcolor-diagnostics -MD -MT CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o -c '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P/OpenMPTryFlag.cpp'
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: arm64-apple-darwin24.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name OpenMPTryFlag.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -mllvm -extra-vectorizer-passes -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +neon -target-feature +v8.5a -target-feature +zcm -target-feature +zcz -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O3 -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -std=gnu++17 -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -fcolor-diagnostics -vectorize-loops -vectorize-slp -fopenmp -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_45922.dir/OpenMPTryFlag.cpp.o -x c++ /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P/OpenMPTryFlag.cpp
+        clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target arm64-apple-darwin24.5.0
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/local/include"
+        ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/Library/Frameworks"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include/c++/v1
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/usr/include
+         /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+         /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk/System/Library/Frameworks (framework directory)
+        End of search list.
+        /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-Cbi42P/OpenMPTryFlag.cpp:2:10: fatal error: 'omp.h' file not found
+            2 | #include <omp.h>
+              |          ^~~~~~~
+        1 error generated.
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+...

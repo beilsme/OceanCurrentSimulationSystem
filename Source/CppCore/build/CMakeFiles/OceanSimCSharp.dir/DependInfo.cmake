@@ -9,7 +9,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/csharp/CppCoreWrapper.cpp" "CMakeFiles/OceanSimCSharp.dir/bindings/csharp/CppCoreWrapper.cpp.o" "gcc" "CMakeFiles/OceanSimCSharp.dir/bindings/csharp/CppCoreWrapper.cpp.o.d"
-  "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_ocean_sim.cpp" "CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.o" "gcc" "CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

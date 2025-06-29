@@ -2,6 +2,10 @@
 cmake_minimum_required(VERSION 3.16)
 project(OceanCurrentSimulationCore VERSION 1.0.0 LANGUAGES CXX)
 
+# 在所有目标上启用Position Independent Code，
+# 以便静态库可被链接到共享库
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # 设置C++标准
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +19,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(TBB REQUIRED)
+
 
 # 包含目录
 include_directories(
@@ -36,20 +41,7 @@ file(GLOB CSHARP_BINDING_SOURCES "bindings/csharp/*.cpp")
 file(GLOB PYTHON_BINDING_SOURCES "bindings/python/*.cpp")
 
 # 核心静态库
-add_library(OceanSimCore STATIC ${CORE_SOURCES}
-        include/core/ParticleSimulator.h
-        src/core/ParticleSimulator.cpp
-        include/core/CurrentFieldSolver.h
-        src/core/CurrentFieldSolver.cpp
-        include/algorithms/RungeKuttaSolver.h
-        include/data/GridDataStructure.h
-        include/core/AdvectionDiffusionSolver.h
-        include/core/PerformanceProfiler.h
-        include/utils/MathUtils.h
-        include/utils/Logger.h
-        include/algorithms/FiniteDifferenceSolver.h
-        src/algorithms/FiniteDifferenceSolver.cpp
-        src/utils/Logger.cpp)
+add_library(OceanSimCore STATIC ${CORE_SOURCES})
 target_link_libraries(OceanSimCore
         OpenMP::OpenMP_CXX
         Eigen3::Eigen
@@ -62,11 +54,9 @@ if(APPLE)
 endif()
 
 # C#绑定动态库
+# C#绑定引擎不需要包含Python的绑定文件
 add_library(OceanSimCSharp SHARED ${CSHARP_BINDING_SOURCES}
-        bindings/csharp/CppCoreWrapper.h
-        bindings/csharp/CppCoreWrapper.cpp
-        bindings/python/pybind_ocean_sim.cpp
-        bindings/python/pybind_ocean_sim.h)
+        bindings/csharp/CppCoreWrapper.cpp)
 target_link_libraries(OceanSimCSharp OceanSimCore)
 
 # Python绑定模块

@@ -981,6 +981,14 @@ CMakeFiles/OceanSimCore.dir/src/algorithms/FiniteDifferenceSolver.cpp.o: /Users/
   /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include/algorithms/FiniteDifferenceSolver.h \
   /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include/utils/Logger.h
 
+CMakeFiles/OceanSimCore.dir/src/algorithms/ParallelComputeEngine.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/ParallelComputeEngine.cpp
+
+CMakeFiles/OceanSimCore.dir/src/algorithms/RungeKuttaSolver.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/RungeKuttaSolver.cpp
+
+CMakeFiles/OceanSimCore.dir/src/algorithms/VectorizedOperations.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/VectorizedOperations.cpp
+
+CMakeFiles/OceanSimCore.dir/src/core/AdvectionDiffusionSolver.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/AdvectionDiffusionSolver.cpp
+
 CMakeFiles/OceanSimCore.dir/src/core/CurrentFieldSolver.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/CurrentFieldSolver.cpp \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h \
@@ -3645,6 +3653,14 @@ CMakeFiles/OceanSimCore.dir/src/core/ParticleSimulator.cpp.o: /Users/beilsmindex
   /opt/homebrew/include/tbb/parallel_for.h \
   /opt/homebrew/opt/libomp/include/omp.h
 
+CMakeFiles/OceanSimCore.dir/src/core/PerformanceProfiler.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/PerformanceProfiler.cpp
+
+CMakeFiles/OceanSimCore.dir/src/data/DataExporter.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/data/DataExporter.cpp
+
+CMakeFiles/OceanSimCore.dir/src/data/GridDataStructure.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/data/GridDataStructure.cpp
+
+CMakeFiles/OceanSimCore.dir/src/data/MemoryManager.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/data/MemoryManager.cpp
+
 CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/Logger.cpp \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h \
@@ -4641,8 +4657,20 @@ CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o: /Users/beilsmindex/洋流模
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include/stdint.h \
   /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include/utils/Logger.h
 
+CMakeFiles/OceanSimCore.dir/src/utils/MathUtils.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/MathUtils.cpp
+
+CMakeFiles/OceanSimCore.dir/src/utils/ThreadPool.cpp.o: /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/ThreadPool.cpp
+
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/ThreadPool.cpp:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/MathUtils.cpp:
 
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/Logger.cpp:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/data/GridDataStructure.cpp:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/PerformanceProfiler.cpp:
 
 /opt/homebrew/include/tbb/parallel_for.h:
 
@@ -5017,6 +5045,12 @@ CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o: /Users/beilsmindex/洋流模
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen/Eigen/src/Core/Visitor.h:
 
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/CurrentFieldSolver.cpp:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/VectorizedOperations.cpp:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/RungeKuttaSolver.cpp:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/ParallelComputeEngine.cpp:
 
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include/utils/Logger.h:
 
@@ -5477,6 +5511,8 @@ CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o: /Users/beilsmindex/洋流模
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen/Eigen/src/Core/arch/Default/GenericPacketMathFunctions.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_trivially_move_constructible.h:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/data/MemoryManager.cpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h:
 
@@ -6760,6 +6796,8 @@ CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o: /Users/beilsmindex/洋流模
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/ios.h:
 
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/AdvectionDiffusionSolver.cpp:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_mb_cur_max.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/wctype.h:
@@ -7199,6 +7237,8 @@ CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o: /Users/beilsmindex/洋流模
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__mutex/tag_types.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__algorithm/copy_if.h:
+
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/data/DataExporter.cpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/is_base_of.h:
 

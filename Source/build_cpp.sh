@@ -5,6 +5,7 @@ export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
 export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
 export CXXFLAGS="-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include"
 export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib"
+export EIGEN_ROOT="/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore"
 
 set -e  # 出错时退出
 

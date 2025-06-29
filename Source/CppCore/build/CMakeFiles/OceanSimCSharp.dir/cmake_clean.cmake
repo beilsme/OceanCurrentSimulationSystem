@@ -1,8 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/OceanSimCSharp.dir/bindings/csharp/CppCoreWrapper.cpp.o"
   "CMakeFiles/OceanSimCSharp.dir/bindings/csharp/CppCoreWrapper.cpp.o.d"
-  "CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.o"
-  "CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.o.d"
   "libOceanSimCSharp.dylib"
   "libOceanSimCSharp.pdb"
 )
