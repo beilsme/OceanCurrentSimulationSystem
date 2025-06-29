@@ -43,15 +43,15 @@ T* GetHandle(void* handle, const std::unordered_map<void*, std::shared_ptr<T>>& 
 
 // ========================= 初始化和清理 =========================
 
-OCEANSIM_API void InitializeOceanSimCore() {
+OCEANSIM_API void InitializeCppCore() {
     if (!g_initialized) {
-        Utils::Logger::initialize("OceanSimCore");
+        Utils::Logger::initialize("CppCore");
         LOG_INFO("OceanSim C++ Core initialized");
         g_initialized = true;
     }
 }
 
-OCEANSIM_API void ShutdownOceanSimCore() {
+OCEANSIM_API void ShutdownCppCore() {
     if (g_initialized) {
         g_particle_simulators.clear();
         g_current_solvers.clear();

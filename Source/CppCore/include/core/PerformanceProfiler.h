@@ -10,6 +10,7 @@
 #include <mutex>
 #include <thread>
 #include <fstream>
+#include <iostream>
 
 namespace OceanSim {
     namespace Core {

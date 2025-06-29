@@ -280,9 +280,9 @@ OCEANSIM_API void ClearError();
 
 // ========================= 初始化和清理 =========================
 
-OCEANSIM_API void InitializeOceanSimCore();
+OCEANSIM_API void InitializeCppCore();
 
-OCEANSIM_API void ShutdownOceanSimCore();
+OCEANSIM_API void ShutdownCppCore();
 
 OCEANSIM_API const char* GetVersionString();
 

@@ -1,4 +1,4 @@
-#include "VectorizedOperations.h"
+#include "algorithms/VectorizedOperations.h"
 #include <cmath>
 #include <iostream>
 #include <algorithm>

@@ -110,7 +110,7 @@ namespace OceanSimulation {
              * @brief 构造函数
              * @param config 引擎配置参数
              */
-            explicit ParallelComputeEngine(const Config& config = Config{});
+            explicit ParallelComputeEngine(const Config& config);
 
             /**
              * @brief 析构函数

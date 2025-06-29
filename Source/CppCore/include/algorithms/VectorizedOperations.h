@@ -74,7 +74,7 @@ namespace OceanSimulation {
              * @brief 构造函数
              * @param config 向量化配置
              */
-            explicit VectorizedOperations(const Config& config = Config{});
+            explicit VectorizedOperations(const Config& config);
 
             /**
              * @brief 析构函数
