@@ -4,11 +4,15 @@
 #include <vector>
 #include <memory>
 #include <cstring>
-#include <immintrin.h>  // AVX/SSE 指令集
 #include <algorithm>
 
+// 仅在 x86 平台包含SIMD头文件，避免在arm64(M1/M2/M3)上编译失败
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
+#  include <immintrin.h>  // AVX/SSE 指令集
+#endif
+
 #ifdef __ARM_NEON
-#include <arm_neon.h>
+#  include <arm_neon.h>  // ARM NEON指令集
 #endif
 
 namespace OceanSimulation {

@@ -52,9 +52,18 @@ namespace OceanSimulation {
             if (!config_.enablePrefetch) return;
 
             const char* data = static_cast<const char*>(ptr);
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
             for (size_t i = 0; i < size; i += 64) { // 按缓存行大小预取
                 _mm_prefetch(data + i, _MM_HINT_T0);
             }
+#elif defined(__aarch64__) || defined(__arm64__)
+            for (size_t i = 0; i < size; i += 64) {
+                __builtin_prefetch(data + i);
+            }
+#else
+            (void)data;
+            (void)size;
+#endif
         }
 
 // ===========================================
@@ -89,6 +98,7 @@ namespace OceanSimulation {
         }
 
         void VectorizedOperations::vectorAddAVX2(const float* a, const float* b, float* result, size_t size) {
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
             const size_t simdSize = 8; // AVX2处理8个float
             const size_t simdEnd = (size / simdSize) * simdSize;
 
@@ -104,9 +114,13 @@ namespace OceanSimulation {
             for (size_t i = simdEnd; i < size; ++i) {
                 result[i] = a[i] + b[i];
             }
+#else
+            vectorAddScalar(a, b, result, size);
+#endif
         }
 
         void VectorizedOperations::vectorAddSSE(const float* a, const float* b, float* result, size_t size) {
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
             const size_t simdSize = 4; // SSE处理4个float
             const size_t simdEnd = (size / simdSize) * simdSize;
 
@@ -120,9 +134,13 @@ namespace OceanSimulation {
             for (size_t i = simdEnd; i < size; ++i) {
                 result[i] = a[i] + b[i];
             }
+#else
+            vectorAddScalar(a, b, result, size);
+#endif
         }
 
         void VectorizedOperations::vectorAddScalar(const float* a, const float* b, float* result, size_t size) {
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
             for (size_t i = 0; i < size; ++i) {
                 result[i] = a[i] + b[i];
             }
@@ -155,6 +173,11 @@ namespace OceanSimulation {
                     }
                     break;
             }
+#else
+            for (size_t i = 0; i < size; ++i) {
+                result[i] = a[i] + b[i];
+            }
+#endif
             ++counters_.vectorOperations;
         }
 
@@ -176,6 +199,7 @@ namespace OceanSimulation {
         }
 
         void VectorizedOperations::vectorMulAVX2(const float* a, const float* b, float* result, size_t size) {
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
             const size_t simdSize = 8;
             const size_t simdEnd = (size / simdSize) * simdSize;
 
@@ -189,11 +213,35 @@ namespace OceanSimulation {
             for (size_t i = simdEnd; i < size; ++i) {
                 result[i] = a[i] * b[i];
             }
+#else
+            vectorMulScalar(a, b, result, size);
+#endif
+        }
+
+        void VectorizedOperations::vectorMulSSE(const float* a, const float* b, float* result, size_t size) {
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
+            const size_t simdSize = 4;
+            const size_t simdEnd = (size / simdSize) * simdSize;
+
+            for (size_t i = 0; i < simdEnd; i += simdSize) {
+                __m128 va = _mm_load_ps(&a[i]);
+                __m128 vb = _mm_load_ps(&b[i]);
+                __m128 vresult = _mm_mul_ps(va, vb);
+                _mm_store_ps(&result[i], vresult);
+            }
+
+            for (size_t i = simdEnd; i < size; ++i) {
+                result[i] = a[i] * b[i];
+            }
+#else
+            vectorMulScalar(a, b, result, size);
+#endif
         }
 
         float VectorizedOperations::dotProduct(const float* a, const float* b, size_t size) {
-            float result = 0.0f;
 
+            float result = 0.0f;
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
             switch (activeSimd_) {
                 case SimdType::AVX2:
                 case SimdType::AVX512: {
@@ -228,7 +276,11 @@ namespace OceanSimulation {
                     }
                     break;
             }
-
+#else
+            for (size_t i = 0; i < size; ++i) {
+                result += a[i] * b[i];
+            }
+#endif
             ++counters_.vectorOperations;
             return result;
         }
