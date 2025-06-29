@@ -1,0 +1,2 @@
+/usr/bin/ar qc libOceanSimCore.a CMakeFiles/OceanSimCore.dir/src/algorithms/FiniteDifferenceSolver.cpp.o CMakeFiles/OceanSimCore.dir/src/core/CurrentFieldSolver.cpp.o CMakeFiles/OceanSimCore.dir/src/core/ParticleSimulator.cpp.o CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o
+/usr/bin/ranlib libOceanSimCore.a

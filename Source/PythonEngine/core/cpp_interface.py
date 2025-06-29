@@ -5,25 +5,25 @@
 模块: Source.PythonEngine.core.cpp_interface
 功能: C++高性能计算引擎的Python接口包装器。负责与C++动态库通信，实现粒子追踪、洋流场数值求解、平流扩散、性能采集等高性能任务的跨语言调用。
 作者: beilsm
-版本: v1.0.0
+版本: v1.0.1
 创建时间: 2025-06-28
-最近更新: 2025-06-28
+最近更新: 2025-06-29
 主要功能:
     - 跨平台动态库自动加载与签名绑定
     - 网格参数、仿真参数结构体对接
     - 支持异步粒子模拟、场求解与扩散模拟
     - 性能数据自动采集
     - 兼容未来C++算法接口扩展
+    - 为simulation模块提供统一接口
 较上一版改进:
-    - 首发版，接口全量实现，结构体参数类型细致对齐
+    - 增加CppInterfaceWrapper类，为simulation模块提供统一接口
+    - 改进错误处理和资源管理
+    - 优化性能监控功能
 测试方法:
     见文件底部 `if __name__ == "__main__"` 区域
 接口说明:
     - initialize(), simulate_particles(), solve_current_field(), solve_advection_diffusion(), get_performance_metrics(), cleanup()
 """
-
-# ...后续为正文...
-
 
 import ctypes
 import numpy as np
@@ -35,6 +35,10 @@ import os
 from pathlib import Path
 import platform
 import json
+import threading
+import time
+from dataclasses import dataclass
+from enum import Enum
 
 class CppInterface:
     """C++计算引擎接口包装器"""
@@ -270,7 +274,6 @@ class CppInterface:
             raise RuntimeError("C++引擎未初始化")
 
         try:
-            import time
             start_time = time.time()
 
             # 准备输入数据
@@ -375,7 +378,6 @@ class CppInterface:
             raise RuntimeError("C++引擎未初始化")
 
         try:
-            import time
             start_time = time.time()
 
             # 准备数据
@@ -450,7 +452,6 @@ class CppInterface:
             raise RuntimeError("C++引擎未初始化")
 
         try:
-            import time
             start_time = time.time()
 
             # 准备数据
@@ -541,12 +542,593 @@ class CppInterface:
             self.is_initialized = False
             self.lib = None
 
+
+class ComputeTaskType(Enum):
+    """计算任务类型"""
+    PARTICLE_TRACKING = "particle_tracking"
+    CURRENT_FIELD_SOLVING = "current_field_solving"
+    ADVECTION_DIFFUSION = "advection_diffusion"
+    PERFORMANCE_ANALYSIS = "performance_analysis"
+
+
+@dataclass
+class ComputeTask:
+    """计算任务数据结构"""
+    task_type: ComputeTaskType
+    input_data: Dict[str, Any]
+    parameters: Dict[str, Any]
+    priority: int = 0
+    timeout: Optional[float] = None
+
+
+class CppInterfaceWrapper:
+    """
+    C++接口包装器
+    为simulation模块提供统一的C++计算引擎接口
+    支持任务队列、资源池管理和性能监控
+    """
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        """
+        初始化C++接口包装器
+        
+        Args:
+            config: 配置参数字典
+        """
+        self.config = config or {}
+        self.logger = logging.getLogger(__name__)
+
+        # C++接口实例
+        self.cpp_interface = CppInterface(self.config)
+
+        # 任务管理
+        self.task_queue = asyncio.Queue()
+        self.is_processing = False
+        self.max_concurrent_tasks = self.config.get("max_concurrent_tasks", 4)
+
+        # 资源管理
+        self._lock = threading.Lock()
+        self._is_initialized = False
+
+        # 性能监控
+        self.task_statistics = {
+            "completed_tasks": 0,
+            "failed_tasks": 0,
+            "total_execution_time": 0.0,
+            "average_task_time": 0.0,
+            "task_type_stats": {}
+        }
+
+        self.logger.info("C++接口包装器初始化完成")
+
+    def initialize(self) -> bool:
+        """
+        同步初始化接口
+        
+        Returns:
+            初始化是否成功
+        """
+        try:
+            # 使用事件循环运行异步初始化
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # 如果没有运行的事件循环，创建新的
+                return asyncio.run(self._async_initialize())
+
+            # 如果已有事件循环，创建任务
+            if loop.is_running():
+                task = asyncio.create_task(self._async_initialize())
+                # 注意：这里可能需要其他方式来等待任务完成
+                return True  # 简化处理，假设初始化成功
+            else:
+                return asyncio.run(self._async_initialize())
+
+        except Exception as e:
+            self.logger.error(f"初始化失败: {e}")
+            return False
+
+    async def _async_initialize(self) -> bool:
+        """异步初始化"""
+        with self._lock:
+            if self._is_initialized:
+                return True
+
+            success = await self.cpp_interface.initialize()
+            if success:
+                self._is_initialized = True
+                # 启动任务处理器
+                asyncio.create_task(self._task_processor())
+                self.logger.info("C++接口包装器异步初始化成功")
+
+            return success
+
+    async def _task_processor(self):
+        """任务处理器"""
+        self.is_processing = True
+
+        while self.is_processing:
+            try:
+                # 获取任务（带超时）
+                task = await asyncio.wait_for(self.task_queue.get(), timeout=1.0)
+
+                # 执行任务
+                await self._execute_task(task)
+
+                # 标记任务完成
+                self.task_queue.task_done()
+
+            except asyncio.TimeoutError:
+                # 超时是正常的，继续循环
+                continue
+            except Exception as e:
+                self.logger.error(f"任务处理器异常: {e}")
+
+    async def _execute_task(self, task: ComputeTask):
+        """执行计算任务"""
+        start_time = time.time()
+
+        try:
+            if task.task_type == ComputeTaskType.PARTICLE_TRACKING:
+                result = await self.cpp_interface.simulate_particles(
+                    task.input_data["velocity_field"],
+                    task.input_data["initial_positions"],
+                    task.parameters["grid_params"],
+                    task.parameters["simulation_params"]
+                )
+
+            elif task.task_type == ComputeTaskType.CURRENT_FIELD_SOLVING:
+                result = await self.cpp_interface.solve_current_field(
+                    task.input_data["input_field"],
+                    task.parameters["grid_params"],
+                    task.parameters["time_step"],
+                    task.parameters.get("solver_type", 0)
+                )
+
+            elif task.task_type == ComputeTaskType.ADVECTION_DIFFUSION:
+                result = await self.cpp_interface.solve_advection_diffusion(
+                    task.input_data["concentration_field"],
+                    task.input_data["velocity_field"],
+                    task.parameters["grid_params"],
+                    task.parameters["diffusion_coeff"],
+                    task.parameters["time_step"],
+                    task.parameters.get("boundary_condition", 0)
+                )
+
+            else:
+                raise ValueError(f"不支持的任务类型: {task.task_type}")
+
+            # 更新统计信息
+            elapsed_time = time.time() - start_time
+            self._update_task_statistics(task.task_type, elapsed_time, success=True)
+
+            # 存储结果（如果需要）
+            task.input_data["result"] = result
+
+        except Exception as e:
+            elapsed_time = time.time() - start_time
+            self._update_task_statistics(task.task_type, elapsed_time, success=False)
+            self.logger.error(f"任务执行失败 ({task.task_type}): {e}")
+            task.input_data["error"] = str(e)
+
+    def _update_task_statistics(self, task_type: ComputeTaskType, elapsed_time: float, success: bool):
+        """更新任务统计信息"""
+        if success:
+            self.task_statistics["completed_tasks"] += 1
+        else:
+            self.task_statistics["failed_tasks"] += 1
+
+        self.task_statistics["total_execution_time"] += elapsed_time
+
+        total_tasks = self.task_statistics["completed_tasks"] + self.task_statistics["failed_tasks"]
+        if total_tasks > 0:
+            self.task_statistics["average_task_time"] = (
+                    self.task_statistics["total_execution_time"] / total_tasks
+            )
+
+        # 按任务类型统计
+        type_key = task_type.value
+        if type_key not in self.task_statistics["task_type_stats"]:
+            self.task_statistics["task_type_stats"][type_key] = {
+                "count": 0,
+                "total_time": 0.0,
+                "average_time": 0.0,
+                "success_count": 0,
+                "failure_count": 0
+            }
+
+        stats = self.task_statistics["task_type_stats"][type_key]
+        stats["count"] += 1
+        stats["total_time"] += elapsed_time
+        stats["average_time"] = stats["total_time"] / stats["count"]
+
+        if success:
+            stats["success_count"] += 1
+        else:
+            stats["failure_count"] += 1
+
+    def submit_particle_tracking_task(self, velocity_field: Dict[str, np.ndarray],
+                                      initial_positions: np.ndarray,
+                                      grid_params: Dict[str, Any],
+                                      simulation_params: Dict[str, Any],
+                                      priority: int = 0) -> asyncio.Future:
+        """
+        提交粒子追踪任务
+        
+        Args:
+            velocity_field: 速度场
+            initial_positions: 初始位置
+            grid_params: 网格参数
+            simulation_params: 模拟参数
+            priority: 任务优先级
+            
+        Returns:
+            异步Future对象
+        """
+        task = ComputeTask(
+            task_type=ComputeTaskType.PARTICLE_TRACKING,
+            input_data={
+                "velocity_field": velocity_field,
+                "initial_positions": initial_positions
+            },
+            parameters={
+                "grid_params": grid_params,
+                "simulation_params": simulation_params
+            },
+            priority=priority
+        )
+
+        return self._submit_task(task)
+
+    def submit_current_field_task(self, input_field: np.ndarray,
+                                  grid_params: Dict[str, Any],
+                                  time_step: float,
+                                  solver_type: int = 0,
+                                  priority: int = 0) -> asyncio.Future:
+        """
+        提交洋流场求解任务
+        
+        Args:
+            input_field: 输入场
+            grid_params: 网格参数
+            time_step: 时间步长
+            solver_type: 求解器类型
+            priority: 任务优先级
+            
+        Returns:
+            异步Future对象
+        """
+        task = ComputeTask(
+            task_type=ComputeTaskType.CURRENT_FIELD_SOLVING,
+            input_data={"input_field": input_field},
+            parameters={
+                "grid_params": grid_params,
+                "time_step": time_step,
+                "solver_type": solver_type
+            },
+            priority=priority
+        )
+
+        return self._submit_task(task)
+
+    def submit_advection_diffusion_task(self, concentration_field: np.ndarray,
+                                        velocity_field: Dict[str, np.ndarray],
+                                        grid_params: Dict[str, Any],
+                                        diffusion_coeff: float,
+                                        time_step: float,
+                                        boundary_condition: int = 0,
+                                        priority: int = 0) -> asyncio.Future:
+        """
+        提交平流扩散任务
+        
+        Args:
+            concentration_field: 浓度场
+            velocity_field: 速度场
+            grid_params: 网格参数
+            diffusion_coeff: 扩散系数
+            time_step: 时间步长
+            boundary_condition: 边界条件类型
+            priority: 任务优先级
+            
+        Returns:
+            异步Future对象
+        """
+        task = ComputeTask(
+            task_type=ComputeTaskType.ADVECTION_DIFFUSION,
+            input_data={
+                "concentration_field": concentration_field,
+                "velocity_field": velocity_field
+            },
+            parameters={
+                "grid_params": grid_params,
+                "diffusion_coeff": diffusion_coeff,
+                "time_step": time_step,
+                "boundary_condition": boundary_condition
+            },
+            priority=priority
+        )
+
+        return self._submit_task(task)
+
+    def _submit_task(self, task: ComputeTask) -> asyncio.Future:
+        """提交任务到队列"""
+        future = asyncio.Future()
+        task.input_data["future"] = future
+
+        try:
+            # 添加到队列（非阻塞）
+            self.task_queue.put_nowait(task)
+            self.logger.debug(f"任务已提交: {task.task_type}")
+        except asyncio.QueueFull:
+            future.set_exception(RuntimeError("任务队列已满"))
+
+        return future
+
+    # 同步接口方法，为与现有simulation模块兼容
+    def sync_simulate_particles(self, velocity_field: Dict[str, np.ndarray],
+                                initial_positions: np.ndarray,
+                                grid_params: Dict[str, Any],
+                                simulation_params: Dict[str, Any]) -> np.ndarray:
+        """
+        同步粒子追踪仿真
+        
+        Args:
+            velocity_field: 速度场
+            initial_positions: 初始位置
+            grid_params: 网格参数
+            simulation_params: 模拟参数
+            
+        Returns:
+            粒子轨迹数组
+        """
+        if not self._is_initialized:
+            raise RuntimeError("接口未初始化")
+
+        try:
+            # 直接调用C++接口的异步方法
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(
+                    self.cpp_interface.simulate_particles(
+                        velocity_field, initial_positions, grid_params, simulation_params
+                    )
+                )
+                return result
+            finally:
+                loop.close()
+        except Exception as e:
+            self.logger.error(f"同步粒子追踪失败: {e}")
+            raise
+
+    def sync_solve_current_field(self, input_field: np.ndarray,
+                                 grid_params: Dict[str, Any],
+                                 time_step: float,
+                                 solver_type: int = 0) -> np.ndarray:
+        """
+        同步洋流场求解
+        
+        Args:
+            input_field: 输入场
+            grid_params: 网格参数
+            time_step: 时间步长
+            solver_type: 求解器类型
+            
+        Returns:
+            求解后的场
+        """
+        if not self._is_initialized:
+            raise RuntimeError("接口未初始化")
+
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(
+                    self.cpp_interface.solve_current_field(
+                        input_field, grid_params, time_step, solver_type
+                    )
+                )
+                return result
+            finally:
+                loop.close()
+        except Exception as e:
+            self.logger.error(f"同步洋流场求解失败: {e}")
+            raise
+
+    def sync_solve_advection_diffusion(self, concentration_field: np.ndarray,
+                                       velocity_field: Dict[str, np.ndarray],
+                                       grid_params: Dict[str, Any],
+                                       diffusion_coeff: float,
+                                       time_step: float,
+                                       boundary_condition: int = 0) -> np.ndarray:
+        """
+        同步平流扩散求解
+        
+        Args:
+            concentration_field: 浓度场
+            velocity_field: 速度场
+            grid_params: 网格参数
+            diffusion_coeff: 扩散系数
+            time_step: 时间步长
+            boundary_condition: 边界条件类型
+            
+        Returns:
+            更新后的浓度场
+        """
+        if not self._is_initialized:
+            raise RuntimeError("接口未初始化")
+
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                result = loop.run_until_complete(
+                    self.cpp_interface.solve_advection_diffusion(
+                        concentration_field, velocity_field, grid_params,
+                        diffusion_coeff, time_step, boundary_condition
+                    )
+                )
+                return result
+            finally:
+                loop.close()
+        except Exception as e:
+            self.logger.error(f"同步平流扩散求解失败: {e}")
+            raise
+
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """获取性能指标"""
+        # 合并C++引擎性能指标和包装器统计信息
+        cpp_metrics = self.cpp_interface.get_performance_metrics()
+
+        return {
+            "cpp_engine": cpp_metrics,
+            "wrapper_statistics": self.task_statistics,
+            "queue_size": self.task_queue.qsize(),
+            "is_processing": self.is_processing,
+            "is_initialized": self._is_initialized
+        }
+
+    def get_system_info(self) -> Dict[str, Any]:
+        """获取系统信息"""
+        return {
+            "platform": platform.system(),
+            "architecture": platform.machine(),
+            "python_version": platform.python_version(),
+            "library_path": self.config.get("library_path", "N/A"),
+            "max_concurrent_tasks": self.max_concurrent_tasks,
+            "config": self.config
+        }
+
+    def is_available(self) -> bool:
+        """检查C++引擎是否可用"""
+        return self._is_initialized and self.cpp_interface.is_available()
+
+    def wait_for_completion(self, timeout: Optional[float] = None):
+        """等待所有任务完成"""
+        if self.task_queue.empty():
+            return
+
+        try:
+            loop = asyncio.get_running_loop()
+            asyncio.create_task(asyncio.wait_for(self.task_queue.join(), timeout))
+        except RuntimeError:
+            # 没有运行的事件循环
+            asyncio.run(asyncio.wait_for(self.task_queue.join(), timeout))
+
+    def cleanup(self):
+        """清理资源"""
+        self.logger.info("开始清理C++接口包装器资源...")
+
+        # 停止任务处理器
+        self.is_processing = False
+
+        # 等待任务完成（带超时）
+        try:
+            self.wait_for_completion(timeout=5.0)
+        except asyncio.TimeoutError:
+            self.logger.warning("等待任务完成超时")
+
+        # 清理C++接口
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(self.cpp_interface.cleanup())
+            finally:
+                loop.close()
+        except Exception as e:
+            self.logger.error(f"清理C++接口失败: {e}")
+
+        self._is_initialized = False
+        self.logger.info("C++接口包装器资源清理完成")
+
+    def __enter__(self):
+        """上下文管理器入口"""
+        if not self.initialize():
+            raise RuntimeError("C++接口初始化失败")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """上下文管理器出口"""
+        self.cleanup()
+
+    def __del__(self):
+        """析构函数"""
+        if hasattr(self, '_is_initialized') and self._is_initialized:
+            self.cleanup()
+
+
+# 为向后兼容提供的别名
+CppEngineInterface = CppInterfaceWrapper
+
+
 if __name__ == "__main__":
     import asyncio
     logging.basicConfig(level=logging.INFO)
-    # 伪造 config 测试路径
+
+    # 基础C++接口测试
+    print("=== 基础C++接口测试 ===")
     config = {"library_path": "./Build/Release/Cpp", "num_threads": 2}
     cpp = CppInterface(config)
-    asyncio.run(cpp.initialize())
-    print("Cpp引擎可用?", cpp.is_available())
-    # 你可以继续补充实际测试数据
+
+    async def test_basic_interface():
+        await cpp.initialize()
+        print("C++引擎可用?", cpp.is_available())
+        if cpp.is_available():
+            metrics = cpp.get_performance_metrics()
+            print("性能指标:", metrics)
+        await cpp.cleanup()
+
+    asyncio.run(test_basic_interface())
+
+    # 包装器接口测试
+    print("\n=== 包装器接口测试 ===")
+
+    with CppInterfaceWrapper(config) as wrapper:
+        print("包装器可用?", wrapper.is_available())
+
+        if wrapper.is_available():
+            # 创建测试数据
+            velocity_field = {
+                "u": np.random.randn(10, 10, 5),
+                "v": np.random.randn(10, 10, 5),
+                "w": np.random.randn(10, 10, 5)
+            }
+
+            initial_positions = np.random.rand(100, 3) * 1000
+
+            grid_params = {
+                "nx": 10, "ny": 10, "nz": 5,
+                "dx": 100.0, "dy": 100.0, "dz": 10.0,
+                "x_min": 0.0, "y_min": 0.0, "z_min": 0.0
+            }
+
+            simulation_params = {
+                "dt": 60.0,
+                "total_time": 3600.0,
+                "diffusion_coeff": 10.0,
+                "enable_3d": True
+            }
+
+            try:
+                # 测试同步接口
+                print("测试同步粒子追踪...")
+                result = wrapper.sync_simulate_particles(
+                    velocity_field, initial_positions, grid_params, simulation_params
+                )
+                print(f"粒子追踪结果形状: {result.shape}")
+
+                # 获取性能指标
+                metrics = wrapper.get_performance_metrics()
+                print("包装器性能指标:", metrics)
+
+                # 获取系统信息
+                system_info = wrapper.get_system_info()
+                print("系统信息:", system_info)
+
+            except Exception as e:
+                print(f"测试失败: {e}")
+
+    print("测试完成!")

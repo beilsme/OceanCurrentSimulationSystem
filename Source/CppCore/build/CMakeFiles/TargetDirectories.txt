@@ -1,0 +1,9 @@
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/OceanSimCore.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/OceanSimCSharp.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/OceanSimPython.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/edit_cache.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/rebuild_cache.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/list_install_components.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/install.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/install/local.dir
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/install/strip.dir

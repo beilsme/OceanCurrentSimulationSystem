@@ -2,6 +2,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <vector>
 #include <cmath>
 #include <random>

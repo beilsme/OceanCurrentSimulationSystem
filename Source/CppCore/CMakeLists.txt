@@ -45,12 +45,21 @@ add_library(OceanSimCore STATIC ${CORE_SOURCES}
         include/data/GridDataStructure.h
         include/core/AdvectionDiffusionSolver.h
         include/core/PerformanceProfiler.h
-        include/utils/MathUtils.h)
+        include/utils/MathUtils.h
+        include/utils/Logger.h
+        include/algorithms/FiniteDifferenceSolver.h
+        src/algorithms/FiniteDifferenceSolver.cpp
+        src/utils/Logger.cpp)
 target_link_libraries(OceanSimCore
         OpenMP::OpenMP_CXX
         Eigen3::Eigen
         TBB::tbb
 )
+
+if(APPLE)
+    target_include_directories(OceanSimCore PRIVATE /opt/homebrew/opt/libomp/include)
+    target_link_directories(OceanSimCore PRIVATE /opt/homebrew/opt/libomp/lib)
+endif()
 
 # C#绑定动态库
 add_library(OceanSimCSharp SHARED ${CSHARP_BINDING_SOURCES}

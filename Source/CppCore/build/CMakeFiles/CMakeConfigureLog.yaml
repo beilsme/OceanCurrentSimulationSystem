@@ -18,7 +18,7 @@ events:
     message: |
       Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
       Compiler: /usr/bin/c++ 
-      Build flags: 
+      Build flags: -Xpreprocessor;-fopenmp;-I/opt/homebrew/opt/libomp/include
       Id flags:  
       
       The output was:
@@ -37,11 +37,11 @@ events:
       - "/opt/homebrew/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:3 (project)"
     message: |
-      Detecting CXX compiler apple sysroot: "/usr/bin/c++" "-E" "apple-sdk.cpp"
+      Detecting CXX compiler apple sysroot: "/usr/bin/c++" "-Xpreprocessor" "-fopenmp" "-I/opt/homebrew/opt/libomp/include" "-E" "apple-sdk.cpp"
         # 1 "apple-sdk.cpp"
         # 1 "<built-in>" 1
         # 1 "<built-in>" 3
-        # 439 "<built-in>" 3
+        # 440 "<built-in>" 3
         # 1 "<command line>" 1
         # 1 "<built-in>" 2
         # 1 "apple-sdk.cpp" 2
@@ -72,13 +72,13 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC"
-      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC"
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m"
     cmakeVariables:
-      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS: "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include"
       CMAKE_CXX_FLAGS_DEBUG: "-g"
       CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
-      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/libomp/lib"
       CMAKE_OSX_ARCHITECTURES: ""
       CMAKE_OSX_DEPLOYMENT_TARGET: ""
       CMAKE_OSX_SYSROOT: ""
@@ -86,38 +86,40 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC'
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m'
         
-        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_32c45/fast
-        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_32c45.dir/build.make CMakeFiles/cmTC_32c45.dir/build
-        Building CXX object CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o
-        /usr/bin/c++   -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_51aad/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_51aad.dir/build.make CMakeFiles/cmTC_51aad.dir/build
+        Building CXX object CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/c++   -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include  -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp
         Apple clang version 16.0.0 (clang-1600.0.26.6)
         Target: arm64-apple-darwin24.5.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
         clang++: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +lse -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sha2 -target-feature +sha3 -target-feature +neon -target-feature +zcm -target-feature +zcz -target-feature +fullfp16 -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +lse -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sha2 -target-feature +sha3 -target-feature +neon -target-feature +zcm -target-feature +zcz -target-feature +fullfp16 -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I /opt/homebrew/opt/libomp/include -fopenmp -I/usr/local/include -c-isystem /opt/homebrew/include -cxx-isystem /opt/homebrew/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp
         clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target arm64-apple-darwin24.5.0
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"
         #include "..." search starts here:
         #include <...> search starts here:
+         /opt/homebrew/opt/libomp/include
          /usr/local/include
+         /opt/homebrew/include
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1
          /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
          /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)
         End of search list.
-        Linking CXX executable cmTC_32c45
-        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_32c45.dir/link.txt --verbose=1
+        Linking CXX executable cmTC_51aad
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_51aad.dir/link.txt --verbose=1
         Apple clang version 16.0.0 (clang-1600.0.26.6)
         Target: arm64-apple-darwin24.5.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 15.0.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_32c45 -L/usr/local/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 15.0.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_51aad -L/opt/homebrew/opt/libomp/lib -L/opt/homebrew/lib -L/usr/local/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a
         @(#)PROGRAM:ld PROJECT:ld-1115.7.3
         BUILD 23:52:02 Dec  5 2024
         configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
@@ -125,12 +127,14 @@ events:
         LTO support using: LLVM version 16.0.0 (static support for 29, runtime is 29)
         TAPI support using: Apple TAPI version 16.0.0 (tapi-1600.0.11.9)
         Library search paths:
+        	/opt/homebrew/opt/libomp/lib
+        	/opt/homebrew/lib
         	/usr/local/lib
         	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
         	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift
         Framework search paths:
         	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
-        /usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -v -Wl,-v CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_32c45
+        /usr/bin/c++ -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/libomp/lib -v -Wl,-v CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_51aad
         
       exitCode: 0
   -
@@ -152,18 +156,22 @@ events:
       Parsed CXX implicit include dir info: rv=done
         found start of include info
         found start of implicit include info
+          add: [/opt/homebrew/opt/libomp/include]
           add: [/usr/local/include]
+          add: [/opt/homebrew/include]
           add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1]
           add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
           add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
           add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
         end of search list found
+        collapse include dir [/opt/homebrew/opt/libomp/include] ==> [/opt/homebrew/opt/libomp/include]
         collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/opt/homebrew/include] ==> [/opt/homebrew/include]
         collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1]
         collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
         collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
         collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
-        implicit include dirs: [/usr/local/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+        implicit include dirs: [/opt/homebrew/opt/libomp/include;/usr/local/include;/opt/homebrew/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
       
       
   -
@@ -176,38 +184,40 @@ events:
       Parsed CXX implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
-        ignore line: [Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC']
+        ignore line: [Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m']
         ignore line: []
-        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_32c45/fast]
-        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_32c45.dir/build.make CMakeFiles/cmTC_32c45.dir/build]
-        ignore line: [Building CXX object CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o]
-        ignore line: [/usr/bin/c++   -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_51aad/fast]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_51aad.dir/build.make CMakeFiles/cmTC_51aad.dir/build]
+        ignore line: [Building CXX object CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/c++   -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include  -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -c /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [Apple clang version 16.0.0 (clang-1600.0.26.6)]
         ignore line: [Target: arm64-apple-darwin24.5.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
         ignore line: [clang++: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"]
-        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +lse -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sha2 -target-feature +sha3 -target-feature +neon -target-feature +zcm -target-feature +zcz -target-feature +fullfp16 -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-B9HDtC -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx15.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=15.2 -fvisibility-inlines-hidden-static-local-var -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +v8.5a -target-feature +aes -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +lse -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sha2 -target-feature +sha3 -target-feature +neon -target-feature +zcm -target-feature +zcz -target-feature +fullfp16 -target-abi darwinpcs -debugger-tuning=lldb -target-linker-version 1115.7.3 -v -fcoverage-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16 -dependency-file CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I /opt/homebrew/opt/libomp/include -fopenmp -I/usr/local/include -c-isystem /opt/homebrew/include -cxx-isystem /opt/homebrew/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -Wno-reserved-identifier -Wno-gnu-folding-constant -fdeprecated-macro -fdebug-compilation-dir=/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-3exm5m -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -x c++ /opt/homebrew/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [clang -cc1 version 16.0.0 (clang-1600.0.26.6) default target arm64-apple-darwin24.5.0]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"]
         ignore line: [#include "..." search starts here:]
         ignore line: [#include <...> search starts here:]
+        ignore line: [ /opt/homebrew/opt/libomp/include]
         ignore line: [ /usr/local/include]
+        ignore line: [ /opt/homebrew/include]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/include]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)]
         ignore line: [End of search list.]
-        ignore line: [Linking CXX executable cmTC_32c45]
-        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_32c45.dir/link.txt --verbose=1]
+        ignore line: [Linking CXX executable cmTC_51aad]
+        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_51aad.dir/link.txt --verbose=1]
         ignore line: [Apple clang version 16.0.0 (clang-1600.0.26.6)]
         ignore line: [Target: arm64-apple-darwin24.5.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
-        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 15.0.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_32c45 -L/usr/local/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 15.0.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_51aad -L/opt/homebrew/opt/libomp/lib -L/opt/homebrew/lib -L/usr/local/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
           arg [-demangle] ==> ignore
           arg [-lto_library] ==> ignore, skip following value
@@ -224,28 +234,34 @@ events:
           arg [-mllvm] ==> ignore
           arg [-enable-linkonceodr-outlining] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_32c45] ==> ignore
+          arg [cmTC_51aad] ==> ignore
+          arg [-L/opt/homebrew/opt/libomp/lib] ==> dir [/opt/homebrew/opt/libomp/lib]
+          arg [-L/opt/homebrew/lib] ==> dir [/opt/homebrew/lib]
           arg [-L/usr/local/lib] ==> dir [/usr/local/lib]
           arg [-search_paths_first] ==> ignore
           arg [-headerpad_max_install_names] ==> ignore
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_32c45.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [CMakeFiles/cmTC_51aad.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
           arg [-lc++] ==> lib [c++]
           arg [-lSystem] ==> lib [System]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
         linker tool for 'CXX': /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
-        Library search paths: [;/usr/local/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        Library search paths: [;/opt/homebrew/opt/libomp/lib;/opt/homebrew/lib;/usr/local/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
         Framework search paths: [;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
         remove lib [System]
         remove lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a]
+        collapse library dir [/opt/homebrew/opt/libomp/lib] ==> [/opt/homebrew/opt/libomp/lib]
+        collapse library dir [/opt/homebrew/lib] ==> [/opt/homebrew/lib]
         collapse library dir [/usr/local/lib] ==> [/usr/local/lib]
+        collapse library dir [/opt/homebrew/opt/libomp/lib] ==> [/opt/homebrew/opt/libomp/lib]
+        collapse library dir [/opt/homebrew/lib] ==> [/opt/homebrew/lib]
         collapse library dir [/usr/local/lib] ==> [/usr/local/lib]
         collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib]
         collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
         collapse framework dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
         implicit libs: [c++]
         implicit objs: []
-        implicit dirs: [/usr/local/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
+        implicit dirs: [/opt/homebrew/opt/libomp/lib;/opt/homebrew/lib;/usr/local/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift]
         implicit fwks: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks]
       
       
@@ -272,12 +288,12 @@ events:
       - "CMakeLists.txt:15 (find_package)"
     description: "Detecting CXX OpenMP compiler info"
     directories:
-      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-Y44Zzy"
-      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-Y44Zzy"
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-WmGsvR"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-WmGsvR"
     cmakeVariables:
-      CMAKE_CXX_FLAGS: " -O3 -march=native"
+      CMAKE_CXX_FLAGS: "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native"
       CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
-      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/libomp/lib"
       CMAKE_OSX_ARCHITECTURES: ""
       CMAKE_OSX_DEPLOYMENT_TARGET: ""
       CMAKE_OSX_SYSROOT: ""
@@ -285,38 +301,57 @@ events:
       variable: "OpenMP_COMPILE_RESULT_CXX_Xclang fopenmp"
       cached: true
       stdout: |
-        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-Y44Zzy'
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-WmGsvR'
         
-        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_4ffff/fast
-        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_4ffff.dir/build.make CMakeFiles/cmTC_4ffff.dir/build
-        Building CXX object CMakeFiles/cmTC_4ffff.dir/OpenMPTryFlag.cpp.o
-        /usr/bin/c++   -O3 -march=native -Xclang -fopenmp -std=gnu++17 -arch arm64 -MD -MT CMakeFiles/cmTC_4ffff.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_4ffff.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_4ffff.dir/OpenMPTryFlag.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-Y44Zzy/OpenMPTryFlag.cpp
-        /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-Y44Zzy/OpenMPTryFlag.cpp:2:10: fatal error: 'omp.h' file not found
-            2 | #include <omp.h>
-              |          ^~~~~~~
-        1 error generated.
-        make[1]: *** [CMakeFiles/cmTC_4ffff.dir/OpenMPTryFlag.cpp.o] Error 1
-        make: *** [cmTC_4ffff/fast] Error 2
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_55865/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_55865.dir/build.make CMakeFiles/cmTC_55865.dir/build
+        Building CXX object CMakeFiles/cmTC_55865.dir/OpenMPTryFlag.cpp.o
+        /usr/bin/c++   -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -Xclang -fopenmp -std=gnu++17 -arch arm64 -MD -MT CMakeFiles/cmTC_55865.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_55865.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_55865.dir/OpenMPTryFlag.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-WmGsvR/OpenMPTryFlag.cpp
+        Linking CXX executable cmTC_55865
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_55865.dir/link.txt --verbose=1
+        Apple clang version 16.0.0 (clang-1600.0.26.6)
+        Target: arm64-apple-darwin24.5.0
+        Thread model: posix
+        InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 15.0.0 15.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -O3 -mllvm -enable-linkonceodr-outlining -o cmTC_55865 -L/opt/homebrew/opt/libomp/lib -L/opt/homebrew/lib -L/usr/local/lib -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_55865.dir/OpenMPTryFlag.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/16/lib/darwin/libclang_rt.osx.a
+        @(#)PROGRAM:ld PROJECT:ld-1115.7.3
+        BUILD 23:52:02 Dec  5 2024
+        configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+        will use ld-classic for: armv6 armv7 armv7s i386 armv6m armv7k armv7m armv7em
+        LTO support using: LLVM version 16.0.0 (static support for 29, runtime is 29)
+        TAPI support using: Apple TAPI version 16.0.0 (tapi-1600.0.11.9)
+        Library search paths:
+        	/opt/homebrew/opt/libomp/lib
+        	/opt/homebrew/lib
+        	/usr/local/lib
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift
+        Framework search paths:
+        	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
+        Undefined symbols for architecture arm64:
+          "_omp_get_max_threads", referenced from:
+              _main in OpenMPTryFlag.cpp.o
+        ld: symbol(s) not found for architecture arm64
+        clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+        /usr/bin/c++ -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -Xclang -fopenmp -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/libomp/lib  -v -Wl,-v CMakeFiles/cmTC_55865.dir/OpenMPTryFlag.cpp.o -o cmTC_55865
+        make[1]: *** [cmTC_55865] Error 1
+        make: *** [cmTC_55865/fast] Error 2
         
       exitCode: 2
-...
-
----
-events:
   -
     kind: "try_compile-v1"
     backtrace:
-      - "/opt/homebrew/share/cmake/Modules/FindOpenMP.cmake:250 (try_compile)"
+      - "/opt/homebrew/share/cmake/Modules/FindOpenMP.cmake:352 (try_compile)"
       - "/opt/homebrew/share/cmake/Modules/FindOpenMP.cmake:557 (_OPENMP_GET_FLAGS)"
       - "CMakeLists.txt:15 (find_package)"
-    description: "Detecting CXX OpenMP compiler info"
+    description: "Trying CXX OpenMP compiler with '/opt/homebrew/opt/libomp/lib/libomp.dylib'"
     directories:
-      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-em9DeQ"
-      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-em9DeQ"
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-gQzqfy"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-gQzqfy"
     cmakeVariables:
-      CMAKE_CXX_FLAGS: " -O3 -march=native"
+      CMAKE_CXX_FLAGS: "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native"
       CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
-      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/libomp/lib"
       CMAKE_OSX_ARCHITECTURES: ""
       CMAKE_OSX_DEPLOYMENT_TARGET: ""
       CMAKE_OSX_SYSROOT: ""
@@ -324,18 +359,86 @@ events:
       variable: "OpenMP_COMPILE_RESULT_CXX_Xclang fopenmp"
       cached: true
       stdout: |
-        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-em9DeQ'
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-gQzqfy'
         
-        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_6c3d8/fast
-        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_6c3d8.dir/build.make CMakeFiles/cmTC_6c3d8.dir/build
-        Building CXX object CMakeFiles/cmTC_6c3d8.dir/OpenMPTryFlag.cpp.o
-        /usr/bin/c++   -O3 -march=native -Xclang -fopenmp -std=gnu++17 -arch arm64 -MD -MT CMakeFiles/cmTC_6c3d8.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_6c3d8.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_6c3d8.dir/OpenMPTryFlag.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-em9DeQ/OpenMPTryFlag.cpp
-        /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-em9DeQ/OpenMPTryFlag.cpp:2:10: fatal error: 'omp.h' file not found
-            2 | #include <omp.h>
-              |          ^~~~~~~
-        1 error generated.
-        make[1]: *** [CMakeFiles/cmTC_6c3d8.dir/OpenMPTryFlag.cpp.o] Error 1
-        make: *** [cmTC_6c3d8/fast] Error 2
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_90901/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_90901.dir/build.make CMakeFiles/cmTC_90901.dir/build
+        Building CXX object CMakeFiles/cmTC_90901.dir/OpenMPTryFlag.cpp.o
+        /usr/bin/c++   -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native  -std=gnu++17 -arch arm64   -Xclang -fopenmp -MD -MT CMakeFiles/cmTC_90901.dir/OpenMPTryFlag.cpp.o -MF CMakeFiles/cmTC_90901.dir/OpenMPTryFlag.cpp.o.d -o CMakeFiles/cmTC_90901.dir/OpenMPTryFlag.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-gQzqfy/OpenMPTryFlag.cpp
+        Linking CXX executable cmTC_90901
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_90901.dir/link.txt --verbose=1
+        /usr/bin/c++ -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/libomp/lib  CMakeFiles/cmTC_90901.dir/OpenMPTryFlag.cpp.o -o cmTC_90901  /opt/homebrew/opt/libomp/lib/libomp.dylib
         
-      exitCode: 2
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/FindOpenMP.cmake:491 (try_compile)"
+      - "/opt/homebrew/share/cmake/Modules/FindOpenMP.cmake:631 (_OPENMP_GET_SPEC_DATE)"
+      - "CMakeLists.txt:15 (find_package)"
+    description: "Detecting CXX OpenMP version"
+    directories:
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-8MHGLR"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-8MHGLR"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native"
+      CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/libomp/lib"
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: ""
+    buildResult:
+      variable: "OpenMP_SPECTEST_CXX_"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-8MHGLR'
+        
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_bf79c/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_bf79c.dir/build.make CMakeFiles/cmTC_bf79c.dir/build
+        Building CXX object CMakeFiles/cmTC_bf79c.dir/OpenMPCheckVersion.cpp.o
+        /usr/bin/c++   -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -Xclang -fopenmp -std=gnu++17 -arch arm64 -MD -MT CMakeFiles/cmTC_bf79c.dir/OpenMPCheckVersion.cpp.o -MF CMakeFiles/cmTC_bf79c.dir/OpenMPCheckVersion.cpp.o.d -o CMakeFiles/cmTC_bf79c.dir/OpenMPCheckVersion.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-8MHGLR/OpenMPCheckVersion.cpp
+        Linking CXX executable cmTC_bf79c
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bf79c.dir/link.txt --verbose=1
+        /usr/bin/c++ -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -Xclang -fopenmp -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/libomp/lib  CMakeFiles/cmTC_bf79c.dir/OpenMPCheckVersion.cpp.o -o cmTC_bf79c
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:104 (try_compile)"
+      - "/opt/homebrew/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/opt/homebrew/share/cmake/Modules/CheckCXXCompilerFlag.cmake:55 (cmake_check_compiler_flag)"
+      - "/opt/homebrew/share/cmake/pybind11/pybind11Common.cmake:323 (check_cxx_compiler_flag)"
+      - "/opt/homebrew/share/cmake/pybind11/pybind11Common.cmake:363 (_pybind11_return_if_cxx_and_linker_flags_work)"
+      - "/opt/homebrew/share/cmake/pybind11/pybind11Common.cmake:435 (_pybind11_generate_lto)"
+      - "/opt/homebrew/share/cmake/pybind11/pybind11Config.cmake:250 (include)"
+      - "CMakeLists.txt:70 (find_package)"
+    checks:
+      - "Performing Test HAS_FLTO_THIN"
+    directories:
+      source: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-JJezvU"
+      binary: "/Users/beilsmindex/\u6d0b\u6d41\u6a21\u62df/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-JJezvU"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native"
+      CMAKE_CXX_FLAGS_DEBUG: "-g -g -Wall -Wextra"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/libomp/lib"
+      CMAKE_MODULE_PATH: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: ""
+    buildResult:
+      variable: "HAS_FLTO_THIN"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-JJezvU'
+        
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_d4bdb/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_d4bdb.dir/build.make CMakeFiles/cmTC_d4bdb.dir/build
+        Building CXX object CMakeFiles/cmTC_d4bdb.dir/src.cxx.o
+        /usr/bin/c++ -DHAS_FLTO_THIN  -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native  -std=gnu++17 -arch arm64   -flto -MD -MT CMakeFiles/cmTC_d4bdb.dir/src.cxx.o -MF CMakeFiles/cmTC_d4bdb.dir/src.cxx.o.d -o CMakeFiles/cmTC_d4bdb.dir/src.cxx.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build/CMakeFiles/CMakeScratch/TryCompile-JJezvU/src.cxx
+        Linking CXX executable cmTC_d4bdb
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d4bdb.dir/link.txt --verbose=1
+        /usr/bin/c++ -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/libomp/lib  CMakeFiles/cmTC_d4bdb.dir/src.cxx.o -o cmTC_d4bdb  -flto
+        
+      exitCode: 0
 ...

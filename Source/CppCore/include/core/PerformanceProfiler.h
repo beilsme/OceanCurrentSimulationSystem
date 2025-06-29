@@ -1,6 +1,7 @@
 // include/core/PerformanceProfiler.h
 #pragma once
 
+#include <Eigen/Sparse>
 #include <chrono>
 #include <string>
 #include <unordered_map>

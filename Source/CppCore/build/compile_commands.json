@@ -1,0 +1,44 @@
+[
+{
+  "directory": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build",
+  "command": "/usr/bin/c++  -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /opt/homebrew/include/eigen3 -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -Xclang -fopenmp -o CMakeFiles/OceanSimCore.dir/src/algorithms/FiniteDifferenceSolver.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/FiniteDifferenceSolver.cpp",
+  "file": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/algorithms/FiniteDifferenceSolver.cpp",
+  "output": "CMakeFiles/OceanSimCore.dir/src/algorithms/FiniteDifferenceSolver.cpp.o"
+},
+{
+  "directory": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build",
+  "command": "/usr/bin/c++  -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /opt/homebrew/include/eigen3 -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -Xclang -fopenmp -o CMakeFiles/OceanSimCore.dir/src/core/CurrentFieldSolver.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/CurrentFieldSolver.cpp",
+  "file": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/CurrentFieldSolver.cpp",
+  "output": "CMakeFiles/OceanSimCore.dir/src/core/CurrentFieldSolver.cpp.o"
+},
+{
+  "directory": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build",
+  "command": "/usr/bin/c++  -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /opt/homebrew/include/eigen3 -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -Xclang -fopenmp -o CMakeFiles/OceanSimCore.dir/src/core/ParticleSimulator.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/ParticleSimulator.cpp",
+  "file": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/core/ParticleSimulator.cpp",
+  "output": "CMakeFiles/OceanSimCore.dir/src/core/ParticleSimulator.cpp.o"
+},
+{
+  "directory": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build",
+  "command": "/usr/bin/c++  -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /opt/homebrew/include/eigen3 -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -Xclang -fopenmp -o CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/Logger.cpp",
+  "file": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/src/utils/Logger.cpp",
+  "output": "CMakeFiles/OceanSimCore.dir/src/utils/Logger.cpp.o"
+},
+{
+  "directory": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build",
+  "command": "/usr/bin/c++ -DOceanSimCSharp_EXPORTS -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /opt/homebrew/include/eigen3 -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -fPIC -Xclang -fopenmp -o CMakeFiles/OceanSimCSharp.dir/bindings/csharp/CppCoreWrapper.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/csharp/CppCoreWrapper.cpp",
+  "file": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/csharp/CppCoreWrapper.cpp",
+  "output": "CMakeFiles/OceanSimCSharp.dir/bindings/csharp/CppCoreWrapper.cpp.o"
+},
+{
+  "directory": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build",
+  "command": "/usr/bin/c++ -DOceanSimCSharp_EXPORTS -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /opt/homebrew/include/eigen3 -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -fPIC -Xclang -fopenmp -o CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_ocean_sim.cpp",
+  "file": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_ocean_sim.cpp",
+  "output": "CMakeFiles/OceanSimCSharp.dir/bindings/python/pybind_ocean_sim.cpp.o"
+},
+{
+  "directory": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/build",
+  "command": "/usr/bin/c++ -DOceanSimPython_EXPORTS -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/include -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/eigen -I/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/dependencies/tbb/include -isystem /Library/Frameworks/Python.framework/Versions/3.12/include/python3.12 -isystem /opt/homebrew/include/eigen3 -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -O3 -march=native -O3 -DNDEBUG -O3 -DNDEBUG -std=gnu++17 -arch arm64 -fPIC -fvisibility=hidden -flto -Xclang -fopenmp -o CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o -c /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_ocean_sim.cpp",
+  "file": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CppCore/bindings/python/pybind_ocean_sim.cpp",
+  "output": "CMakeFiles/OceanSimPython.dir/bindings/python/pybind_ocean_sim.cpp.o"
+}
+]

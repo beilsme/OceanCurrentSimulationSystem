@@ -1,6 +1,11 @@
 #!/bin/bash
 # Scripts/build_cpp.sh - C++核心模块构建脚本
 
+export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+export CXXFLAGS="-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include"
+export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib"
+
 set -e  # 出错时退出
 
 # 颜色定义
@@ -133,6 +138,11 @@ clean_build() {
     cd ..
 }
 
+
+export CPLUS_INCLUDE_PATH="/opt/homebrew/include"
+export C_INCLUDE_PATH="/opt/homebrew/include"
+export LIBRARY_PATH="/opt/homebrew/lib"
+
 # 配置CMake
 configure_cmake() {
     log_info "配置CMake..."
@@ -146,6 +156,7 @@ configure_cmake() {
         -DBUILD_PYTHON_BINDINGS=$BUILD_PYTHON \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -DCMAKE_INSTALL_PREFIX=../install \
+        -DCMAKE_PREFIX_PATH=/opt/homebrew/share/cmake/pybind11 \
         $COMPILER_OPTION
     
     if [ $? -eq 0 ]; then
@@ -157,6 +168,8 @@ configure_cmake() {
     
     cd ../..
 }
+
+
 
 # 编译C++核心
 build_cpp_core() {
