@@ -2,6 +2,11 @@
 cmake_minimum_required(VERSION 3.16)
 project(OceanCurrentSimulationSystem VERSION 1.0.0 LANGUAGES CXX)
 
+# 在所有目标上启用Position Independent Code，
+# 以便静态库可被链接到共享库
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+
 # 构建选项
 option(BUILD_TESTS "构建测试程序" ON)
 option(BUILD_PYTHON_BINDINGS "构建Python绑定" ON)
@@ -157,6 +162,7 @@ set(CORE_SOURCES
         include/utils/MathUtils.h
         include/utils/ThreadPool.h
         include/utils/Logger.h
+        bindings/python/pybind_ocean_sim.cpp
 )
 
 # GPU源文件（如果启用）
