@@ -75,6 +75,23 @@ namespace OceanSimulation {
                 std::atomic<uint32_t> threadsActive{0};
                 std::atomic<double> cpuUtilization{0.0};
                 std::chrono::system_clock::time_point startTime;
+
+                PerformanceStats() = default;
+                PerformanceStats(const PerformanceStats& other)
+                        : tasksExecuted(other.tasksExecuted.load()),
+                          totalExecutionTime(other.totalExecutionTime.load()),
+                          threadsActive(other.threadsActive.load()),
+                          cpuUtilization(other.cpuUtilization.load()),
+                          startTime(other.startTime) {}
+
+                PerformanceStats& operator=(const PerformanceStats& other) {
+                    tasksExecuted.store(other.tasksExecuted.load());
+                    totalExecutionTime.store(other.totalExecutionTime.load());
+                    threadsActive.store(other.threadsActive.load());
+                    cpuUtilization.store(other.cpuUtilization.load());
+                    startTime = other.startTime;
+                    return *this;
+                }
             };
 
         private:

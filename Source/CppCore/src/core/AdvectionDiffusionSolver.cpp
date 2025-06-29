@@ -1,11 +1,16 @@
 // src/core/AdvectionDiffusionSolver.cpp
 #include "core/AdvectionDiffusionSolver.h"
 #include "core/PerformanceProfiler.h"
+#include "algorithms/FiniteDifferenceSolver.h"
+#include "data/GridDataStructure.h"
+#include "utils/MathUtils.h"
+
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <iostream>
 #include <chrono>
+
 
 namespace OceanSim {
     namespace Core {
@@ -28,7 +33,8 @@ namespace OceanSim {
             previous_solution_ = current_solution_;
 
             // 创建有限差分求解器
-            fd_solver_ = std::make_shared<Algorithms::FiniteDifferenceSolver>();
+            int grid_size = dims[0];
+            fd_solver_ = std::make_shared<Algorithms::FiniteDifferenceSolver>(grid_size, 1.0);
         }
 
         void AdvectionDiffusionSolver::setInitialCondition(const std::string& field_name,

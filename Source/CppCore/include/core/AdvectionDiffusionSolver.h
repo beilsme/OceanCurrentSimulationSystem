@@ -72,6 +72,7 @@ namespace OceanSim {
 
             // 求解
             void solve(double dt);
+            void solveSingleTimeStep(double dt);
             void solveToSteadyState(double tolerance = 1e-6, int max_iterations = 10000);
             void solveTimeSequence(double t_start, double t_end, double dt,
                                    const std::string& output_prefix = "");
@@ -100,7 +101,7 @@ namespace OceanSim {
             double getComputationTime() const { return computation_time_; }
             int getIterationCount() const { return iteration_count_; }
 
-        private:
+        protected:
             std::shared_ptr<Data::GridDataStructure> grid_;
             std::shared_ptr<Algorithms::FiniteDifferenceSolver> fd_solver_;
 
@@ -134,7 +135,7 @@ namespace OceanSim {
             // 自适应时间步长
             bool adaptive_timestep_ = false;
             double cfl_target_ = 0.5;
-            double previous_dt_ = 0.0;
+            mutable double previous_dt_ = 0.0;
 
             // 性能监控
             bool profiling_enabled_ = false;
@@ -146,16 +147,22 @@ namespace OceanSim {
             void solveImplicit(double dt);
             void solveCrankNicolson(double dt);
             void solveRungeKutta4(double dt);
+            void solveAdamsBashforth(double dt);
 
             // 平流项计算
             Eigen::MatrixXd computeAdvection(const Eigen::MatrixXd& field, double dt);
             Eigen::MatrixXd computeAdvectionUpwind(const Eigen::MatrixXd& field, double dt);
             Eigen::MatrixXd computeAdvectionTVD(const Eigen::MatrixXd& field, double dt);
             Eigen::MatrixXd computeAdvectionWENO5(const Eigen::MatrixXd& field, double dt);
+            Eigen::MatrixXd computeAdvectionLaxWendroff(const Eigen::MatrixXd& field, double dt);
+            Eigen::MatrixXd computeAdvectionQUICK(const Eigen::MatrixXd& field, double dt);
+            Eigen::MatrixXd computeAdvectionMUSCL(const Eigen::MatrixXd& field, double dt);
 
             // 扩散项计算
             Eigen::MatrixXd computeDiffusion(const Eigen::MatrixXd& field, double dt);
             Eigen::MatrixXd computeAnisotropicDiffusion(const Eigen::MatrixXd& field, double dt);
+            Eigen::MatrixXd computeRightHandSide(const Eigen::MatrixXd& field);
+
 
             // 限制器函数
             double superbeeFluxLimiter(double r) const;
@@ -166,11 +173,19 @@ namespace OceanSim {
             double wenoReconstruction(const std::vector<double>& stencil, bool left_biased) const;
             std::vector<double> wenoWeights(const std::vector<double>& beta_values) const;
 
+            // 反应项和源项处理
+            void addReactionTerm(double dt);
+            
             // 边界条件应用
             void applyBoundaryConditions(Eigen::MatrixXd& field);
             void applyDirichletBC(Eigen::MatrixXd& field, int boundary_id, double value);
             void applyNeumannBC(Eigen::MatrixXd& field, int boundary_id, double flux);
+            void applyRobinBC(Eigen::MatrixXd& field, int boundary_id, double value);
+            void applyOutflowBC(Eigen::MatrixXd& field, int boundary_id);
             void applyPeriodicBC(Eigen::MatrixXd& field);
+
+            void saveResult(const std::string& filename) const;
+
 
             // 稀疏矩阵求解（隐式方法）
             void setupImplicitMatrix(Eigen::SparseMatrix<double>& A,
@@ -183,6 +198,9 @@ namespace OceanSim {
             bool isInternalPoint(int i, int j) const;
             double computeLocalCourantNumber(int i, int j, double dt) const;
             void updateSolutionHistory();
+
+            double safeDivision(double numerator, double denominator) const;
+
 
             // 数值稳定性检查
             void checkNumericalStability(double dt) const;
@@ -210,6 +228,10 @@ namespace OceanSim {
             // 求解
             void solveMultiComponent(double dt);
             const std::vector<Eigen::MatrixXd>& getComponentSolutions() const;
+            double getComponentMass(int component_id) const;
+            double getTotalSystemMass() const;
+            void printComponentSummary() const;
+            void saveComponentResults(const std::string& filename_prefix) const;
 
         private:
             int num_components_;
