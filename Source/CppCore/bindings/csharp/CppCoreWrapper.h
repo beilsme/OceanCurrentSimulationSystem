@@ -1,5 +1,6 @@
 // bindings/csharp/CppCoreWrapper.h
 #pragma once
+#include <cstddef>
 
 #ifdef _WIN32
 #ifdef OCEANSIM_EXPORTS

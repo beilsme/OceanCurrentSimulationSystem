@@ -4,6 +4,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #include <pybind11/functional.h>
+#include <thread>
 
 #include "core/ParticleSimulator.h"
 #include "core/CurrentFieldSolver.h"
@@ -22,8 +23,8 @@ m.doc() = "OceanSim C++ Core Python Bindings";
 m.attr("__version__") = "1.0.0";
 
 // ========================= 初始化模块 =========================
-m.def("initialize", &Utils::Logger::initialize, "Initialize the OceanSim library",
-py::arg("name") = "OceanSim");
+m.def("initialize", &Utils::Logger::initialize,
+    "Initialize the OceanSim library", py::arg("name") = "OceanSim");
 
 m.def("set_log_level", [](int level) {
 // 设置日志级别的实现
@@ -82,7 +83,9 @@ py::arg("grid_type") = Data::GridDataStructure::GridType::REGULAR)
 .def("set_origin", &Data::GridDataStructure::setOrigin)
 .def("set_bounds", &Data::GridDataStructure::setBounds)
 
-.def("add_field_2d", &Data::GridDataStructure::addField)
+.def("add_field_2d",
+    py::overload_cast<const std::string&, const Eigen::MatrixXd&>(
+            &Data::GridDataStructure::addField))
 .def("add_field_3d", py::overload_cast<const std::string&, const std::vector<Eigen::MatrixXd>&>
 (&Data::GridDataStructure::addField))
 .def("add_vector_field", &Data::GridDataStructure::addVectorField)

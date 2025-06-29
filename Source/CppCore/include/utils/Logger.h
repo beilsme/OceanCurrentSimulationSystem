@@ -36,6 +36,13 @@ namespace OceanSim {
             static Logger& getInstance();
 
             /**
+             * @brief 初始化日志记录器，可选指定日志文件前缀
+            */
+            static void initialize(const std::string& name = "OceanSim");
+
+            /**
+            
+            /**
              * @brief 设置日志文件路径
              * @param filepath 日志文件路径
              */

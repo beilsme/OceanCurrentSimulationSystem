@@ -12,6 +12,13 @@ namespace OceanSim {
             return instance;
         }
 
+        void Logger::initialize(const std::string& name) {
+            std::string logfile = name + ".log";
+            Logger& logger = getInstance();
+            logger.setLogFile(logfile);
+        }
+
+
         Logger::~Logger() {
             close();
         }

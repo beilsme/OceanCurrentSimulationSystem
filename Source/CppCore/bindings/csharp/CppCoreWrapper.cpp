@@ -46,7 +46,7 @@ T* GetHandle(void* handle, const std::unordered_map<void*, std::shared_ptr<T>>& 
 OCEANSIM_API void InitializeOceanSimCore() {
     if (!g_initialized) {
         Utils::Logger::initialize("OceanSimCore");
-        Utils::Logger::info("OceanSim C++ Core initialized");
+        LOG_INFO("OceanSim C++ Core initialized");
         g_initialized = true;
     }
 }
@@ -57,7 +57,7 @@ OCEANSIM_API void ShutdownOceanSimCore() {
         g_current_solvers.clear();
         g_grid_data.clear();
         g_ad_solvers.clear();
-        Utils::Logger::info("OceanSim C++ Core shutdown");
+        LOG_INFO("OceanSim C++ Core shutdown");
         g_initialized = false;
     }
 }
