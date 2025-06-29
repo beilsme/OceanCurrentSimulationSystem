@@ -137,6 +137,7 @@ namespace OceanSimulation {
 
             // 内部实现方法
             void* allocateFromPool(size_t size, size_t alignment, size_t poolIndex);
+            void* allocateFromPools(size_t size, size_t alignment);
             void* allocateNewPool(size_t size, size_t alignment);
             bool deallocateFromPool(void* ptr, size_t poolIndex);
             size_t findBestFitPool(size_t size) const;
@@ -154,7 +155,7 @@ namespace OceanSimulation {
              * @brief 构造函数
              * @param config 内存管理器配置
              */
-            explicit MemoryManager(const Config& config = Config{});
+            explicit MemoryManager(const Config& config = {});
 
             /**
              * @brief 析构函数

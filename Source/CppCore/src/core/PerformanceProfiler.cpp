@@ -586,7 +586,7 @@ namespace OceanSim {
         }
 
         void PerformanceCounters::recordIterationTime(double time) {
-            total_iteration_time_ += time;
+            total_iteration_time_.fetch_add(time, std::memory_order_relaxed);
             iteration_count_++;
         }
 
