@@ -35,14 +35,24 @@ namespace OceanSim {
 
             // 物理参数
             struct PhysicalParameters {
-                double gravity = 9.81;              // 重力加速度
-                double coriolis_f = 1e-4;          // 科里奥利参数
-                double beta = 2e-11;               // β平面近似参数
-                double viscosity_h = 1e3;          // 水平粘性系数
-                double viscosity_v = 1e-3;         // 垂直粘性系数
-                double diffusivity_h = 1e2;        // 水平扩散系数
-                double diffusivity_v = 1e-4;       // 垂直扩散系数
-                double reference_density = 1025.0;  // 参考密度
+                double gravity;              // 重力加速度
+                double coriolis_f;          // 科里奥利参数
+                double beta;               // β平面近似参数
+                double viscosity_h;          // 水平粘性系数
+                double viscosity_v;         // 垂直粘性系数
+                double diffusivity_h;        // 水平扩散系数
+                double diffusivity_v;       // 垂直扩散系数
+                double reference_density;  // 参考密度
+
+                PhysicalParameters()
+                        : gravity(9.81),
+                          coriolis_f(1e-4),
+                          beta(2e-11),
+                          viscosity_h(1e3),
+                          viscosity_v(1e-3),
+                          diffusivity_h(1e2),
+                          diffusivity_v(1e-4),
+                          reference_density(1025.0) {}
             };
 
             // 构造函数

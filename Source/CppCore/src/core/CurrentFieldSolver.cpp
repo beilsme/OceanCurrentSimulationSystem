@@ -60,10 +60,12 @@ namespace OceanSim {
             previous_state_.resize(nx_, ny_, nz_);
 
             // 创建有限差分求解器
-            fd_solver_ = std::make_shared<Algorithms::FiniteDifferenceSolver>(
-                    nx_, ny_, nz_, dx_, dy_, dz_);
+            fd_solver_ = std::make_shared<Algorithms::FiniteDifferenceSolver>(nx_, 1.0);
 
-            Utils::Logger::info("CurrentFieldSolver initialized: {}x{}x{}", nx_, ny_, nz_);
+
+            LOG_INFO("CurrentFieldSolver initialized: " +
+                     std::to_string(nx_) + "x" + std::to_string(ny_) + "x" +
+                     std::to_string(nz_));
         }
 
         void CurrentFieldSolver::initialize(const OceanState& initial_state) {
@@ -76,13 +78,13 @@ namespace OceanSim {
             // 计算初始压力场
             computeHydrostaticPressure();
 
-            Utils::Logger::info("Ocean state initialized");
+            LOG_INFO("Ocean state initialized");
         }
 
         void CurrentFieldSolver::setBottomTopography(const Eigen::MatrixXd& bottom_depth) {
             bottom_depth_ = bottom_depth;
             has_topography_ = true;
-            Utils::Logger::info("Bottom topography set");
+            LOG_INFO("Bottom topography set");
         }
 
         void CurrentFieldSolver::setWindStress(const Eigen::MatrixXd& tau_x,
@@ -90,7 +92,7 @@ namespace OceanSim {
             wind_stress_x_ = tau_x;
             wind_stress_y_ = tau_y;
             has_wind_forcing_ = true;
-            Utils::Logger::info("Wind stress forcing set");
+            LOG_INFO("Wind stress forcing set");
         }
 
         void CurrentFieldSolver::stepForward(double dt) {
@@ -100,7 +102,7 @@ namespace OceanSim {
             // 检查CFL条件
             double max_dt = computeCFLTimeStep();
             if (dt > max_dt) {
-                Utils::Logger::warning("Time step {} exceeds CFL limit {}", dt, max_dt);
+                LOG_WARNING("Time step " + std::to_string(dt) + " exceeds CFL limit " + std::to_string(max_dt));
             }
 
             // 时间分裂算法：先正压后斜压
@@ -112,7 +114,7 @@ namespace OceanSim {
 
             // 质量守恒检查
             if (!checkMassConservation()) {
-                Utils::Logger::warning("Mass conservation violated");
+                LOG_WARNING("Mass conservation violated");
             }
         }
 

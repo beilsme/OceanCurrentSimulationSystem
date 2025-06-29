@@ -6,7 +6,13 @@
 #include <random>
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range.h>
-#include <immintrin.h>
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
+#  include <immintrin.h>
+#  define SIMD_SUPPORTED 1
+#else
+#  define SIMD_SUPPORTED 0
+#endif
+
 
 namespace OceanSim {
     namespace Core {
@@ -16,8 +22,7 @@ namespace OceanSim {
                 std::shared_ptr<Algorithms::RungeKuttaSolver> solver)
                 : grid_(grid), solver_(solver) {
 
-            Utils::Logger::info("ParticleSimulator initialized with {} threads",
-                                num_threads_);
+            LOG_INFO("ParticleSimulator initialized with " + std::to_string(num_threads_) + " threads");
         }
 
         void ParticleSimulator::initializeParticles(
@@ -36,7 +41,7 @@ namespace OceanSim {
                 trajectories_[i].push_back(positions[i]);
             }
 
-            Utils::Logger::info("Initialized {} particles", particles_.size());
+            LOG_INFO("Initialized " + std::to_string(particles_.size()) + " particles");
         }
 
         void ParticleSimulator::initializeRandomParticles(
@@ -109,6 +114,7 @@ namespace OceanSim {
         }
 
         void ParticleSimulator::updateParticlesSIMD(double dt) {
+#if SIMD_SUPPORTED
             // 使用Intel TBB进行SIMD优化的并行计算
             tbb::parallel_for(
                     tbb::blocked_range<size_t>(0, particles_.size(), 8),
@@ -139,6 +145,9 @@ namespace OceanSim {
                         }
                     }
             );
+#else
+            updateParticlesParallel(dt);
+#endif
         }
 
         void ParticleSimulator::updateParticlesSingle(Particle& particle, double dt) {

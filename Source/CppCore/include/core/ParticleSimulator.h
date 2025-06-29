@@ -99,6 +99,8 @@ namespace OceanSim {
             // 并行计算辅助
             void updateParticlesParallel(double dt);
             void updateParticlesSIMD(double dt);
+            void updateParticlesSingle(Particle& particle, double dt);
+            void stepForwardSingle(Particle& particle, double dt);
         };
 
     } // namespace Core
