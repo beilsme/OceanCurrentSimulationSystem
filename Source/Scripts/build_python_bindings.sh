@@ -69,7 +69,7 @@ echo "🔄 [5/6] 开始并行编译 ..."
 cmake --build . -j"$JOBS"
 
 echo "🔄 [6/6] 软链接 Python 动态库 ..."
-SO_NAME=$(ls *_cpython-*.so oceansim*.so OceanSimPython*.so 2>/dev/null | head -n1 || true)
+SO_NAME=$(ls *_cpython-*.so oceansim*.so 2>/dev/null | head -n1 || true)
 if [[ -z "$SO_NAME" ]]; then
   echo "❌ 未找到编译生成的 .so 文件，请检查上方编译输出"
   exit 1

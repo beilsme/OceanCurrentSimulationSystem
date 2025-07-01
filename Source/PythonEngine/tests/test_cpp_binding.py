@@ -7,7 +7,7 @@
 # 最新更改时间：2025-07-01 18:10 (Asia/Taipei)
 # ==============================================================================
 # ✅ 功能简介：
-#   - 对 OceanSim C++ Core 的 Python 绑定 (OceanSimPython) 进行快速单元测试
+#    - 对 OceanSim C++ Core 的 Python 绑定 (oceansim) 进行快速单元测试
 #   - 验证以下内容：
 #       1. 模块能被成功 import；
 #       2. 可创建 GridDataStructure；
@@ -59,11 +59,11 @@ def _create_basic_grid(oc: Any):
 # ------------------------------------------------------------------------------
 
 def test_cpp_binding_basic():
-    """Smoke test for the OceanSimPython binding."""
+    """Smoke test for the oceansim binding."""
 
-    oceansim, err = _try_import_module("OceanSimPython")
+    oceansim, err = _try_import_module("oceansim")
     assert oceansim is not None, (
-        "Cannot import OceanSimPython – ensure BUILD_PYTHON_BINDINGS is ON.\n"  # noqa: E501
+        "Cannot import oceansim – ensure BUILD_PYTHON_BINDINGS is ON.\n"  # noqa: E501
         f"Original exception: {err}"
     )
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
     try:
         test_cpp_binding_basic()
-        print("✅ OceanSimPython binding smoke test passed.")
+        print("✅ oceansim binding smoke test passed.")
         sys.exit(0)
     except AssertionError as ae:
         print(f"❌ Assertion failed: {ae}")
