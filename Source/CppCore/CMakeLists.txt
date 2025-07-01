@@ -171,7 +171,7 @@ set(CORE_SOURCES
         include/utils/MathUtils.h
         include/utils/ThreadPool.h
         include/utils/Logger.h
-        $<$<BOOL:${BUILD_PYTHON_BINDINGS}>:bindings/python/pybind_ocean_sim.cpp>
+
 )
 
 # GPU源文件（如果启用）
@@ -260,10 +260,10 @@ if(BUILD_PYTHON_BINDINGS)
     find_package(pybind11 QUIET)
     if(pybind11_FOUND)
         set(PYTHON_BINDING_SOURCES
-                bindings/python/pybind_particle_sim.cpp
-                bindings/python/pybind_current_solver.cpp
-                bindings/python/pybind_advection.cpp
                 bindings/python/pybind_main.cpp
+                bindings/python/pybind_advection.cpp
+                bindings/python/pybind_current_solver.cpp
+                bindings/python/pybind_particle_sim.cpp
         )
 
 
@@ -274,10 +274,10 @@ if(BUILD_PYTHON_BINDINGS)
                 CppCore
                 ${PY_LIB})
 
-        # Python模块属性
-        set_target_properties(oceansim PROPERTIES
-                OUTPUT_NAME "oceansim"
-        )
+#        # Python模块属性
+#        set_target_properties(oceansim PROPERTIES
+#                OUTPUT_NAME "oceansim"
+#        )
     else()
         message(WARNING "未找到pybind11，Python绑定将被禁用")
         set(BUILD_PYTHON_BINDINGS OFF)

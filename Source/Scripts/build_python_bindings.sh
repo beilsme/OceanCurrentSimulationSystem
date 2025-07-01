@@ -14,6 +14,8 @@
 
 set -euo pipefail
 
+
+
 ### --- 可按需修改 ---
 PY_VER="3.12"
 VENV_DIR=".venv"
@@ -23,6 +25,15 @@ JOBS=$(sysctl -n hw.ncpu)
 # 项目根目录：脚本所在目录向上两级
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJ_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# ⚠️ 每次强制清理旧构建目录 & 旧 .so（可用环境变量跳过）
+CLEAN=${CLEAN_BUILD:-ON}      # 调试期默认清理；export CLEAN_BUILD=OFF 可跳过
+if [[ "$CLEAN" == "ON" ]]; then
+  echo "🧹 清理旧构建缓存 ..."
+  rm -rf "$PROJ_ROOT/Source/CppCore/cmake-build-python"
+  rm -f  "$PROJ_ROOT/Source/PythonEngine/oceansim.so"
+fi
+# -------------------------------------------------------------------------
 
 CPP_CORE="$PROJ_ROOT/Source/CppCore"
 PY_ENGINE="$PROJ_ROOT/Source/PythonEngine"
