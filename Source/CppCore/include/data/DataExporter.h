@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <functional>
 #include <mutex>
+#include <chrono>
+
 
 namespace OceanSimulation {
     namespace Core {
@@ -122,7 +124,12 @@ namespace OceanSimulation {
             ExportConfig config_;
             mutable std::mutex exportMutex_;
             ExportStats stats_;
-
+            
+            std::unordered_map<std::string, std::string> globalMetadata_;
+            std::string coordinateSystem_;
+            std::string projection_;
+            
+            
             // 格式特定的导出器
             std::unordered_map<ExportFormat, std::function<bool(const std::string&, const void*)>> exporters_;
 
@@ -137,13 +144,34 @@ namespace OceanSimulation {
 
             // 验证数据完整性
             bool validateData(const void* data, size_t size) const;
+            std::string getFileExtension(ExportFormat format) const;
+
+            // === 下面 4 个是粒子轨迹导出辅助函数 ===
+            bool exportTrajectoriesToCSV   (const ParticleTrajectory& traj,
+                                            const std::string& filename);
+            bool exportTrajectoriesToJSON  (const ParticleTrajectory& traj,
+                                            const std::string& filename);
+            bool exportTrajectoriesToVTK   (const ParticleTrajectory& traj,
+                                            const std::string& filename);
+            bool exportTrajectoriesToBinary(const ParticleTrajectory& traj,
+                                            const std::string& filename);
+
+            // === 磁盘空间检查函数 ===
+            bool checkDiskSpace(size_t requiredSpace) const;
+
 
         public:
+
+            /**
+            * @brief 默认构造——内部自动使用 ExportConfig 的默认值
+            */
+            DataExporter();                     
+            
             /**
              * @brief 构造函数
              * @param config 导出配置
              */
-            explicit DataExporter(const ExportConfig& config = ExportConfig{});
+            explicit DataExporter(const ExportConfig& config);
 
             /**
              * @brief 析构函数

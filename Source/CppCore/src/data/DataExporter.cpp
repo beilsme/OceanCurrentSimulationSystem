@@ -18,6 +18,10 @@
 namespace OceanSimulation {
     namespace Core {
 
+
+        DataExporter::DataExporter()
+                : DataExporter(ExportConfig{}) {}
+        
         DataExporter::DataExporter(const ExportConfig& config) : config_(config), stats_{} {
             initializeExporters();
             createOutputDirectory(config_.outputDirectory);
@@ -248,7 +252,10 @@ namespace OceanSimulation {
             file.close();
             return true;
         }
-
+        
+        
+        
+        
         bool DataExporter::exportToCSV(const std::vector<std::vector<double>>& data,
                                        const std::vector<std::string>& headers,
                                        const std::string& filename) {

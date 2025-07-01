@@ -529,14 +529,31 @@ namespace OceanSimulation {
 
 // 统计和监控实现
         ThreadPool::TaskStats ThreadPool::getTaskStats() const {
-            return taskStats_;
+            TaskStats stats{};
+            stats.tasksSubmitted = taskStats_.tasksSubmitted.load();
+            stats.tasksCompleted = taskStats_.tasksCompleted.load();
+            stats.tasksRejected = taskStats_.tasksRejected.load();
+            stats.totalExecutionTime = taskStats_.totalExecutionTime.load();
+            stats.averageWaitTime = taskStats_.averageWaitTime.load();
+            stats.peakQueueSize = taskStats_.peakQueueSize.load();
+            stats.startTime = taskStats_.startTime;
+            return stats;
         }
 
         ThreadPool::ThreadStats ThreadPool::getThreadStats(uint32_t threadId) const {
             if (threadId >= threadStats_.size()) {
                 return ThreadStats{};
             }
-            return *threadStats_[threadId];
+            const auto& src = *threadStats_[threadId];
+            ThreadStats stats{};
+            stats.threadId = src.threadId;
+            stats.tasksExecuted = src.tasksExecuted.load();
+            stats.totalWorkTime = src.totalWorkTime.load();
+            stats.idleTime = src.idleTime.load();
+            stats.workSteals = src.workSteals.load();
+            stats.isActive = src.isActive.load();
+            stats.lastActivity = src.lastActivity;
+            return stats;
         }
 
         void ThreadPool::printStats() const {

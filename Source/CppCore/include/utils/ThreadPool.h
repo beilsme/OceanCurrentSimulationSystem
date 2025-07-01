@@ -169,7 +169,7 @@ namespace OceanSimulation {
                                    std::chrono::microseconds executionTime);
             void checkDynamicResize();
             void resizePool(size_t newSize);
-            void setThreadAffinity(uint32_t threadId, uint32_t cpuId);
+           
 
         public:
             /**
