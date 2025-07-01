@@ -1,482 +1,785 @@
-// bindings/csharp/CppCoreWrapper.cpp
+// ==============================================================================
+// 文件路径：Source/CppCore/bindings/csharp/CppCoreWrapper.cpp
+// 作者：beilsm
+// 版本号：v1.0.0
+// 创建时间：2025-07-01
+// 最新更改时间：2025-07-01
+// ==============================================================================
+// 📝 功能说明：
+//   C++核心模块的C#绑定包装器实现文件
+//   将C++类包装为C风格接口供C# P/Invoke调用
+// ==============================================================================
+
 #include "CppCoreWrapper.h"
+
+// 包含必要的C++头文件
+#include "data/GridDataStructure.h"
 #include "core/ParticleSimulator.h"
 #include "core/CurrentFieldSolver.h"
 #include "core/AdvectionDiffusionSolver.h"
-#include "data/GridDataStructure.h"
 #include "algorithms/RungeKuttaSolver.h"
+#include "algorithms/FiniteDifferenceSolver.h"
+#include "algorithms/ParallelComputeEngine.h"
+#include "algorithms/VectorizedOperations.h"
+#include "data/MemoryManager.h"
+#include "data/DataExporter.h"
+#include "core/PerformanceProfiler.h"
 #include "utils/Logger.h"
-#include <unordered_map>
-#include <memory>
+
 #include <cstring>
-#include <thread>
+#include <stdexcept>
+#include <memory>
 
-using namespace OceanSim;
+using namespace oceansim;
 
-// ========================= 全局状态管理 =========================
+// ===========================================
+// 内部辅助函数
+// ===========================================
 
-static ErrorCode g_last_error = ERROR_NONE;
-static std::string g_error_message;
-static bool g_initialized = false;
-
-// 句柄管理
-static std::unordered_map<void*, std::shared_ptr<Core::ParticleSimulator>> g_particle_simulators;
-static std::unordered_map<void*, std::shared_ptr<Core::CurrentFieldSolver>> g_current_solvers;
-static std::unordered_map<void*, std::shared_ptr<Data::GridDataStructure>> g_grid_data;
-static std::unordered_map<void*, std::shared_ptr<Core::AdvectionDiffusionSolver>> g_ad_solvers;
-
-// 辅助函数
-void SetError(ErrorCode code, const std::string& message) {
-    g_last_error = code;
-    g_error_message = message;
-}
-
-template<typename T>
-T* GetHandle(void* handle, const std::unordered_map<void*, std::shared_ptr<T>>& container) {
-    auto it = container.find(handle);
-    if (it != container.end()) {
-        return it->second.get();
+namespace {
+    // 将C结构体转换为C++对象
+    Vector3 ConvertVector3D(const Vector3D& vec) {
+        return Vector3(vec.x, vec.y, vec.z);
     }
-    SetError(ERROR_INVALID_HANDLE, "Invalid handle provided");
-    return nullptr;
-}
 
-// ========================= 初始化和清理 =========================
-
-OCEANSIM_API void InitializeCppCore() {
-    if (!g_initialized) {
-        Utils::Logger::initialize("CppCore");
-        LOG_INFO("OceanSim C++ Core initialized");
-        g_initialized = true;
-    }
-}
-
-OCEANSIM_API void ShutdownCppCore() {
-    if (g_initialized) {
-        g_particle_simulators.clear();
-        g_current_solvers.clear();
-        g_grid_data.clear();
-        g_ad_solvers.clear();
-        LOG_INFO("OceanSim C++ Core shutdown");
-        g_initialized = false;
-    }
-}
-
-OCEANSIM_API const char* GetVersionString() {
-    return "OceanSim C++ Core v1.0.0";
-}
-
-OCEANSIM_API int GetThreadCount() {
-    return static_cast<int>(std::thread::hardware_concurrency());
-}
-
-OCEANSIM_API void SetThreadCount(int thread_count) {
-    omp_set_num_threads(thread_count);
-}
-
-// ========================= 错误处理接口 =========================
-
-OCEANSIM_API ErrorCode GetLastError() {
-    return g_last_error;
-}
-
-OCEANSIM_API const char* GetErrorMessage(ErrorCode error_code) {
-    switch (error_code) {
-        case ERROR_NONE: return "No error";
-        case ERROR_INVALID_HANDLE: return "Invalid handle";
-        case ERROR_INVALID_PARAMETER: return "Invalid parameter";
-        case ERROR_MEMORY_ALLOCATION: return "Memory allocation failed";
-        case ERROR_FILE_IO: return "File I/O error";
-        case ERROR_NUMERICAL_INSTABILITY: return "Numerical instability detected";
-        case ERROR_CONVERGENCE_FAILURE: return "Convergence failure";
-        default: return "Unknown error";
-    }
-}
-
-OCEANSIM_API void ClearError() {
-    g_last_error = ERROR_NONE;
-    g_error_message.clear();
-}
-
-// ========================= 网格数据结构接口 =========================
-
-OCEANSIM_API GridDataHandle CreateGridData(int nx, int ny, int nz,
-                                           CoordinateSystemType coord_sys,
-                                           GridTypeEnum grid_type) {
-    try {
-        auto coord_system = static_cast<Data::GridDataStructure::CoordinateSystem>(coord_sys);
-        auto grid_type_enum = static_cast<Data::GridDataStructure::GridType>(grid_type);
-
-        auto grid = std::make_shared<Data::GridDataStructure>(nx, ny, nz, coord_system, grid_type_enum);
-        void* handle = grid.get();
-        g_grid_data[handle] = grid;
-
-        return handle;
-    } catch (const std::exception& e) {
-        SetError(ERROR_MEMORY_ALLOCATION, e.what());
-        return nullptr;
-    }
-}
-
-OCEANSIM_API void DestroyGridData(GridDataHandle handle) {
-    auto it = g_grid_data.find(handle);
-    if (it != g_grid_data.end()) {
-        g_grid_data.erase(it);
-    }
-}
-
-OCEANSIM_API void SetGridSpacing(GridDataHandle handle, double dx, double dy,
-                                 const double* dz, int nz) {
-    auto* grid = GetHandle(handle, g_grid_data);
-    if (grid) {
-        std::vector<double> dz_vec(dz, dz + nz);
-        grid->setSpacing(dx, dy, dz_vec);
-    }
-}
-
-OCEANSIM_API void SetGridOrigin(GridDataHandle handle, const Vector3D* origin) {
-    auto* grid = GetHandle(handle, g_grid_data);
-    if (grid && origin) {
-        Eigen::Vector3d eigen_origin(origin->x, origin->y, origin->z);
-        grid->setOrigin(eigen_origin);
-    }
-}
-
-OCEANSIM_API void AddScalarField2D(GridDataHandle handle, const char* name,
-                                   const double* data, int nx, int ny) {
-    auto* grid = GetHandle(handle, g_grid_data);
-    if (grid && name && data) {
-        Eigen::MatrixXd field(nx, ny);
-        std::memcpy(field.data(), data, nx * ny * sizeof(double));
-        grid->addField(name, field);
-    }
-}
-
-OCEANSIM_API void AddVectorField(GridDataHandle handle, const char* name,
-                                 const double* u_data, const double* v_data,
-                                 const double* w_data, int nx, int ny, int nz) {
-    auto* grid = GetHandle(handle, g_grid_data);
-    if (grid && name && u_data && v_data && w_data) {
-        std::vector<Eigen::MatrixXd> components(3);
-        int size = nx * ny * nz;
-
-        components[0].resize(nx, ny);
-        components[1].resize(nx, ny);
-        components[2].resize(nx, ny);
-
-        std::memcpy(components[0].data(), u_data, size * sizeof(double));
-        std::memcpy(components[1].data(), v_data, size * sizeof(double));
-        std::memcpy(components[2].data(), w_data, size * sizeof(double));
-
-        grid->addVectorField(name, components);
-    }
-}
-
-OCEANSIM_API double InterpolateScalar(GridDataHandle handle, const char* field_name,
-                                      const Vector3D* position, InterpolationMethodType method) {
-    auto* grid = GetHandle(handle, g_grid_data);
-    if (grid && field_name && position) {
-        Eigen::Vector3d pos(position->x, position->y, position->z);
-        auto interp_method = static_cast<Data::GridDataStructure::InterpolationMethod>(method);
-        return grid->interpolateScalar(pos, field_name, interp_method);
-    }
-    return 0.0;
-}
-
-OCEANSIM_API Vector3D InterpolateVector(GridDataHandle handle, const char* field_name,
-                                        const Vector3D* position, InterpolationMethodType method) {
-    Vector3D result = {0.0, 0.0, 0.0};
-    auto* grid = GetHandle(handle, g_grid_data);
-    if (grid && field_name && position) {
-        Eigen::Vector3d pos(position->x, position->y, position->z);
-        auto interp_method = static_cast<Data::GridDataStructure::InterpolationMethod>(method);
-        Eigen::Vector3d vec = grid->interpolateVector(pos, field_name, interp_method);
+    Vector3D ConvertToVector3D(const Vector3& vec) {
+        Vector3D result;
         result.x = vec.x();
         result.y = vec.y();
         result.z = vec.z();
+        return result;
     }
-    return result;
+
+    CoordinateSystem ConvertCoordinateSystem(int coord_system) {
+        switch (coord_system) {
+            case COORDINATE_CARTESIAN: return CoordinateSystem::CARTESIAN;
+            case COORDINATE_SPHERICAL: return CoordinateSystem::SPHERICAL;
+            case COORDINATE_HYBRID_SIGMA: return CoordinateSystem::HYBRID_SIGMA;
+            case COORDINATE_ISOPYCNAL: return CoordinateSystem::ISOPYCNAL;
+            default: return CoordinateSystem::CARTESIAN;
+        }
+    }
+
+    GridType ConvertGridType(int grid_type) {
+        switch (grid_type) {
+            case GRID_REGULAR: return GridType::REGULAR;
+            case GRID_CURVILINEAR: return GridType::CURVILINEAR;
+            case GRID_UNSTRUCTURED: return GridType::UNSTRUCTURED;
+            default: return GridType::REGULAR;
+        }
+    }
+
+    NumericalScheme ConvertNumericalScheme(int scheme) {
+        switch (scheme) {
+            case SCHEME_UPWIND: return NumericalScheme::UPWIND;
+            case SCHEME_CENTRAL: return NumericalScheme::CENTRAL;
+            case SCHEME_TVD_SUPERBEE: return NumericalScheme::TVD_SUPERBEE;
+            case SCHEME_WENO: return NumericalScheme::WENO;
+            default: return NumericalScheme::TVD_SUPERBEE;
+        }
+    }
+
+    TimeIntegration ConvertTimeIntegration(int method) {
+        switch (method) {
+            case TIME_EULER: return TimeIntegration::EULER;
+            case TIME_RUNGE_KUTTA_2: return TimeIntegration::RUNGE_KUTTA_2;
+            case TIME_RUNGE_KUTTA_3: return TimeIntegration::RUNGE_KUTTA_3;
+            case TIME_RUNGE_KUTTA_4: return TimeIntegration::RUNGE_KUTTA_4;
+            case TIME_ADAMS_BASHFORTH: return TimeIntegration::ADAMS_BASHFORTH;
+            default: return TimeIntegration::RUNGE_KUTTA_4;
+        }
+    }
+
+    ExecutionPolicy ConvertExecutionPolicy(int policy) {
+        switch (policy) {
+            case EXECUTION_SEQUENTIAL: return ExecutionPolicy::Sequential;
+            case EXECUTION_PARALLEL: return ExecutionPolicy::Parallel;
+            case EXECUTION_VECTORIZED: return ExecutionPolicy::Vectorized;
+            case EXECUTION_HYBRID_PARALLEL: return ExecutionPolicy::HybridParallel;
+            default: return ExecutionPolicy::Parallel;
+        }
+    }
+
+    SimdType ConvertSimdType(int simd) {
+        switch (simd) {
+            case SIMD_NONE: return SimdType::None;
+            case SIMD_SSE: return SimdType::SSE;
+            case SIMD_AVX: return SimdType::AVX;
+            case SIMD_AVX2: return SimdType::AVX2;
+            case SIMD_AVX512: return SimdType::AVX512;
+            case SIMD_NEON: return SimdType::NEON;
+            default: return SimdType::AVX2;
+        }
+    }
+
+    // 错误处理宏
+#define HANDLE_EXCEPTION(code) \
+        try { \
+            code \
+        } catch (const std::exception& e) { \
+            Logger::getInstance().error("C# Wrapper Exception: " + std::string(e.what())); \
+        } catch (...) { \
+            Logger::getInstance().error("C# Wrapper Unknown Exception"); \
+        }
 }
 
-OCEANSIM_API int HasField(GridDataHandle handle, const char* field_name) {
-    auto* grid = GetHandle(handle, g_grid_data);
-    if (grid && field_name) {
-        return grid->hasField(field_name) ? 1 : 0;
+// ===========================================
+// 网格数据结构接口实现
+// ===========================================
+
+OCEANSIM_API GridHandle Grid_Create(const GridConfig* config) {
+    if (!config) return nullptr;
+
+    HANDLE_EXCEPTION({
+                         auto grid = std::make_unique<GridDataStructure>(
+                                 config->nx, config->ny, config->nz,
+                                 config->dx, config->dy, config->dz,
+                                 ConvertVector3D(config->origin),
+                                 ConvertCoordinateSystem(config->coordinate_system),
+                                 ConvertGridType(config->grid_type)
+                         );
+                         return grid.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void Grid_Destroy(GridHandle grid) {
+    if (grid) {
+        delete static_cast<GridDataStructure*>(grid);
     }
+}
+
+OCEANSIM_API void Grid_GetDimensions(GridHandle grid, int* nx, int* ny, int* nz) {
+    if (!grid || !nx || !ny || !nz) return;
+
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
+                         auto dims = gridPtr->getDimensions();
+                         *nx = dims[0];
+                         *ny = dims[1];
+                         *nz = dims[2];
+                     });
+}
+
+OCEANSIM_API void Grid_SetScalarField(GridHandle grid, const double* data, int size, const char* field_name) {
+    if (!grid || !data || !field_name) return;
+
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
+                         std::vector<double> field_data(data, data + size);
+                         gridPtr->setScalarField(std::string(field_name), field_data);
+                     });
+}
+
+OCEANSIM_API void Grid_SetVectorField(GridHandle grid, const double* u_data, const double* v_data,
+                                      const double* w_data, int size, const char* field_name) {
+    if (!grid || !u_data || !v_data || !w_data || !field_name) return;
+
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
+                         std::vector<Vector3> vector_field;
+                         vector_field.reserve(size);
+
+                         for (int i = 0; i < size; ++i) {
+                             vector_field.emplace_back(u_data[i], v_data[i], w_data[i]);
+                         }
+
+                         gridPtr->setVectorField(std::string(field_name), vector_field);
+                     });
+}
+
+OCEANSIM_API void Grid_GetScalarField(GridHandle grid, const char* field_name, double* data, int size) {
+    if (!grid || !field_name || !data) return;
+
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
+                         auto field_data = gridPtr->getScalarField(std::string(field_name));
+
+                         int copy_size = std::min(size, static_cast<int>(field_data.size()));
+                         std::memcpy(data, field_data.data(), copy_size * sizeof(double));
+                     });
+}
+
+OCEANSIM_API double Grid_Interpolate(GridHandle grid, const Vector3D* position,
+                                     const char* field_name, int method) {
+    if (!grid || !position || !field_name) return 0.0;
+
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
+                         Vector3 pos = ConvertVector3D(*position);
+                         InterpolationMethod interp_method = static_cast<InterpolationMethod>(method);
+                         return gridPtr->interpolate(std::string(field_name), pos, interp_method);
+                     });
+
+    return 0.0;
+}
+
+// ===========================================
+// 粒子模拟器接口实现
+// ===========================================
+
+OCEANSIM_API ParticleSimulatorHandle ParticleSim_Create(GridHandle grid, RungeKuttaSolverHandle solver_handle) {
+    if (!grid || !solver_handle) return nullptr;
+
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
+                         auto* solverPtr = static_cast<RungeKuttaSolver*>(solver_handle);
+
+                         auto simulator = std::make_unique<ParticleSimulator>(*gridPtr, *solverPtr);
+                         return simulator.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void ParticleSim_Destroy(ParticleSimulatorHandle simulator) {
+    if (simulator) {
+        delete static_cast<ParticleSimulator*>(simulator);
+    }
+}
+
+OCEANSIM_API void ParticleSim_InitializeParticles(ParticleSimulatorHandle simulator,
+                                                  const Vector3D* positions, int count) {
+    if (!simulator || !positions) return;
+
+    HANDLE_EXCEPTION({
+                         auto* simPtr = static_cast<ParticleSimulator*>(simulator);
+                         std::vector<Vector3> init_positions;
+                         init_positions.reserve(count);
+
+                         for (int i = 0; i < count; ++i) {
+                             init_positions.push_back(ConvertVector3D(positions[i]));
+                         }
+
+                         simPtr->initializeParticles(init_positions);
+                     });
+}
+
+OCEANSIM_API void ParticleSim_StepForward(ParticleSimulatorHandle simulator, double time_step) {
+    if (!simulator) return;
+
+    HANDLE_EXCEPTION({
+                         auto* simPtr = static_cast<ParticleSimulator*>(simulator);
+                         simPtr->stepForward(time_step);
+                     });
+}
+
+OCEANSIM_API void ParticleSim_GetParticles(ParticleSimulatorHandle simulator, ParticleData* particles, int count) {
+    if (!simulator || !particles) return;
+
+    HANDLE_EXCEPTION({
+                         auto* simPtr = static_cast<ParticleSimulator*>(simulator);
+                         auto particle_list = simPtr->getParticles();
+
+                         int copy_count = std::min(count, static_cast<int>(particle_list.size()));
+                         for (int i = 0; i < copy_count; ++i) {
+                             const auto& p = particle_list[i];
+                             particles[i].id = p.getId();
+                             particles[i].position = ConvertToVector3D(p.getPosition());
+                             particles[i].velocity = ConvertToVector3D(p.getVelocity());
+                             particles[i].age = p.getAge();
+                             particles[i].active = p.isActive() ? 1 : 0;
+                         }
+                     });
+}
+
+OCEANSIM_API int ParticleSim_GetParticleCount(ParticleSimulatorHandle simulator) {
+    if (!simulator) return 0;
+
+    HANDLE_EXCEPTION({
+                         auto* simPtr = static_cast<ParticleSimulator*>(simulator);
+                         return static_cast<int>(simPtr->getParticles().size());
+                     });
+
     return 0;
 }
 
-// ========================= 粒子模拟器接口 =========================
+// ===========================================
+// 洋流场求解器接口实现
+// ===========================================
 
-OCEANSIM_API ParticleSimulatorHandle CreateParticleSimulator(
-        int nx, int ny, int nz, double dx, double dy, double dz) {
-    try {
-        auto grid = std::make_shared<Data::GridDataStructure>(nx, ny, nz);
-        std::vector<double> dz_vec(nz, dz);
-        grid->setSpacing(dx, dy, dz_vec);
+OCEANSIM_API CurrentFieldSolverHandle CurrentSolver_Create(GridHandle grid, const PhysicalParameters* params) {
+    if (!grid || !params) return nullptr;
 
-        auto solver = std::make_shared<Algorithms::RungeKuttaSolver>();
-        auto particle_sim = std::make_shared<Core::ParticleSimulator>(grid, solver);
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
 
-        void* handle = particle_sim.get();
-        g_particle_simulators[handle] = particle_sim;
+                         // 创建物理参数对象
+                         PhysicalParameters cpp_params;
+                         cpp_params.density = params->density;
+                         cpp_params.viscosity = params->viscosity;
+                         cpp_params.gravity = params->gravity;
+                         cpp_params.coriolis_param = params->coriolis_param;
+                         cpp_params.wind_stress_x = params->wind_stress_x;
+                         cpp_params.wind_stress_y = params->wind_stress_y;
 
-        return handle;
-    } catch (const std::exception& e) {
-        SetError(ERROR_MEMORY_ALLOCATION, e.what());
-        return nullptr;
+                         auto solver = std::make_unique<CurrentFieldSolver>(*gridPtr, cpp_params);
+                         return solver.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void CurrentSolver_Destroy(CurrentFieldSolverHandle solver) {
+    if (solver) {
+        delete static_cast<CurrentFieldSolver*>(solver);
     }
 }
 
-OCEANSIM_API void DestroyParticleSimulator(ParticleSimulatorHandle handle) {
-    auto it = g_particle_simulators.find(handle);
-    if (it != g_particle_simulators.end()) {
-        g_particle_simulators.erase(it);
+OCEANSIM_API void CurrentSolver_ComputeVelocityField(CurrentFieldSolverHandle solver, double time_step) {
+    if (!solver) return;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<CurrentFieldSolver*>(solver);
+                         solverPtr->computeVelocityField(time_step);
+                     });
+}
+
+OCEANSIM_API void CurrentSolver_SetBoundaryConditions(CurrentFieldSolverHandle solver, int boundary_type,
+                                                      const double* values, int size) {
+    if (!solver || !values) return;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<CurrentFieldSolver*>(solver);
+                         std::vector<double> boundary_values(values, values + size);
+                         // Note: This would need to be implemented in the actual CurrentFieldSolver class
+                         // solverPtr->setBoundaryConditions(static_cast<BoundaryType>(boundary_type), boundary_values);
+                     });
+}
+
+OCEANSIM_API double CurrentSolver_ComputeKineticEnergy(CurrentFieldSolverHandle solver) {
+    if (!solver) return 0.0;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<CurrentFieldSolver*>(solver);
+                         return solverPtr->computeKineticEnergy();
+                     });
+
+    return 0.0;
+}
+
+OCEANSIM_API double CurrentSolver_CheckMassConservation(CurrentFieldSolverHandle solver) {
+    if (!solver) return 0.0;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<CurrentFieldSolver*>(solver);
+                         return solverPtr->checkMassConservation();
+                     });
+
+    return 0.0;
+}
+
+// ===========================================
+// 平流扩散求解器接口实现
+// ===========================================
+
+OCEANSIM_API AdvectionDiffusionSolverHandle AdvectionSolver_Create(GridHandle grid, const SolverParameters* params) {
+    if (!grid || !params) return nullptr;
+
+    HANDLE_EXCEPTION({
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
+
+                         auto solver = std::make_unique<AdvectionDiffusionSolver>(
+                                 *gridPtr,
+                                 ConvertNumericalScheme(params->scheme_type),
+                                 ConvertTimeIntegration(params->integration_method)
+                         );
+
+                         solver->setDiffusionCoefficient(params->diffusion_coeff);
+
+                         return solver.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void AdvectionSolver_Destroy(AdvectionDiffusionSolverHandle solver) {
+    if (solver) {
+        delete static_cast<AdvectionDiffusionSolver*>(solver);
     }
 }
 
-OCEANSIM_API void InitializeParticles(ParticleSimulatorHandle handle,
-                                      const Vector3D* positions, int count) {
-    auto* sim = GetHandle(handle, g_particle_simulators);
-    if (sim && positions && count > 0) {
-        std::vector<Eigen::Vector3d> pos_vec;
-        pos_vec.reserve(count);
+OCEANSIM_API void AdvectionSolver_SetInitialCondition(AdvectionDiffusionSolverHandle solver,
+                                                      const double* initial_field, int size) {
+    if (!solver || !initial_field) return;
 
-        for (int i = 0; i < count; ++i) {
-            pos_vec.emplace_back(positions[i].x, positions[i].y, positions[i].z);
-        }
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<AdvectionDiffusionSolver*>(solver);
+                         std::vector<double> initial_data(initial_field, initial_field + size);
+                         solverPtr->setInitialCondition(initial_data);
+                     });
+}
 
-        sim->initializeParticles(pos_vec);
+OCEANSIM_API void AdvectionSolver_SetVelocityField(AdvectionDiffusionSolverHandle solver,
+                                                   const double* u_field, const double* v_field,
+                                                   const double* w_field, int size) {
+    if (!solver || !u_field || !v_field || !w_field) return;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<AdvectionDiffusionSolver*>(solver);
+                         std::vector<Vector3> velocity_field;
+                         velocity_field.reserve(size);
+
+                         for (int i = 0; i < size; ++i) {
+                             velocity_field.emplace_back(u_field[i], v_field[i], w_field[i]);
+                         }
+
+                         solverPtr->setVelocityField(velocity_field);
+                     });
+}
+
+OCEANSIM_API void AdvectionSolver_Solve(AdvectionDiffusionSolverHandle solver, double time_end,
+                                        double* output_field, int size) {
+    if (!solver || !output_field) return;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<AdvectionDiffusionSolver*>(solver);
+                         auto result = solverPtr->solve(time_end);
+
+                         int copy_size = std::min(size, static_cast<int>(result.size()));
+                         std::memcpy(output_field, result.data(), copy_size * sizeof(double));
+                     });
+}
+
+// ===========================================
+// 龙格-库塔求解器接口实现
+// ===========================================
+
+OCEANSIM_API RungeKuttaSolverHandle RungeKutta_Create(int order, double time_step) {
+    HANDLE_EXCEPTION({
+                         auto solver = std::make_unique<RungeKuttaSolver>(order, time_step);
+                         return solver.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void RungeKutta_Destroy(RungeKuttaSolverHandle solver) {
+    if (solver) {
+        delete static_cast<RungeKuttaSolver*>(solver);
     }
 }
 
-OCEANSIM_API void InitializeRandomParticles(ParticleSimulatorHandle handle,
-                                            int count, const Vector3D* bounds_min,
-                                            const Vector3D* bounds_max) {
-    auto* sim = GetHandle(handle, g_particle_simulators);
-    if (sim && bounds_min && bounds_max && count > 0) {
-        Eigen::Vector3d min_bounds(bounds_min->x, bounds_min->y, bounds_min->z);
-        Eigen::Vector3d max_bounds(bounds_max->x, bounds_max->y, bounds_max->z);
+OCEANSIM_API void RungeKutta_SetTimeStep(RungeKuttaSolverHandle solver, double time_step) {
+    if (!solver) return;
 
-        sim->initializeRandomParticles(count, min_bounds, max_bounds);
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<RungeKuttaSolver*>(solver);
+                         solverPtr->setTimeStep(time_step);
+                     });
+}
+
+OCEANSIM_API double RungeKutta_GetTimeStep(RungeKuttaSolverHandle solver) {
+    if (!solver) return 0.0;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<RungeKuttaSolver*>(solver);
+                         return solverPtr->getTimeStep();
+                     });
+
+    return 0.0;
+}
+
+// ===========================================
+// 有限差分求解器接口实现
+// ===========================================
+
+OCEANSIM_API FiniteDifferenceSolverHandle FiniteDiff_Create(int grid_size, double spacing) {
+    HANDLE_EXCEPTION({
+                         auto solver = std::make_unique<FiniteDifferenceSolver>(grid_size, spacing);
+                         return solver.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void FiniteDiff_Destroy(FiniteDifferenceSolverHandle solver) {
+    if (solver) {
+        delete static_cast<FiniteDifferenceSolver*>(solver);
     }
 }
 
-OCEANSIM_API void StepParticlesForward(ParticleSimulatorHandle handle, double dt) {
-    auto* sim = GetHandle(handle, g_particle_simulators);
-    if (sim) {
-        sim->stepForward(dt);
+OCEANSIM_API void FiniteDiff_ComputeFirstDerivative(FiniteDifferenceSolverHandle solver,
+                                                    const double* input, double* output,
+                                                    int size, int direction) {
+    if (!solver || !input || !output) return;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<FiniteDifferenceSolver*>(solver);
+                         std::vector<double> input_data(input, input + size);
+                         auto result = solverPtr->computeFirstDerivative(input_data, direction);
+
+                         int copy_size = std::min(size, static_cast<int>(result.size()));
+                         std::memcpy(output, result.data(), copy_size * sizeof(double));
+                     });
+}
+
+OCEANSIM_API void FiniteDiff_ComputeSecondDerivative(FiniteDifferenceSolverHandle solver,
+                                                     const double* input, double* output,
+                                                     int size, int direction) {
+    if (!solver || !input || !output) return;
+
+    HANDLE_EXCEPTION({
+                         auto* solverPtr = static_cast<FiniteDifferenceSolver*>(solver);
+                         std::vector<double> input_data(input, input + size);
+                         auto result = solverPtr->computeSecondDerivative(input_data, direction);
+
+                         int copy_size = std::min(size, static_cast<int>(result.size()));
+                         std::memcpy(output, result.data(), copy_size * sizeof(double));
+                     });
+}
+
+// ===========================================
+// 向量化运算接口实现
+// ===========================================
+
+OCEANSIM_API VectorizedOperationsHandle VectorOps_Create(const PerformanceConfig* config) {
+    if (!config) return nullptr;
+
+    HANDLE_EXCEPTION({
+                         VectorConfig vec_config;
+                         vec_config.execution_policy = ConvertExecutionPolicy(config->execution_policy);
+                         vec_config.simd_type = ConvertSimdType(config->simd_type);
+                         vec_config.num_threads = config->num_threads;
+
+                         auto ops = std::make_unique<VectorizedOperations>(vec_config);
+                         return ops.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void VectorOps_Destroy(VectorizedOperationsHandle ops) {
+    if (ops) {
+        delete static_cast<VectorizedOperations*>(ops);
     }
 }
 
-OCEANSIM_API int GetParticleCount(ParticleSimulatorHandle handle) {
-    auto* sim = GetHandle(handle, g_particle_simulators);
-    if (sim) {
-        return static_cast<int>(sim->getParticles().size());
+OCEANSIM_API void VectorOps_Add(VectorizedOperationsHandle ops, const double* a, const double* b,
+                                double* result, int size) {
+    if (!ops || !a || !b || !result) return;
+
+    HANDLE_EXCEPTION({
+                         auto* opsPtr = static_cast<VectorizedOperations*>(ops);
+                         opsPtr->vectorAdd(a, b, result, size);
+                     });
+}
+
+OCEANSIM_API void VectorOps_Sub(VectorizedOperationsHandle ops, const double* a, const double* b,
+                                double* result, int size) {
+    if (!ops || !a || !b || !result) return;
+
+    HANDLE_EXCEPTION({
+                         auto* opsPtr = static_cast<VectorizedOperations*>(ops);
+                         opsPtr->vectorSub(a, b, result, size);
+                     });
+}
+
+OCEANSIM_API double VectorOps_DotProduct(VectorizedOperationsHandle ops, const double* a, const double* b, int size) {
+    if (!ops || !a || !b) return 0.0;
+
+    HANDLE_EXCEPTION({
+                         auto* opsPtr = static_cast<VectorizedOperations*>(ops);
+                         return opsPtr->dotProduct(a, b, size);
+                     });
+
+    return 0.0;
+}
+
+OCEANSIM_API double VectorOps_Norm(VectorizedOperationsHandle ops, const double* a, int size) {
+    if (!ops || !a) return 0.0;
+
+    HANDLE_EXCEPTION({
+                         auto* opsPtr = static_cast<VectorizedOperations*>(ops);
+                         return opsPtr->vectorNorm(a, size);
+                     });
+
+    return 0.0;
+}
+
+// ===========================================
+// 并行计算引擎接口实现
+// ===========================================
+
+OCEANSIM_API ParallelComputeEngineHandle ParallelEngine_Create(const PerformanceConfig* config) {
+    if (!config) return nullptr;
+
+    HANDLE_EXCEPTION({
+                         EngineConfig engine_config;
+                         engine_config.execution_policy = ConvertExecutionPolicy(config->execution_policy);
+                         engine_config.num_threads = config->num_threads;
+
+                         auto engine = std::make_unique<ParallelComputeEngine>(engine_config);
+                         return engine.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void ParallelEngine_Destroy(ParallelComputeEngineHandle engine) {
+    if (engine) {
+        delete static_cast<ParallelComputeEngine*>(engine);
     }
+}
+
+OCEANSIM_API void ParallelEngine_SetThreadCount(ParallelComputeEngineHandle engine, int num_threads) {
+    if (!engine) return;
+
+    HANDLE_EXCEPTION({
+                         auto* enginePtr = static_cast<ParallelComputeEngine*>(engine);
+                         enginePtr->setThreadCount(num_threads);
+                     });
+}
+
+OCEANSIM_API int ParallelEngine_GetThreadCount(ParallelComputeEngineHandle engine) {
+    if (!engine) return 0;
+
+    HANDLE_EXCEPTION({
+                         auto* enginePtr = static_cast<ParallelComputeEngine*>(engine);
+                         return enginePtr->getThreadCount();
+                     });
+
     return 0;
 }
 
-OCEANSIM_API void GetParticles(ParticleSimulatorHandle handle,
-                               ParticleData* particles, int max_count) {
-    auto* sim = GetHandle(handle, g_particle_simulators);
-    if (sim && particles) {
-        const auto& sim_particles = sim->getParticles();
-        int count = std::min(max_count, static_cast<int>(sim_particles.size()));
+// ===========================================
+// 数据导出器接口实现
+// ===========================================
 
-        for (int i = 0; i < count; ++i) {
-            const auto& p = sim_particles[i];
-            particles[i].position.x = p.position.x();
-            particles[i].position.y = p.position.y();
-            particles[i].position.z = p.position.z();
-            particles[i].velocity.x = p.velocity.x();
-            particles[i].velocity.y = p.velocity.y();
-            particles[i].velocity.z = p.velocity.z();
-            particles[i].age = p.age;
-            particles[i].id = p.id;
-            particles[i].active = p.active ? 1 : 0;
-        }
+OCEANSIM_API DataExporterHandle DataExporter_Create(void) {
+    HANDLE_EXCEPTION({
+                         auto exporter = std::make_unique<DataExporter>();
+                         return exporter.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void DataExporter_Destroy(DataExporterHandle exporter) {
+    if (exporter) {
+        delete static_cast<DataExporter*>(exporter);
     }
 }
 
-OCEANSIM_API void EnableParticleDiffusion(ParticleSimulatorHandle handle,
-                                          double diffusion_coefficient) {
-    auto* sim = GetHandle(handle, g_particle_simulators);
-    if (sim) {
-        sim->enableDiffusion(diffusion_coefficient);
-    }
-}
+OCEANSIM_API int DataExporter_ExportToNetCDF(DataExporterHandle exporter, GridHandle grid, const char* filename) {
+    if (!exporter || !grid || !filename) return 0;
 
-OCEANSIM_API double GetParticleComputationTime(ParticleSimulatorHandle handle) {
-    auto* sim = GetHandle(handle, g_particle_simulators);
-    if (sim) {
-        return sim->getComputationTime();
-    }
-    return 0.0;
-}
+    HANDLE_EXCEPTION({
+                         auto* exporterPtr = static_cast<DataExporter*>(exporter);
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
 
-// ========================= 洋流场求解器接口 =========================
+                         bool success = exporterPtr->exportToNetCDF(*gridPtr, std::string(filename));
+                         return success ? 1 : 0;
+                     });
 
-OCEANSIM_API CurrentFieldSolverHandle CreateCurrentFieldSolver(
-        int nx, int ny, int nz, double dx, double dy, double dz,
-        const PhysicalParameters* params) {
-    try {
-        auto grid = std::make_shared<Data::GridDataStructure>(nx, ny, nz);
-        std::vector<double> dz_vec(nz, dz);
-        grid->setSpacing(dx, dy, dz_vec);
-
-        Core::CurrentFieldSolver::PhysicalParameters cpp_params;
-        if (params) {
-            cpp_params.gravity = params->gravity;
-            cpp_params.coriolis_f = params->coriolis_f;
-            cpp_params.beta = params->beta;
-            cpp_params.viscosity_h = params->viscosity_h;
-            cpp_params.viscosity_v = params->viscosity_v;
-            cpp_params.diffusivity_h = params->diffusivity_h;
-            cpp_params.diffusivity_v = params->diffusivity_v;
-            cpp_params.reference_density = params->reference_density;
-        }
-
-        auto solver = std::make_shared<Core::CurrentFieldSolver>(grid, cpp_params);
-        void* handle = solver.get();
-        g_current_solvers[handle] = solver;
-
-        return handle;
-    } catch (const std::exception& e) {
-        SetError(ERROR_MEMORY_ALLOCATION, e.what());
-        return nullptr;
-    }
-}
-
-OCEANSIM_API void DestroyCurrentFieldSolver(CurrentFieldSolverHandle handle) {
-    auto it = g_current_solvers.find(handle);
-    if (it != g_current_solvers.end()) {
-        g_current_solvers.erase(it);
-    }
-}
-
-OCEANSIM_API void SetBottomTopography(CurrentFieldSolverHandle handle,
-                                      const double* bottom_depth, int nx, int ny) {
-    auto* solver = GetHandle(handle, g_current_solvers);
-    if (solver && bottom_depth) {
-        Eigen::MatrixXd topography(nx, ny);
-        std::memcpy(topography.data(), bottom_depth, nx * ny * sizeof(double));
-        solver->setBottomTopography(topography);
-    }
-}
-
-OCEANSIM_API void StepCurrentFieldForward(CurrentFieldSolverHandle handle, double dt) {
-    auto* solver = GetHandle(handle, g_current_solvers);
-    if (solver) {
-        solver->stepForward(dt);
-    }
-}
-
-OCEANSIM_API double GetTotalEnergy(CurrentFieldSolverHandle handle) {
-    auto* solver = GetHandle(handle, g_current_solvers);
-    if (solver) {
-        return solver->computeTotalEnergy();
-    }
-    return 0.0;
-}
-
-OCEANSIM_API int CheckMassConservation(CurrentFieldSolverHandle handle, double tolerance) {
-    auto* solver = GetHandle(handle, g_current_solvers);
-    if (solver) {
-        return solver->checkMassConservation(tolerance) ? 1 : 0;
-    }
     return 0;
 }
 
-// ========================= 平流扩散求解器接口 =========================
+OCEANSIM_API int DataExporter_ExportToVTK(DataExporterHandle exporter, GridHandle grid, const char* filename) {
+    if (!exporter || !grid || !filename) return 0;
 
-OCEANSIM_API AdvectionDiffusionHandle CreateAdvectionDiffusionSolver(
-        GridDataHandle grid_handle, NumericalSchemeType scheme, TimeIntegrationType time_method) {
-    try {
-        auto* grid_ptr = GetHandle(grid_handle, g_grid_data);
-        if (!grid_ptr) return nullptr;
+    HANDLE_EXCEPTION({
+                         auto* exporterPtr = static_cast<DataExporter*>(exporter);
+                         auto* gridPtr = static_cast<GridDataStructure*>(grid);
 
-        auto grid_shared = g_grid_data[grid_handle];
-        auto num_scheme = static_cast<Core::AdvectionDiffusionSolver::NumericalScheme>(scheme);
-        auto time_int = static_cast<Core::AdvectionDiffusionSolver::TimeIntegration>(time_method);
+                         bool success = exporterPtr->exportToVTK(*gridPtr, std::string(filename));
+                         return success ? 1 : 0;
+                     });
 
-        auto solver = std::make_shared<Core::AdvectionDiffusionSolver>(grid_shared, num_scheme, time_int);
-        void* handle = solver.get();
-        g_ad_solvers[handle] = solver;
+    return 0;
+}
 
-        return handle;
-    } catch (const std::exception& e) {
-        SetError(ERROR_MEMORY_ALLOCATION, e.what());
-        return nullptr;
+// ===========================================
+// 性能分析器接口实现
+// ===========================================
+
+OCEANSIM_API PerformanceProfilerHandle Profiler_Create(void) {
+    HANDLE_EXCEPTION({
+                         auto profiler = std::make_unique<PerformanceProfiler>();
+                         return profiler.release();
+                     });
+
+    return nullptr;
+}
+
+OCEANSIM_API void Profiler_Destroy(PerformanceProfilerHandle profiler) {
+    if (profiler) {
+        delete static_cast<PerformanceProfiler*>(profiler);
     }
 }
 
-OCEANSIM_API void DestroyAdvectionDiffusionSolver(AdvectionDiffusionHandle handle) {
-    auto it = g_ad_solvers.find(handle);
-    if (it != g_ad_solvers.end()) {
-        g_ad_solvers.erase(it);
-    }
+OCEANSIM_API void Profiler_StartTiming(PerformanceProfilerHandle profiler, const char* section_name) {
+    if (!profiler || !section_name) return;
+
+    HANDLE_EXCEPTION({
+                         auto* profilerPtr = static_cast<PerformanceProfiler*>(profiler);
+                         profilerPtr->startTiming(std::string(section_name));
+                     });
 }
 
-OCEANSIM_API void SetDiffusionCoefficient(AdvectionDiffusionHandle handle,
-                                          double diffusion_coeff) {
-    auto* solver = GetHandle(handle, g_ad_solvers);
-    if (solver) {
-        solver->setDiffusionCoefficient(diffusion_coeff);
-    }
+OCEANSIM_API void Profiler_EndTiming(PerformanceProfilerHandle profiler, const char* section_name) {
+    if (!profiler || !section_name) return;
+
+    HANDLE_EXCEPTION({
+                         auto* profilerPtr = static_cast<PerformanceProfiler*>(profiler);
+                         profilerPtr->endTiming(std::string(section_name));
+                     });
 }
 
-OCEANSIM_API void SolveAdvectionDiffusion(AdvectionDiffusionHandle handle, double dt) {
-    auto* solver = GetHandle(handle, g_ad_solvers);
-    if (solver) {
-        solver->solve(dt);
-    }
-}
+OCEANSIM_API double Profiler_GetElapsedTime(PerformanceProfilerHandle profiler, const char* section_name) {
+    if (!profiler || !section_name) return 0.0;
 
-OCEANSIM_API double GetMaxConcentration(AdvectionDiffusionHandle handle) {
-    auto* solver = GetHandle(handle, g_ad_solvers);
-    if (solver) {
-        return solver->getMaxConcentration();
-    }
+    HANDLE_EXCEPTION({
+                         auto* profilerPtr = static_cast<PerformanceProfiler*>(profiler);
+                         return profilerPtr->getElapsedTime(std::string(section_name));
+                     });
+
     return 0.0;
 }
 
-OCEANSIM_API double ComputePecletNumber(AdvectionDiffusionHandle handle) {
-    auto* solver = GetHandle(handle, g_ad_solvers);
-    if (solver) {
-        return solver->computePecletNumber();
-    }
-    return 0.0;
+OCEANSIM_API void Profiler_GenerateReport(PerformanceProfilerHandle profiler, const char* filename) {
+    if (!profiler || !filename) return;
+
+    HANDLE_EXCEPTION({
+                         auto* profilerPtr = static_cast<PerformanceProfiler*>(profiler);
+                         profilerPtr->generateReport(std::string(filename));
+                     });
 }
 
-// ========================= 性能分析接口 =========================
+// ===========================================
+// 工具函数接口实现
+// ===========================================
 
-OCEANSIM_API void GetPerformanceMetrics(void* handle, PerformanceMetrics* metrics) {
-    if (!metrics) return;
+OCEANSIM_API const char* OceanSim_GetVersion(void) {
+    return "1.0.0";
+}
 
-    // 默认初始化
-    metrics->computation_time = 0.0;
-    metrics->memory_usage_mb = 0.0;
-    metrics->iteration_count = 0;
-    metrics->efficiency_ratio = 0.0;
+OCEANSIM_API int OceanSim_Initialize(void) {
+    HANDLE_EXCEPTION({
+                         Logger::getInstance().info("OceanSim C# Wrapper initialized");
+                         return 1;
+                     });
 
-    // 尝试从不同类型的求解器获取性能指标
-    auto particle_it = g_particle_simulators.find(handle);
-    if (particle_it != g_particle_simulators.end()) {
-        metrics->computation_time = particle_it->second->getComputationTime();
-        return;
-    }
+    return 0;
+}
 
-    auto current_it = g_current_solvers.find(handle);
-    if (current_it != g_current_solvers.end()) {
-        // CurrentFieldSolver的性能指标
-        return;
-    }
+OCEANSIM_API void OceanSim_Cleanup(void) {
+    HANDLE_EXCEPTION({
+                         Logger::getInstance().info("OceanSim C# Wrapper cleanup");
+                     });
+}
 
-    auto ad_it = g_ad_solvers.find(handle);
-    if (ad_it != g_ad_solvers.end()) {
-        metrics->computation_time = ad_it->second->getComputationTime();
-        metrics->iteration_count = ad_it->second->getIterationCount();
-        return;
-    }
+OCEANSIM_API void OceanSim_SetLogLevel(int level) {
+    HANDLE_EXCEPTION({
+                         Logger::LogLevel log_level;
+                         switch (level) {
+                             case 0: log_level = Logger::LogLevel::DEBUG; break;
+                             case 1: log_level = Logger::LogLevel::INFO; break;
+                             case 2: log_level = Logger::LogLevel::WARNING; break;
+                             case 3: log_level = Logger::LogLevel::ERROR; break;
+                             default: log_level = Logger::LogLevel::INFO; break;
+                         }
+                         Logger::getInstance().setLevel(log_level);
+                     });
 }
