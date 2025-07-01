@@ -266,6 +266,9 @@ if(BUILD_PYTHON_BINDINGS)
     if(pybind11_FOUND)
         set(PYTHON_BINDING_SOURCES
                 bindings/python/pybind_main.cpp
+                bindings/python/pybind_grid.cpp
+                bindings/python/pybind_algorithms.cpp
+                bindings/python/pybind_parallel.cpp
                 bindings/python/pybind_advection.cpp
                 bindings/python/pybind_current_solver.cpp
                 bindings/python/pybind_particle_sim.cpp
