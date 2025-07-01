@@ -105,11 +105,15 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/eigen
 )
 # ======== 手动指定 Python 头文件 & 动态库 ========
-set(PY_INC "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/include")
-set(PY_LIB "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/lib/libpython3.12.dylib")
+#set(PY_INC "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/include")
+#set(PY_LIB "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/lib/libpython3.12.dylib")
+#
+#include_directories(${PY_INC})                     # 让所有目标都能找到 <Python.h>
+#link_directories("${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/lib")   # 供链接器搜索
 
-include_directories(${PY_INC})                     # 让所有目标都能找到 <Python.h>
-link_directories("${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/lib")   # 供链接器搜索
+# 允许外部自定义 Python 路径；若未指定则使用系统默认
+set(PY_INC "")
+set(PY_LIB "")
 # ===============================================
 
 
@@ -206,6 +210,7 @@ endif()
 if(HDF5_FOUND)
     target_link_libraries(CppCore PUBLIC ${HDF5_LIBRARIES})
     target_include_directories(CppCore PUBLIC ${HDF5_INCLUDE_DIRS})
+    link_directories(${HDF5_LIBRARY_DIRS})
 endif()
 
 # GPU支持
@@ -268,16 +273,15 @@ if(BUILD_PYTHON_BINDINGS)
 
 
         pybind11_add_module(oceansim ${PYTHON_BINDING_SOURCES})
-        target_include_directories(oceansim PRIVATE ${PY_INC})
-        target_link_libraries(oceansim
-                PRIVATE
-                CppCore
-                ${PY_LIB})
+        if(PY_INC)
+            target_include_directories(oceansim PRIVATE ${PY_INC})
+        endif()
+        target_link_libraries(oceansim PRIVATE CppCore)
+        if(PY_LIB)
+            target_link_libraries(oceansim PRIVATE ${PY_LIB})
+        endif()
 
-#        # Python模块属性
-#        set_target_properties(oceansim PROPERTIES
-#                OUTPUT_NAME "oceansim"
-#        )
+
     else()
         message(WARNING "未找到pybind11，Python绑定将被禁用")
         set(BUILD_PYTHON_BINDINGS OFF)

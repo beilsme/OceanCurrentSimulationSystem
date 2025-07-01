@@ -19,7 +19,13 @@ set -euo pipefail
 ### --- 可按需修改 ---
 PY_VER="3.12"
 VENV_DIR=".venv"
-JOBS=$(sysctl -n hw.ncpu)
+if command -v nproc >/dev/null; then
+  JOBS=$(nproc --all)
+elif command -v sysctl >/dev/null; then
+  JOBS=$(sysctl -n hw.ncpu)
+else
+  JOBS=4
+fi
 ### -------------------
 
 # 项目根目录：脚本所在目录向上两级
@@ -40,7 +46,8 @@ PY_ENGINE="$PROJ_ROOT/Source/PythonEngine"
 BUILD_DIR="$CPP_CORE/cmake-build-python"
 
 echo "🔄 [1/6] Homebrew 依赖检测 ..."
-brew bundle --file=- 2>/dev/null <<BREWFILE
+if command -v brew >/dev/null; then
+  brew bundle --file=- 2>/dev/null <<BREWFILE
 brew "cmake"
 brew "eigen"
 brew "pybind11"
@@ -49,19 +56,33 @@ brew "tbb"
 brew "netcdf"
 brew "hdf5"
 BREWFILE
+else
+  echo "brew 未安装，跳过依赖检测"
+fi
 
 echo "🔄 [2/6] Python 虚拟环境准备 ..."
 if [[ ! -d "$PROJ_ROOT/$VENV_DIR" ]]; then
-  "$(brew --prefix python@$PY_VER)/bin/python$PY_VER" -m venv "$PROJ_ROOT/$VENV_DIR"
+  if command -v brew >/dev/null; then
+      PYTHON_BIN="$(brew --prefix python@$PY_VER)/bin/python$PY_VER"
+    else
+      PYTHON_BIN="$(command -v python${PY_VER} || command -v python3)"
+    fi
+    "$PYTHON_BIN" -m venv "$PROJ_ROOT/$VENV_DIR"
 fi
 source "$PROJ_ROOT/$VENV_DIR/bin/activate"
 pip -q install --upgrade pip
 pip -q install numpy scipy matplotlib pybind11
 
 echo "🔄 [3/6] 环境变量配置 ..."
-export CMAKE_PREFIX_PATH="$(brew --prefix pybind11)/share/cmake/pybind11:$(brew --prefix eigen)/share/eigen3"
+if command -v brew >/dev/null; then
+  export CMAKE_PREFIX_PATH="$(brew --prefix pybind11)/share/cmake/pybind11:$(brew --prefix eigen)/share/eigen3"
+  export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:${DYLD_LIBRARY_PATH:-}"
+else
+  export CMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/cmake/pybind11:/usr/include/eigen3"
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
+fi
 export CXXFLAGS="-Wall -Wextra -Wpedantic"
-export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:${DYLD_LIBRARY_PATH:-}"
+
 
 echo "🔄 [4/6] 生成构建目录 ..."
 mkdir -p "$BUILD_DIR"
@@ -72,7 +93,7 @@ cmake "$CPP_CORE" \
   -DBUILD_PYTHON_BINDINGS=ON \
   -DBUILD_CSHARP_BINDINGS=OFF \
   -DBUILD_TESTS=OFF \
-  -DPython3_EXECUTABLE="$(which python)" \
+  -DPython3_EXECUTABLE="$PROJ_ROOT/$VENV_DIR/bin/python" \
   -DPython3_FIND_STRATEGY=LOCATION \
   -DPython3_FIND_FRAMEWORK=NEVER
 
