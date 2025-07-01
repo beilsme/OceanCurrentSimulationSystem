@@ -2,23 +2,23 @@
 # ==============================================================================
 # 文件路径：Source/Scripts/build_python_bindings.sh
 # 作者：beilsm
-# 版本号：v1.0.2
+# 版本号：v1.0.3
 # 创建时间：2025-07-01 19:45
-# 最新更改时间：2025-07-01 20:25
+# 最新更改时间：2025-07-01 22:30
 # ==============================================================================
 # ✅ 更新说明：
-#   - v1.0.2
-#       • 修正 PROJ_ROOT 计算，避免出现 Source/Source/CppCore
-#       • DYLD_LIBRARY_PATH 改为 ${...:-} 防止未定义报错
+#   - v1.0.3
+#       • 自动关联到 Source/PythonEngine/.venv 环境
+#       • 直接安装模块到目标虚拟环境
 # ==============================================================================
 
 set -euo pipefail
 
-
-
 ### --- 可按需修改 ---
 PY_VER="3.12"
 VENV_DIR=".venv"
+# 使用 PythonEngine 目录下的虚拟环境
+TARGET_VENV_DIR="Source/PythonEngine/.venv"
 if command -v nproc >/dev/null; then
   JOBS=$(nproc --all)
 elif command -v sysctl >/dev/null; then
@@ -37,15 +37,15 @@ CLEAN=${CLEAN_BUILD:-ON}      # 调试期默认清理；export CLEAN_BUILD=OFF �
 if [[ "$CLEAN" == "ON" ]]; then
   echo "🧹 清理旧构建缓存 ..."
   rm -rf "$PROJ_ROOT/Source/CppCore/cmake-build-python"
-  rm -f  "$PROJ_ROOT/Source/PythonEngine/oceansim.so"
 fi
 # -------------------------------------------------------------------------
 
 CPP_CORE="$PROJ_ROOT/Source/CppCore"
 PY_ENGINE="$PROJ_ROOT/Source/PythonEngine"
 BUILD_DIR="$CPP_CORE/cmake-build-python"
+TARGET_VENV="$PROJ_ROOT/$TARGET_VENV_DIR"
 
-echo "🔄 [1/6] Homebrew 依赖检测 ..."
+echo "🔄 [1/7] Homebrew 依赖检测 ..."
 if command -v brew >/dev/null; then
   brew bundle --file=- 2>/dev/null <<BREWFILE
 brew "cmake"
@@ -60,20 +60,24 @@ else
   echo "brew 未安装，跳过依赖检测"
 fi
 
-echo "🔄 [2/6] Python 虚拟环境准备 ..."
-if [[ ! -d "$PROJ_ROOT/$VENV_DIR" ]]; then
+echo "🔄 [2/7] 检查目标虚拟环境 ..."
+if [[ ! -d "$TARGET_VENV" ]]; then
+  echo "创建目标虚拟环境: $TARGET_VENV"
   if command -v brew >/dev/null; then
       PYTHON_BIN="$(brew --prefix python@$PY_VER)/bin/python$PY_VER"
     else
       PYTHON_BIN="$(command -v python${PY_VER} || command -v python3)"
     fi
-    "$PYTHON_BIN" -m venv "$PROJ_ROOT/$VENV_DIR"
+    "$PYTHON_BIN" -m venv "$TARGET_VENV"
 fi
-source "$PROJ_ROOT/$VENV_DIR/bin/activate"
+
+echo "🔄 [3/7] 准备编译环境 ..."
+# 激活目标虚拟环境
+source "$TARGET_VENV/bin/activate"
 pip -q install --upgrade pip
 pip -q install numpy scipy matplotlib pybind11
 
-echo "🔄 [3/6] 环境变量配置 ..."
+echo "🔄 [4/7] 环境变量配置 ..."
 if command -v brew >/dev/null; then
   export CMAKE_PREFIX_PATH="$(brew --prefix pybind11)/share/cmake/pybind11:$(brew --prefix eigen)/share/eigen3"
   export DYLD_LIBRARY_PATH="/opt/homebrew/opt/libomp/lib:${DYLD_LIBRARY_PATH:-}"
@@ -83,8 +87,7 @@ else
 fi
 export CXXFLAGS="-Wall -Wextra -Wpedantic"
 
-
-echo "🔄 [4/6] 生成构建目录 ..."
+echo "🔄 [5/7] 生成构建目录 ..."
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
@@ -93,28 +96,46 @@ cmake "$CPP_CORE" \
   -DBUILD_PYTHON_BINDINGS=ON \
   -DBUILD_CSHARP_BINDINGS=OFF \
   -DBUILD_TESTS=OFF \
-  -DPython3_EXECUTABLE="$PROJ_ROOT/$VENV_DIR/bin/python" \
+  -DPython3_EXECUTABLE="$TARGET_VENV/bin/python" \
   -DPython3_FIND_STRATEGY=LOCATION \
-  -DPython3_FIND_FRAMEWORK=NEVER
+  -DPython3_FIND_FRAMEWORK=NEVER \
+  -DCMAKE_CXX_FLAGS="-DPYBIND11_DETAILED_ERROR_MESSAGES"
 
-echo "🔄 [5/6] 开始并行编译 ..."
+echo "🔄 [6/7] 开始并行编译 ..."
 cmake --build . -j"$JOBS"
 
-echo "🔄 [6/6] 软链接 Python 动态库 ..."
+echo "🔄 [7/7] 安装模块到目标环境 ..."
 SO_NAME=$(ls *_cpython-*.so oceansim*.so 2>/dev/null | head -n1 || true)
 if [[ -z "$SO_NAME" ]]; then
   echo "❌ 未找到编译生成的 .so 文件，请检查上方编译输出"
   exit 1
 fi
-mkdir -p "$PY_ENGINE"
-ln -sf "$BUILD_DIR/$SO_NAME" "$PY_ENGINE/oceansim.so"
 
-echo "✅ 编译完成：$PY_ENGINE/oceansim.so"
-echo "🚀 立即验证："
-echo "source $PROJ_ROOT/$VENV_DIR/bin/activate && python -c 'import oceansim, sys; print(\"oceansim ✔\", sys.version)'"
-echo "🔄 自动验证 oceansim ..."
-source "$PROJ_ROOT/$VENV_DIR/bin/activate"
+# 获取目标环境的 site-packages 路径
+SITE_PACKAGES="$TARGET_VENV/lib/python$PY_VER/site-packages"
+mkdir -p "$SITE_PACKAGES"
+
+# 复制模块到 site-packages
+cp "$BUILD_DIR/$SO_NAME" "$SITE_PACKAGES/oceansim.so"
+
+# 同时在 PythonEngine 目录下创建软链接（保持兼容性）
+mkdir -p "$PY_ENGINE"
+ln -sf "$SITE_PACKAGES/oceansim.so" "$PY_ENGINE/oceansim.so"
+
+echo "✅ 编译完成！"
+echo "📦 模块已安装到: $SITE_PACKAGES/oceansim.so"
+echo "🔗 软链接创建于: $PY_ENGINE/oceansim.so"
+echo ""
+echo "🚀 使用方法："
+echo "1. 激活环境: source $TARGET_VENV/bin/activate"
+echo "2. 导入模块: python -c 'import oceansim; print(oceansim)'"
+echo ""
+echo "🔄 立即验证 ..."
+source "$TARGET_VENV/bin/activate"
 python - <<'PY'
 import oceansim, sys
-print("oceansim ✔ 自动验证通过！ Python", sys.version)
+print("✅ oceansim 模块验证成功！")
+print("Python 版本:", sys.version)
+print("模块位置:", oceansim.__file__)
+print("可用功能:", [x for x in dir(oceansim) if not x.startswith('_')])
 PY

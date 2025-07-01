@@ -181,6 +181,12 @@ namespace OceanSimulation {
             ++counters_.vectorOperations;
         }
 
+        void VectorizedOperations::vectorMulScalar(const float* a, const float* b, float* result, size_t size) {
+            for (size_t i = 0; i < size; ++i) {
+                result[i] = a[i] * b[i];
+            }
+        }
+        
         void VectorizedOperations::vectorMul(const float* a, const float* b, float* result, size_t size) {
             switch (activeSimd_) {
                 case SimdType::AVX2:

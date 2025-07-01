@@ -1,10 +1,4 @@
-/**
- * @file pybind_parallel.cpp
- * @author beilsm
- * @version 1.0
- * @brief Parallel compute and vector operations bindings
- * @date 2025-07-01
- */
+
 #include "pybind_bindings.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>

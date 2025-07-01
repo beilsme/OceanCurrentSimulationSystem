@@ -176,6 +176,7 @@ set(CORE_SOURCES
         include/utils/ThreadPool.h
         include/utils/Logger.h
 
+
 )
 
 # GPU源文件（如果启用）
@@ -241,6 +242,7 @@ if(BUILD_CSHARP_BINDINGS)
             bindings/csharp/CppCoreInterop.cpp
             bindings/csharp/ParticleSimulatorWrapper.cpp
             bindings/csharp/GridDataWrapper.cpp
+            
     )
 
     add_library(OceanSimCSharp SHARED ${CSHARP_BINDING_SOURCES})
@@ -272,6 +274,7 @@ if(BUILD_PYTHON_BINDINGS)
                 bindings/python/pybind_advection.cpp
                 bindings/python/pybind_current_solver.cpp
                 bindings/python/pybind_particle_sim.cpp
+                
         )
 
 

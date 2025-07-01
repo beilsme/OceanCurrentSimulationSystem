@@ -307,6 +307,17 @@ namespace OceanSimulation {
              */
             void warmupSimd();
 
+            /**
+              * @brief 标量回退实现 - 向量乘法
+              * @param a 输入向量A
+              * @param b 输入向量B  
+              * @param result 输出向量
+              * @param size 向量长度
+              */
+            void vectorAddScalar(const float* a, const float* b, float* result, size_t size);
+            void vectorMulScalar(const float* a, const float* b, float* result, size_t size);
+            
+            
         private:
             // AVX2实现
             void vectorAddAVX2(const float* a, const float* b, float* result, size_t size);
@@ -316,9 +327,8 @@ namespace OceanSimulation {
             void vectorAddSSE(const float* a, const float* b, float* result, size_t size);
             void vectorMulSSE(const float* a, const float* b, float* result, size_t size);
 
-            // 标量回退实现
-            void vectorAddScalar(const float* a, const float* b, float* result, size_t size);
-            void vectorMulScalar(const float* a, const float* b, float* result, size_t size);
+            
+           
         };
 
     } // namespace Core
