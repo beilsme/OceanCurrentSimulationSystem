@@ -156,7 +156,7 @@ set(CORE_SOURCES
         src/utils/MathUtils.cpp
         src/utils/ThreadPool.cpp
         src/utils/Logger.cpp
-        
+
         include/algorithms/FiniteDifferenceSolver.h
         include/algorithms/RungeKuttaSolver.h
         include/algorithms/ParallelComputeEngine.h
@@ -268,11 +268,11 @@ if(BUILD_PYTHON_BINDINGS)
 
 
         pybind11_add_module(OceanSimPython ${PYTHON_BINDING_SOURCES})
-        target_include_directories(OceanSimPython PRIVATE ${PY_INC})  
+        target_include_directories(OceanSimPython PRIVATE ${PY_INC})
         target_link_libraries(OceanSimPython
                 PRIVATE
                 CppCore
-                ${PY_LIB})                                            
+                ${PY_LIB})
 
         # Python模块属性
         set_target_properties(OceanSimPython PROPERTIES
