@@ -10,10 +10,10 @@ cmake .. -DBUILD_PYTHON_BINDINGS=ON \
 -DPython3_FIND_FRAMEWORK=NEVER
 
 # 3️⃣ 构建
-cmake --build . --target OceanSimPython -j$(sysctl -n hw.ncpu)
+cmake --build . --target oceansim -j$(sysctl -n hw.ncpu)
 
 # 4️⃣ 安装到 venv
-cp bindings/python/OceanSimPython.cpython-312-darwin*.so \
+cp bindings/python/oceansim.cpython-312-darwin*.so \
 ../../PythonEngine/.venv/lib/python3.12/site-packages/
 # 删掉之前写的 alias 文件（如果有）
-rm -f ../../PythonEngine/.venv/lib/python3.12/site-packages/OceanSimPython.py
+rm -f ../../PythonEngine/.venv/lib/python3.12/site-packages/oceansim.py

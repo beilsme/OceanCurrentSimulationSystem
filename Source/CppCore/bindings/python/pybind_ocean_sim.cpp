@@ -18,7 +18,7 @@
 namespace py = pybind11;
 using namespace OceanSim;
 
-PYBIND11_MODULE(OceanSimPython, m) {
+PYBIND11_MODULE(oceansim, m) {
 m.doc() = "OceanSim C++ Core Python Bindings";
 m.attr("__version__") = "1.0.0";
 

@@ -267,15 +267,15 @@ if(BUILD_PYTHON_BINDINGS)
         )
 
 
-        pybind11_add_module(OceanSimPython ${PYTHON_BINDING_SOURCES})
-        target_include_directories(OceanSimPython PRIVATE ${PY_INC})
-        target_link_libraries(OceanSimPython
+        pybind11_add_module(oceansim ${PYTHON_BINDING_SOURCES})
+        target_include_directories(oceansim PRIVATE ${PY_INC})
+        target_link_libraries(oceansim
                 PRIVATE
                 CppCore
                 ${PY_LIB})
 
         # Python模块属性
-        set_target_properties(OceanSimPython PROPERTIES
+        set_target_properties(oceansim PROPERTIES
                 OUTPUT_NAME "oceansim"
         )
     else()
@@ -340,7 +340,7 @@ if(BUILD_CSHARP_BINDINGS)
 endif()
 
 if(BUILD_PYTHON_BINDINGS AND pybind11_FOUND)
-    install(TARGETS OceanSimPython
+    install(TARGETS oceansim
             LIBRARY DESTINATION lib/python
     )
 endif()
