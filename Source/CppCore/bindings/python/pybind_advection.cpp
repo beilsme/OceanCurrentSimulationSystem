@@ -11,7 +11,7 @@ void bind_advection(py::module_ &m)
                          Solver::NumericalScheme,
                          Solver::TimeIntegration>(),
                  py::arg("grid"),
-                 py::arg("scheme") = Solver::NumericalScheme::TVD_SUPERBEE,
-                 py::arg("time_method") = Solver::TimeIntegration::RUNGE_KUTTA_4)
+                 py::arg("scheme"),
+                 py::arg("time_method"))
             .def("solve", &Solver::solve);
 }
