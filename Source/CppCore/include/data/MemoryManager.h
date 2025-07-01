@@ -2,6 +2,7 @@
 #define MEMORY_MANAGER_H
 
 #include <memory>
+#include <functional>
 #include <vector>
 #include <unordered_map>
 #include <mutex>
@@ -151,12 +152,15 @@ namespace OceanSimulation {
             bool isAligned(void* ptr, size_t alignment) const;
 
         public:
+            
+            
+            
             /**
              * @brief 构造函数
              * @param config 内存管理器配置
              */
-            explicit MemoryManager(const Config& config = {});
-
+            explicit MemoryManager(const Config& config);
+            MemoryManager();
             /**
              * @brief 析构函数
              */

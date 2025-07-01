@@ -85,6 +85,12 @@ namespace OceanSimulation {
                 std::chrono::system_clock::time_point startTime;
             };
 
+            struct TaskStatsSnapshot {
+                uint64_t submitted;
+                uint64_t completed;
+            };
+
+
             /**
              * @brief 线程统计信息
              */
@@ -97,6 +103,12 @@ namespace OceanSimulation {
                 std::atomic<bool> isActive{false};
                 std::chrono::system_clock::time_point lastActivity;
             };
+
+            struct ThreadStatsSnapshot {
+                uint64_t executed;
+                uint64_t idleLoops;
+            };
+
 
         private:
             /**
@@ -176,7 +188,8 @@ namespace OceanSimulation {
              * @brief 构造函数
              * @param config 线程池配置
              */
-            explicit ThreadPool(const Config& config = Config{});
+            explicit ThreadPool(const Config& config);
+            ThreadPool();
 
             /**
              * @brief 析构函数
@@ -312,18 +325,18 @@ namespace OceanSimulation {
             /**
              * @brief 获取任务统计信息
              */
-            TaskStats getTaskStats() const;
+            TaskStatsSnapshot getTaskStats() const;
 
             /**
              * @brief 获取线程统计信息
              * @param threadId 线程ID
              */
-            ThreadStats getThreadStats(uint32_t threadId) const;
+            ThreadStatsSnapshot getThreadStats(uint32_t threadId) const;
 
             /**
              * @brief 获取所有线程统计信息
              */
-            std::vector<ThreadStats> getAllThreadStats() const;
+            std::vector<ThreadStatsSnapshot> getAllThreadStats() const;
 
             /**
              * @brief 重置统计信息

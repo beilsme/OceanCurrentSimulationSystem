@@ -19,7 +19,9 @@ namespace OceanSimulation {
 
 // 线程本地存储
         thread_local MemoryManager* MemoryManager::threadLocalManager_ = nullptr;
-
+        
+        
+        
         MemoryManager::MemoryManager(const Config& config) : config_(config) {
             initializePools();
             lastGcTime_ = std::chrono::system_clock::now();
@@ -38,6 +40,9 @@ namespace OceanSimulation {
             std::cout << "  最大池数: " << config_.maxPoolCount << std::endl;
             std::cout << "  默认对齐: " << static_cast<int>(config_.defaultAlignment) << " 字节" << std::endl;
         }
+
+        MemoryManager::MemoryManager() : MemoryManager(Config{}) {}
+
 
         MemoryManager::~MemoryManager() {
             if (config_.enableLeakDetection) {

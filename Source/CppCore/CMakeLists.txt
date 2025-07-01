@@ -9,7 +9,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # 构建选项
 option(BUILD_TESTS "构建测试程序" ON)
-option(BUILD_PYTHON_BINDINGS "构建Python绑定" ON)
+option(BUILD_PYTHON_BINDINGS "构建Python绑定" OFF)
 option(BUILD_CSHARP_BINDINGS "构建C#绑定" ON)
 option(ENABLE_PROFILING "启用性能分析" ON)
 option(ENABLE_GPU_SUPPORT "启用GPU加速支持" OFF)
@@ -25,7 +25,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # 编译器特定设置
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -mavx2")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0 -DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -march=native")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2 -g")
@@ -162,7 +162,7 @@ set(CORE_SOURCES
         include/utils/MathUtils.h
         include/utils/ThreadPool.h
         include/utils/Logger.h
-        bindings/python/pybind_ocean_sim.cpp
+        $<$<BOOL:${BUILD_PYTHON_BINDINGS}>:bindings/python/pybind_ocean_sim.cpp>
 )
 
 # GPU源文件（如果启用）

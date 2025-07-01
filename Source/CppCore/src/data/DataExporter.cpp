@@ -27,6 +27,9 @@ namespace OceanSimulation {
             createOutputDirectory(config_.outputDirectory);
         }
 
+        DataExporter::DataExporter() : DataExporter(ExportConfig{}) {}
+
+
         DataExporter::~DataExporter() {
             // 清理资源
         }
@@ -252,7 +255,74 @@ namespace OceanSimulation {
             file.close();
             return true;
         }
-        
+
+        bool DataExporter::exportTrajectoriesToJSON(const ParticleTrajectory& trajectory,
+                                                    const std::string& filename) {
+            std::ofstream file(filename);
+            if (!file.is_open()) {
+                return false;
+            }
+
+            file << "{\n  \"particles\": [\n";
+            for (size_t p = 0; p < trajectory.particleIds.size(); ++p) {
+                file << "    {\"id\": " << trajectory.particleIds[p] << ", \"path\": [";
+                for (size_t t = 0; t < trajectory.timestamps.size(); ++t) {
+                    file << "[" << trajectory.positions[p][t * 3] << ","
+                         << trajectory.positions[p][t * 3 + 1] << ","
+                         << trajectory.positions[p][t * 3 + 2] << "]";
+                    if (t + 1 < trajectory.timestamps.size()) file << ", ";
+                }
+                file << "]}";
+                if (p + 1 < trajectory.particleIds.size()) file << ",";
+                file << "\n";
+            }
+            file << "  ]\n}\n";
+            file.close();
+            return true;
+        }
+
+        bool DataExporter::exportTrajectoriesToVTK(const ParticleTrajectory& trajectory,
+                                                   const std::string& filename) {
+            std::ofstream file(filename);
+            if (!file.is_open()) {
+                return false;
+            }
+
+            file << "# vtk DataFile Version 3.0\nTrajectories\nASCII\nDATASET POLYDATA\n";
+            size_t numPoints = trajectory.particleIds.size() * trajectory.timestamps.size();
+            file << "POINTS " << numPoints << " float\n";
+            for (size_t p = 0; p < trajectory.particleIds.size(); ++p) {
+                for (size_t t = 0; t < trajectory.timestamps.size(); ++t) {
+                    file << trajectory.positions[p][t * 3] << " "
+                         << trajectory.positions[p][t * 3 + 1] << " "
+                         << trajectory.positions[p][t * 3 + 2] << "\n";
+                }
+            }
+            file.close();
+            return true;
+        }
+
+        bool DataExporter::exportTrajectoriesToBinary(const ParticleTrajectory& trajectory,
+                                                      const std::string& filename) {
+            std::ofstream file(filename, std::ios::binary);
+            if (!file.is_open()) return false;
+
+            size_t particleCount = trajectory.particleIds.size();
+            size_t timeCount = trajectory.timestamps.size();
+            file.write(reinterpret_cast<const char*>(&particleCount), sizeof(size_t));
+            file.write(reinterpret_cast<const char*>(&timeCount), sizeof(size_t));
+            file.write(reinterpret_cast<const char*>(trajectory.timestamps.data()),
+                       timeCount * sizeof(double));
+            for (size_t p = 0; p < particleCount; ++p) {
+                file.write(reinterpret_cast<const char*>(&trajectory.particleIds[p]), sizeof(size_t));
+                file.write(reinterpret_cast<const char*>(trajectory.positions[p].data()),
+                           timeCount * 3 * sizeof(float));
+                file.write(reinterpret_cast<const char*>(trajectory.velocities[p].data()),
+                           timeCount * 3 * sizeof(float));
+            }
+            file.close();
+            return true;
+        }
         
         
         

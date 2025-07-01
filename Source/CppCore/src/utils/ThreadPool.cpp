@@ -96,6 +96,8 @@ namespace OceanSimulation {
             std::cout << std::endl;
         }
 
+        ThreadPool::ThreadPool() : ThreadPool(Config{}) {}
+        
         ThreadPool::~ThreadPool() {
             stop(false); // 强制停止
 
@@ -528,32 +530,36 @@ namespace OceanSimulation {
         }
 
 // 统计和监控实现
-        ThreadPool::TaskStats ThreadPool::getTaskStats() const {
-            TaskStats stats{};
-            stats.tasksSubmitted = taskStats_.tasksSubmitted.load();
-            stats.tasksCompleted = taskStats_.tasksCompleted.load();
-            stats.tasksRejected = taskStats_.tasksRejected.load();
-            stats.totalExecutionTime = taskStats_.totalExecutionTime.load();
-            stats.averageWaitTime = taskStats_.averageWaitTime.load();
-            stats.peakQueueSize = taskStats_.peakQueueSize.load();
-            stats.startTime = taskStats_.startTime;
-            return stats;
+        ThreadPool::TaskStatsSnapshot ThreadPool::getTaskStats() const {
+            TaskStatsSnapshot snapshot{};
+            snapshot.submitted = taskStats_.tasksSubmitted.load();
+            snapshot.completed = taskStats_.tasksCompleted.load();
+            return snapshot;
         }
 
-        ThreadPool::ThreadStats ThreadPool::getThreadStats(uint32_t threadId) const {
+        ThreadPool::ThreadStatsSnapshot ThreadPool::getThreadStats(uint32_t threadId) const {
+            ThreadStatsSnapshot snapshot{};
             if (threadId >= threadStats_.size()) {
-                return ThreadStats{};
+                return snapshot;
             }
+
             const auto& src = *threadStats_[threadId];
-            ThreadStats stats{};
-            stats.threadId = src.threadId;
-            stats.tasksExecuted = src.tasksExecuted.load();
-            stats.totalWorkTime = src.totalWorkTime.load();
-            stats.idleTime = src.idleTime.load();
-            stats.workSteals = src.workSteals.load();
-            stats.isActive = src.isActive.load();
-            stats.lastActivity = src.lastActivity;
-            return stats;
+            snapshot.executed = src.tasksExecuted.load();
+            snapshot.idleLoops = src.idleTime.load();
+            return snapshot;
+        }
+
+        std::vector<ThreadPool::ThreadStatsSnapshot> ThreadPool::getAllThreadStats() const {
+            std::vector<ThreadStatsSnapshot> snapshots;
+            snapshots.reserve(threadStats_.size());
+            for (const auto& statsPtr : threadStats_) {
+                ThreadStatsSnapshot snap{};
+                snap.executed = statsPtr->tasksExecuted.load();
+                snap.idleLoops = statsPtr->idleTime.load();
+                snapshots.push_back(snap);
+            }
+
+            return snapshots;
         }
 
         void ThreadPool::printStats() const {
