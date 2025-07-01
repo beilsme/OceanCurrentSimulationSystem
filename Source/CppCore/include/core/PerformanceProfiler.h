@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <atomic>
 #include <thread>
 #include <fstream>
 #include <iostream>
@@ -74,7 +75,7 @@ namespace OceanSim {
             private:
                 size_t peak_memory_ = 0;
                 std::vector<std::pair<std::string, size_t>> memory_history_;
-                std::mutex memory_mutex_;
+                mutable std::mutex memory_mutex_;
             };
 
             // 单例模式

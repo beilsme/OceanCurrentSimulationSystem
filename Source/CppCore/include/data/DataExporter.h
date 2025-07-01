@@ -349,3 +349,38 @@ namespace OceanSimulation {
              * @return 导出是否成功
              */
             bool exportToCSV(const std::vector<std::vector<double>>& data,
+                             const std::vector<std::string>& headers,
+                             const std::string& filename = "");
+
+            /**
+             * @brief 导出为JSON格式
+             * @param data 数据
+             * @param filename 文件名
+             * @return 导出是否成功
+             */
+            bool exportToJSON(const std::unordered_map<std::string, std::vector<double>>& data,
+                              const std::string& filename = "");
+
+            /**
+             * @brief 导出为VTK格式
+             * @param data 网格数据
+             * @param filename 文件名
+             * @return 导出是否成功
+             */
+            bool exportToVTK(const GridData& data, const std::string& filename);
+
+        private:
+            bool exportNetCDFImpl(const std::string& filename, const void* data);
+            bool exportHDF5Impl(const std::string& filename, const void* data);
+            bool exportCSVImpl(const std::string& filename, const void* data);
+            bool exportBinaryImpl(const std::string& filename, const void* data);
+            bool exportJSONImpl(const std::string& filename, const void* data);
+            bool exportVTKImpl(const std::string& filename, const void* data);
+            bool exportMATLABImpl(const std::string& filename, const void* data);
+            bool exportParaViewImpl(const std::string& filename, const void* data);
+        };
+
+    } // namespace Core
+} // namespace OceanSimulation
+
+#endif // DATA_EXPORTER_H
