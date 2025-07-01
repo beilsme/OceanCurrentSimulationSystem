@@ -27,7 +27,7 @@ namespace OceanSimulation {
             createOutputDirectory(config_.outputDirectory);
         }
 
-        DataExporter::DataExporter() : DataExporter(ExportConfig{}) {}
+
 
 
         DataExporter::~DataExporter() {

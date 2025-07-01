@@ -9,7 +9,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # 构建选项
 option(BUILD_TESTS "构建测试程序" ON)
-option(BUILD_PYTHON_BINDINGS "构建Python绑定" OFF)
+option(BUILD_PYTHON_BINDINGS "构建Python绑定" ON)
 option(BUILD_CSHARP_BINDINGS "构建C#绑定" ON)
 option(ENABLE_PROFILING "启用性能分析" ON)
 option(ENABLE_GPU_SUPPORT "启用GPU加速支持" OFF)
@@ -104,6 +104,15 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/eigen
 )
+# ======== 手动指定 Python 头文件 & 动态库 ========
+set(PY_INC "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/include")
+set(PY_LIB "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/lib/libpython3.12.dylib")
+
+include_directories(${PY_INC})                     # 让所有目标都能找到 <Python.h>
+link_directories("${CMAKE_CURRENT_SOURCE_DIR}/dependencies/python/lib")   # 供链接器搜索
+# ===============================================
+
+
 
 # 平台特定设置
 if(APPLE)
@@ -259,7 +268,11 @@ if(BUILD_PYTHON_BINDINGS)
 
 
         pybind11_add_module(OceanSimPython ${PYTHON_BINDING_SOURCES})
-        target_link_libraries(OceanSimPython PRIVATE CppCore)
+        target_include_directories(OceanSimPython PRIVATE ${PY_INC})  
+        target_link_libraries(OceanSimPython
+                PRIVATE
+                CppCore
+                ${PY_LIB})                                            
 
         # Python模块属性
         set_target_properties(OceanSimPython PROPERTIES
