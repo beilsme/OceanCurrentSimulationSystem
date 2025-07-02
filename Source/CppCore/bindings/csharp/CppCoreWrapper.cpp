@@ -26,11 +26,19 @@
 #include "core/PerformanceProfiler.h"
 #include "utils/Logger.h"
 
+
 #include <cstring>
 #include <stdexcept>
 #include <memory>
+#include <vector>
+#include <algorithm>
+#include <Eigen/Dense>
 
 using namespace OceanSim;
+using namespace OceanSim::Data;
+using namespace OceanSim::Core;
+using namespace OceanSim::Algorithms;
+using namespace OceanSim::Utils;
 
 // ===========================================
 // 内部辅助函数
