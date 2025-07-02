@@ -1,5 +1,5 @@
 // ==============================================================================
-// 文件路径：Source/CSharpEngine/Core/OceanSimWrapper.cs
+// 文件路径：Source/CSharpClient/Core/OceanSimWrapper.cs
 // 作者：beilsm
 // 版本号：v1.0.0
 // 创建时间：2025-07-01

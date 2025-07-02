@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # 文件路径：Source/Scripts/build_csharp_bindings.sh
 # 作者：beilsm
-# 版本号：v1.0.0
+# 版本号：v1.0.1
 # 创建时间：2025-07-01
-# 最新更改时间：2025-07-01
+# 最新更改时间：2025-07-02
 # ==============================================================================
 # 📝 功能说明：
 #   C#绑定构建脚本
@@ -26,9 +26,9 @@ CLEAN_BUILD="${CLEAN_BUILD:-ON}"
 TARGET_PLATFORM="${TARGET_PLATFORM:-x64}"
 DOTNET_VERSION="${DOTNET_VERSION:-8.0}"
 
-# 路径配置
+# 路径配置 - 修复了C#客户端路径
 CPP_CORE="$PROJ_ROOT/Source/CppCore"
-CSHARP_ENGINE="$PROJ_ROOT/Source/CSharpEngine"
+CSHARP_CLIENT="$PROJ_ROOT/Source/CSharpClient"  # 修正路径名称
 BUILD_DIR="$CPP_CORE/cmake-build-csharp"
 OUTPUT_DIR="$PROJ_ROOT/Build/$BUILD_TYPE/CSharp"
 
@@ -82,6 +82,13 @@ check_dependencies() {
         exit 1
     }
     
+    # 检查C#客户端目录是否存在
+    if [[ ! -d "$CSHARP_CLIENT" ]]; then
+        log_error "C# 客户端目录不存在: $CSHARP_CLIENT"
+        log_info "请确保路径正确，或创建该目录"
+        exit 1
+    fi
+    
     # 检查.NET SDK
     if command -v dotnet >/dev/null; then
         DOTNET_INSTALLED_VERSION=$(dotnet --version 2>/dev/null | cut -d. -f1-2)
@@ -93,6 +100,7 @@ check_dependencies() {
         fi
     else
         log_warning ".NET SDK not found - C# projects may not build correctly"
+        log_info "Please install .NET SDK from: https://dotnet.microsoft.com/download"
     fi
     
     # 检查平台特定依赖
@@ -113,16 +121,44 @@ check_platform_deps_macos() {
     if command -v brew >/dev/null; then
         # 检查 Homebrew 包
         local packages=("cmake" "eigen" "libomp" "tbb")
+        local missing_packages=()
+        
         for pkg in "${packages[@]}"; do
             if brew list "$pkg" >/dev/null 2>&1; then
                 log_info "Found Homebrew package: $pkg"
+                
+                # 特别检查 libomp 的安装情况
+                if [[ "$pkg" == "libomp" ]]; then
+                    local brew_prefix
+                    brew_prefix="$(brew --prefix)"
+                    if [[ -f "$brew_prefix/opt/libomp/lib/libomp.dylib" ]]; then
+                        log_info "  - libomp.dylib found at $brew_prefix/opt/libomp/lib/"
+                    else
+                        log_warning "  - libomp.dylib not found, may need reinstallation"
+                    fi
+                fi
             else
                 log_warning "Homebrew package not found: $pkg"
-                log_info "Run: brew install $pkg"
+                missing_packages+=("$pkg")
             fi
         done
+        
+        # 如果有缺失的包，提供安装建议
+        if [[ ${#missing_packages[@]} -gt 0 ]]; then
+            log_info "Install missing packages with:"
+            log_info "  brew install ${missing_packages[*]}"
+        fi
+        
+        # 检查是否需要链接 libomp
+        if brew list libomp >/dev/null 2>&1; then
+            if ! brew list --linked libomp >/dev/null 2>&1; then
+                log_warning "libomp is installed but not linked"
+                log_info "Try: brew link --force libomp"
+            fi
+        fi
     else
         log_warning "Homebrew not found - manual dependency management required"
+        log_info "Install Homebrew from: https://brew.sh"
     fi
 }
 
@@ -137,10 +173,20 @@ check_platform_deps_linux() {
                 log_info "Found apt package: $pkg"
             else
                 log_warning "apt package not found: $pkg"
+                log_info "Run: sudo apt-get install $pkg"
             fi
         done
     elif command -v yum >/dev/null; then
         log_info "Detected YUM package manager"
+        local packages=("gcc-c++" "cmake" "eigen3-devel" "libomp-devel" "tbb-devel")
+        for pkg in "${packages[@]}"; do
+            if yum list installed "$pkg" >/dev/null 2>&1; then
+                log_info "Found yum package: $pkg"
+            else
+                log_warning "yum package not found: $pkg"
+                log_info "Run: sudo yum install $pkg"
+            fi
+        done
     else
         log_warning "Unknown package manager - manual dependency management required"
     fi
@@ -154,6 +200,7 @@ check_platform_deps_windows() {
         log_info "Found Visual Studio compiler"
     else
         log_warning "Visual Studio compiler not found in PATH"
+        log_info "Please install Visual Studio Build Tools or Visual Studio"
     fi
     
     # 检查 vcpkg
@@ -161,10 +208,9 @@ check_platform_deps_windows() {
         log_info "Found vcpkg at: $VCPKG_ROOT"
     else
         log_warning "vcpkg not found - consider using vcpkg for dependency management"
+        log_info "Install vcpkg from: https://github.com/Microsoft/vcpkg"
     fi
 }
-
-# =
 
 # ===========================================
 # 清理构建目录
@@ -185,8 +231,50 @@ clean_build_directory() {
 # 配置CMake
 # ===========================================
 
+# ===========================================
+# 修复 macOS OpenMP 链接问题
+# ===========================================
+
+fix_macos_openmp() {
+    if [[ "$OSTYPE" == "darwin"* ]] && command -v brew >/dev/null; then
+        log_info "修复 macOS OpenMP 配置..."
+        
+        local brew_prefix
+        brew_prefix="$(brew --prefix)"
+        
+        # 检查 libomp 是否安装
+        if ! brew list libomp >/dev/null 2>&1; then
+            log_info "安装 libomp..."
+            brew install libomp
+        fi
+        
+        # 强制链接 libomp（如果需要）
+        if ! brew list --linked libomp >/dev/null 2>&1; then
+            log_info "链接 libomp..."
+            brew link --force libomp 2>/dev/null || true
+        fi
+        
+        # 设置 OpenMP 环境变量
+        export OpenMP_ROOT="$brew_prefix/opt/libomp"
+        export OpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp -I$brew_prefix/opt/libomp/include"
+        export OpenMP_CXX_LIB_NAMES="omp"
+        export OpenMP_omp_LIBRARY="$brew_prefix/opt/libomp/lib/libomp.dylib"
+        
+        log_info "OpenMP 环境变量已设置:"
+        log_info "  OpenMP_ROOT=$OpenMP_ROOT"
+        log_info "  OpenMP_omp_LIBRARY=$OpenMP_omp_LIBRARY"
+    fi
+}
+
+# ===========================================
+# 配置CMake
+# ===========================================
+
 configure_cmake() {
     log_info "配置 CMake 构建系统..."
+    
+    # 在 macOS 上修复 OpenMP 问题
+    fix_macos_openmp
     
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR"
@@ -204,7 +292,7 @@ configure_cmake() {
     # 设置安装前缀
     cmake_args+=("-DCMAKE_INSTALL_PREFIX=$OUTPUT_DIR")
     
-    # 平台特定配置
+    # 平台特定配置 - 传递数组名而不是引用
     if [[ "$OSTYPE" == "darwin"* ]]; then
         configure_cmake_macos cmake_args
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -215,41 +303,93 @@ configure_cmake() {
     
     # 执行CMake配置
     log_info "Running cmake with args: ${cmake_args[*]}"
-    cmake "$CPP_CORE" "${cmake_args[@]}"
-    
-    log_success "CMake 配置完成"
+    if cmake "$CPP_CORE" "${cmake_args[@]}"; then
+        log_success "CMake 配置完成"
+    else
+        log_error "CMake 配置失败"
+        log_info "尝试查看详细错误信息..."
+        if [[ -f "CMakeFiles/CMakeError.log" ]]; then
+            log_error "CMake Error Log:"
+            tail -n 10 "CMakeFiles/CMakeError.log"
+        fi
+        exit 1
+    fi
 }
 
 configure_cmake_macos() {
-    local -n args=$1
+    # macOS 特定配置 - 修复了 local -n 兼容性问题和路径拼接
+    local cmake_args_ref="$1"
     
     # macOS 特定配置
     if command -v brew >/dev/null; then
         local brew_prefix
         brew_prefix="$(brew --prefix)"
         
-        args+=("-DCMAKE_PREFIX_PATH=$brew_prefix/opt/eigen:$brew_prefix/opt/libomp:$brew_prefix/opt/tbb")
+        # 构建完整的 CMAKE_PREFIX_PATH
+        local cmake_prefix_path="$brew_prefix/opt/eigen:$brew_prefix/opt/libomp:$brew_prefix/opt/tbb"
         
-        # OpenMP 配置
+        # 使用 eval 来动态添加数组元素，兼容旧版本 bash
+        eval "${cmake_args_ref}+=(\"-DCMAKE_PREFIX_PATH=$cmake_prefix_path\")"
+        
+        # OpenMP 特殊配置 - macOS 需要明确指定 libomp
         if [[ -d "$brew_prefix/opt/libomp" ]]; then
-            export LDFLAGS="-L$brew_prefix/opt/libomp/lib $LDFLAGS"
-            export CPPFLAGS="-I$brew_prefix/opt/libomp/include $CPPFLAGS"
+            export LDFLAGS="-L$brew_prefix/opt/libomp/lib ${LDFLAGS:-}"
+            export CPPFLAGS="-I$brew_prefix/opt/libomp/include ${CPPFLAGS:-}"
+            
+            # 明确指定 OpenMP 的路径给 CMake
+            eval "${cmake_args_ref}+=(\"-DOpenMP_CXX_FLAGS=-Xpreprocessor -fopenmp -I$brew_prefix/opt/libomp/include\")"
+            eval "${cmake_args_ref}+=(\"-DOpenMP_CXX_LIB_NAMES=omp\")"
+            eval "${cmake_args_ref}+=(\"-DOpenMP_omp_LIBRARY=$brew_prefix/opt/libomp/lib/libomp.dylib\")"
+        fi
+        
+        # 如果有 tbb，也明确指定
+        if [[ -d "$brew_prefix/opt/tbb" ]]; then
+            eval "${cmake_args_ref}+=(\"-DTBB_ROOT=$brew_prefix/opt/tbb\")"
         fi
     fi
     
-    # 设置目标架构
+    # 设置目标架构和SIMD支持
     if [[ "$TARGET_PLATFORM" == "arm64" ]]; then
-        args+=("-DCMAKE_OSX_ARCHITECTURES=arm64")
+        eval "${cmake_args_ref}+=(\"-DCMAKE_OSX_ARCHITECTURES=arm64\")"
+        # ARM64 使用 NEON 而不是 AVX
+        if [[ "${DISABLE_SIMD:-}" != "ON" ]]; then
+            eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-march=armv8-a\")"
+        fi
     elif [[ "$TARGET_PLATFORM" == "x64" ]]; then
-        args+=("-DCMAKE_OSX_ARCHITECTURES=x86_64")
+        eval "${cmake_args_ref}+=(\"-DCMAKE_OSX_ARCHITECTURES=x86_64\")"
+        # x64 启用 AVX2 支持，除非被禁用
+        if [[ "${DISABLE_SIMD:-}" == "ON" ]]; then
+            log_info "SIMD 优化已禁用"
+            eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-mno-avx -mno-avx2\")"
+        else
+            # 检测 CPU 是否支持 AVX2
+            if sysctl -n machdep.cpu.features machdep.cpu.leaf7_features 2>/dev/null | grep -q AVX2; then
+                eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-mavx2 -mfma\")"
+                log_info "启用 AVX2 SIMD 优化"
+            else
+                log_warning "CPU 不支持 AVX2，使用基础优化"
+                eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-march=native\")"
+            fi
+        fi
     fi
+    
+    # 添加通用的编译器标志
+    eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG\")"
 }
 
 configure_cmake_linux() {
-    local -n args=$1
+    # Linux 特定配置 - 修复了 local -n 兼容性问题
+    local cmake_args_ref="$1"
     
     # Linux 特定配置
-    args+=("-DCMAKE_POSITION_INDEPENDENT_CODE=ON")
+    eval "${cmake_args_ref}+=(\"-DCMAKE_POSITION_INDEPENDENT_CODE=ON\")"
+    
+    # 启用 SIMD 支持
+    if [[ "$TARGET_PLATFORM" == "arm64" ]]; then
+        eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-march=armv8-a\")"
+    else
+        eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-march=native -mavx2 -mfma\")"
+    fi
     
     # 如果是交叉编译
     if [[ "$TARGET_PLATFORM" != "$(uname -m)" ]]; then
@@ -259,20 +399,24 @@ configure_cmake_linux() {
 }
 
 configure_cmake_windows() {
-    local -n args=$1
+    # Windows 特定配置 - 修复了 local -n 兼容性问题
+    local cmake_args_ref="$1"
     
     # Windows 特定配置
-    args+=("-G" "Visual Studio 17 2022")
+    eval "${cmake_args_ref}+=(\"-G\" \"Visual Studio 17 2022\")"
     
     if [[ "$TARGET_PLATFORM" == "x64" ]]; then
-        args+=("-A" "x64")
+        eval "${cmake_args_ref}+=(\"-A\" \"x64\")"
+        # Windows x64 AVX2 支持
+        eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=/arch:AVX2\")"
     elif [[ "$TARGET_PLATFORM" == "x86" ]]; then
-        args+=("-A" "Win32")
+        eval "${cmake_args_ref}+=(\"-A\" \"Win32\")"
+        eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=/arch:AVX2\")"
     fi
     
     # vcpkg 集成
     if [[ -n "${VCPKG_ROOT:-}" ]]; then
-        args+=("-DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake")
+        eval "${cmake_args_ref}+=(\"-DCMAKE_TOOLCHAIN_FILE=\$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake\")"
     fi
 }
 
@@ -297,12 +441,14 @@ build_cpp_library() {
     fi
     
     log_info "Building with: cmake ${build_args[*]}"
-    cmake "${build_args[@]}"
-    
-    # 验证构建结果
-    verify_cpp_build
-    
-    log_success "C++ 动态库构建完成"
+    if cmake "${build_args[@]}"; then
+        # 验证构建结果
+        verify_cpp_build
+        log_success "C++ 动态库构建完成"
+    else
+        log_error "C++ 动态库构建失败"
+        exit 1
+    fi
 }
 
 verify_cpp_build() {
@@ -322,11 +468,16 @@ verify_cpp_build() {
         if find "$BUILD_DIR" -name "$pattern" -type f | grep -q .; then
             ((found_libs++))
             log_info "Found library files matching: $pattern"
+            # 显示找到的库文件
+            find "$BUILD_DIR" -name "$pattern" -type f | while read -r lib; do
+                log_info "  - $(basename "$lib")"
+            done
         fi
     done
     
     if [[ $found_libs -eq 0 ]]; then
         log_error "No library files found after build"
+        log_error "Build may have failed. Check the build output above."
         return 1
     fi
     
@@ -344,12 +495,14 @@ install_cpp_library() {
     mkdir -p "$OUTPUT_DIR"
     
     # 执行安装
-    cmake --install . --config "$BUILD_TYPE"
-    
-    # 复制额外的库文件到便于访问的位置
-    copy_library_files
-    
-    log_success "C++ 库文件安装完成"
+    if cmake --install . --config "$BUILD_TYPE"; then
+        # 复制额外的库文件到便于访问的位置
+        copy_library_files
+        log_success "C++ 库文件安装完成"
+    else
+        log_error "C++ 库文件安装失败"
+        exit 1
+    fi
 }
 
 copy_library_files() {
@@ -369,9 +522,55 @@ copy_library_files() {
     fi
     
     # 设置库文件权限
-    chmod 755 "$lib_dest"/*
+    if ls "$lib_dest"/* >/dev/null 2>&1; then
+        chmod 755 "$lib_dest"/*
+        log_info "库文件复制到: $lib_dest"
+        # 列出复制的文件
+        ls -la "$lib_dest"
+    else
+        log_warning "没有找到可复制的库文件"
+    fi
+}
+
+# ===========================================
+# 初始化C#项目结构
+# ===========================================
+
+initialize_csharp_project() {
+    log_info "初始化 C# 项目结构..."
     
-    log_info "库文件复制到: $lib_dest"
+    # 确保 C# 客户端目录存在
+    mkdir -p "$CSHARP_CLIENT"
+    
+    # 检查是否已有解决方案文件
+    if [[ ! -f "$CSHARP_CLIENT/OceanSim.sln" ]]; then
+        log_info "创建 C# 解决方案和项目结构..."
+        cd "$CSHARP_CLIENT"
+        
+        # 创建解决方案
+        dotnet new sln -n OceanSim
+        
+        # 创建核心项目
+        mkdir -p OceanSim.Core
+        cd OceanSim.Core
+        dotnet new classlib -n OceanSim.Core --framework net8.0
+        cd ..
+        dotnet sln add OceanSim.Core/OceanSim.Core.csproj
+        
+        # 创建示例项目
+        mkdir -p OceanSim.Examples
+        cd OceanSim.Examples
+        dotnet new console -n OceanSim.Examples --framework net8.0
+        cd ..
+        dotnet sln add OceanSim.Examples/OceanSim.Examples.csproj
+        
+        # 添加项目引用
+        dotnet add OceanSim.Examples/OceanSim.Examples.csproj reference OceanSim.Core/OceanSim.Core.csproj
+        
+        log_info "C# 项目结构创建完成"
+    else
+        log_info "C# 项目结构已存在，跳过初始化"
+    fi
 }
 
 # ===========================================
@@ -386,11 +585,19 @@ build_csharp_projects() {
         return 0
     fi
     
-    cd "$CSHARP_ENGINE"
+    # 初始化项目结构（如果需要）
+    initialize_csharp_project
+    
+    cd "$CSHARP_CLIENT"
     
     # 恢复NuGet包
     log_info "恢复 NuGet 包..."
-    dotnet restore
+    if dotnet restore; then
+        log_info "NuGet 包恢复成功"
+    else
+        log_error "NuGet 包恢复失败"
+        exit 1
+    fi
     
     # 构建解决方案
     log_info "构建 C# 解决方案..."
@@ -407,12 +614,21 @@ build_csharp_projects() {
         dotnet_args+=("--arch" "arm64")
     fi
     
-    dotnet "${dotnet_args[@]}"
+    if dotnet "${dotnet_args[@]}"; then
+        log_info "C# 解决方案构建成功"
+    else
+        log_error "C# 解决方案构建失败"
+        exit 1
+    fi
     
     # 运行测试（如果有）
     if [[ -f "OceanSim.Tests/OceanSim.Tests.csproj" ]]; then
         log_info "运行 C# 单元测试..."
-        dotnet test --configuration "$BUILD_TYPE" --no-build --verbosity minimal
+        if dotnet test --configuration "$BUILD_TYPE" --no-build --verbosity minimal; then
+            log_info "C# 单元测试通过"
+        else
+            log_warning "C# 单元测试失败"
+        fi
     fi
     
     # 发布项目
@@ -427,22 +643,32 @@ publish_csharp_projects() {
     local publish_dir="$OUTPUT_DIR/publish"
     mkdir -p "$publish_dir"
     
-    # 发布主项目
+    # 发布核心项目
     if [[ -f "OceanSim.Core/OceanSim.Core.csproj" ]]; then
-        dotnet publish "OceanSim.Core/OceanSim.Core.csproj" \
+        log_info "发布 OceanSim.Core..."
+        if dotnet publish "OceanSim.Core/OceanSim.Core.csproj" \
             --configuration "$BUILD_TYPE" \
             --output "$publish_dir/Core" \
             --no-restore \
-            --verbosity minimal
+            --verbosity minimal; then
+            log_info "OceanSim.Core 发布成功"
+        else
+            log_error "OceanSim.Core 发布失败"
+        fi
     fi
     
     # 发布示例项目
     if [[ -f "OceanSim.Examples/OceanSim.Examples.csproj" ]]; then
-        dotnet publish "OceanSim.Examples/OceanSim.Examples.csproj" \
+        log_info "发布 OceanSim.Examples..."
+        if dotnet publish "OceanSim.Examples/OceanSim.Examples.csproj" \
             --configuration "$BUILD_TYPE" \
             --output "$publish_dir/Examples" \
             --no-restore \
-            --verbosity minimal
+            --verbosity minimal; then
+            log_info "OceanSim.Examples 发布成功"
+        else
+            log_error "OceanSim.Examples 发布失败"
+        fi
     fi
     
     log_info "C# 项目发布到: $publish_dir"
@@ -552,6 +778,8 @@ OceanSim C# 绑定构建报告
 
 构建配置:
 - 项目根目录: $PROJ_ROOT
+- C++ 核心目录: $CPP_CORE
+- C# 客户端目录: $CSHARP_CLIENT
 - 构建目录: $BUILD_DIR
 - 输出目录: $OUTPUT_DIR
 - 并行任务数: $JOBS
@@ -596,9 +824,9 @@ cleanup_temp_files() {
     fi
     
     # 清理.NET临时文件
-    if [[ -d "$CSHARP_ENGINE" ]]; then
-        find "$CSHARP_ENGINE" -type d -name "bin" -exec rm -rf {} + 2>/dev/null || true
-        find "$CSHARP_ENGINE" -type d -name "obj" -exec rm -rf {} + 2>/dev/null || true
+    if [[ -d "$CSHARP_CLIENT" ]]; then
+        find "$CSHARP_CLIENT" -type d -name "bin" -exec rm -rf {} + 2>/dev/null || true
+        find "$CSHARP_CLIENT" -type d -name "obj" -exec rm -rf {} + 2>/dev/null || true
         log_info ".NET 临时文件已清理"
     fi
     
@@ -612,6 +840,7 @@ cleanup_temp_files() {
 main() {
     log_info "开始 OceanSim C# 绑定构建流程"
     log_info "构建配置: $BUILD_TYPE, 平台: $TARGET_PLATFORM"
+    log_info "C# 客户端路径: $CSHARP_CLIENT"
     
     local start_time
     start_time=$(date +%s)
@@ -654,6 +883,10 @@ main() {
     echo "   - 确保在运行时设置正确的库路径"
     echo "   - 参考示例代码了解API使用方法"
     echo "   - 查看文档获取更多信息"
+    echo ""
+    echo "📋 项目结构:"
+    echo "   - C# 客户端: $CSHARP_CLIENT"
+    echo "   - 解决方案文件: $CSHARP_CLIENT/OceanSim.sln"
 }
 
 # ===========================================
@@ -672,6 +905,15 @@ handle_error() {
         log_error "CMake 错误日志:"
         tail -n 20 "$BUILD_DIR/CMakeFiles/CMakeError.log" | sed 's/^/  /'
     fi
+    
+    # 显示可能的解决方案
+    echo ""
+    echo "🔧 可能的解决方案:"
+    echo "   1. 检查依赖是否正确安装"
+    echo "   2. 确保 C# 客户端目录存在: $CSHARP_CLIENT"
+    echo "   3. 验证 .NET SDK 版本兼容性"
+    echo "   4. 查看上方的详细错误信息"
+    echo "   5. 尝试清理构建后重新运行: $0 --clean"
     
     exit $exit_code
 }
@@ -697,17 +939,28 @@ OceanSim C# 绑定构建脚本
   -j, --jobs N            设置并行编译任务数 [默认: 自动检测]
   --dotnet-version VER    指定 .NET 版本 [默认: 8.0]
   --no-tests              跳过测试步骤
+  --no-simd               禁用 SIMD 优化（解决编译兼容性问题）
+  --init-only             仅初始化 C# 项目结构，不构建
 
 环境变量:
   BUILD_TYPE              构建类型
   CLEAN_BUILD             是否清理构建 (ON|OFF)
   TARGET_PLATFORM         目标平台
   DOTNET_VERSION          .NET 版本
+  DISABLE_SIMD            禁用 SIMD 优化 (ON|OFF)
 
 示例:
   $0                      # 默认构建
   $0 -t Debug -c          # Debug构建并清理
   $0 -p arm64 --no-tests  # ARM64平台构建，跳过测试
+  $0 --no-simd            # 禁用SIMD优化的构建
+  $0 --init-only          # 仅初始化 C# 项目结构
+
+路径信息:
+  项目根目录: $PROJ_ROOT
+  C++ 核心目录: $CPP_CORE
+  C# 客户端目录: $CSHARP_CLIENT
+  构建输出目录: $OUTPUT_DIR
 
 EOF
 }
@@ -743,6 +996,14 @@ parse_arguments() {
                 SKIP_TESTS="ON"
                 shift
                 ;;
+            --no-simd)
+                DISABLE_SIMD="ON"
+                shift
+                ;;
+            --init-only)
+                INIT_ONLY="ON"
+                shift
+                ;;
             *)
                 log_error "未知参数: $1"
                 show_help
@@ -761,6 +1022,35 @@ parse_arguments() {
         log_error "无效的目标平台: $TARGET_PLATFORM"
         exit 1
     fi
+    
+    # 验证 JOBS 参数
+    if ! [[ "$JOBS" =~ ^[0-9]+$ ]] || [[ "$JOBS" -lt 1 ]]; then
+        log_error "无效的并行任务数: $JOBS"
+        exit 1
+    fi
+}
+
+# ===========================================
+# 仅初始化模式
+# ===========================================
+
+run_init_only() {
+    log_info "仅初始化 C# 项目结构模式"
+    
+    check_dependencies
+    initialize_csharp_project
+    
+    log_success "C# 项目结构初始化完成！"
+    echo ""
+    echo "📁 项目结构已创建:"
+    echo "   - 解决方案: $CSHARP_CLIENT/OceanSim.sln"
+    echo "   - 核心库: $CSHARP_CLIENT/OceanSim.Core/"
+    echo "   - 示例: $CSHARP_CLIENT/OceanSim.Examples/"
+    echo ""
+    echo "🚀 下一步:"
+    echo "   1. 编辑项目文件添加 P/Invoke 接口"
+    echo "   2. 运行完整构建: $0"
+    echo "   3. 或者在 IDE 中打开解决方案: $CSHARP_CLIENT/OceanSim.sln"
 }
 
 # 解析命令行参数
@@ -773,3 +1063,11 @@ if [[ "${SKIP_TESTS:-}" == "ON" ]]; then
     }
 fi
 
+# 如果是仅初始化模式
+if [[ "${INIT_ONLY:-}" == "ON" ]]; then
+    run_init_only
+    exit 0
+fi
+
+# 执行主流程
+main

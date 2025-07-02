@@ -1,0 +1,288 @@
+<!-- 
+==============================================================================
+文件路径：Source/CSharpClient/OceanSim.Core/OceanSim.Core.csproj
+作者：beilsm
+版本号：v1.0.0
+创建时间：2025-07-01
+最新更改时间：2025-07-01
+==============================================================================
+📝 功能说明：
+  OceanSim C# 核心库项目文件
+  定义项目结构、依赖关系和构建配置
+==============================================================================
+-->
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <!-- 目标框架 -->
+        <TargetFrameworks>net8.0;net6.0;netstandard2.1</TargetFrameworks>
+
+        <!-- 项目信息 -->
+        <AssemblyName>OceanSim.Core</AssemblyName>
+        <RootNamespace>OceanSim.Core</RootNamespace>
+        <PackageId>OceanSim.Core</PackageId>
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+
+        <!-- 包信息 -->
+        <Title>OceanSim Core Library</Title>
+        <Description>High-performance ocean current simulation library with C# bindings to C++ computational core</Description>
+        <Authors>beilsm</Authors>
+        <Company>OceanSim Team</Company>
+        <Product>OceanSim</Product>
+        <Copyright>Copyright © 2025 OceanSim Team</Copyright>
+
+        <!-- 构建配置 -->
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <WarningsAsErrors />
+        <WarningsNotAsErrors />
+
+        <!-- 性能优化 -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Optimize>true</Optimize>
+        <DebugType>portable</DebugType>
+
+        <!-- NuGet 包配置 -->
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/oceansim/oceansim</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/oceansim/oceansim</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>ocean;simulation;oceanography;fluid-dynamics;scientific-computing;hpc</PackageTags>
+        <PackageReleaseNotes>Initial release of OceanSim C# bindings</PackageReleaseNotes>
+
+        <!-- 平台特定配置 -->
+        <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+
+        <!-- 输出配置 -->
+        <OutputPath>bin\$(Configuration)\$(Platform)\</OutputPath>
+        <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    </PropertyGroup>
+
+    <!-- Debug 配置 -->
+    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+    </PropertyGroup>
+
+    <!-- Release 配置 -->
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <DefineConstants>RELEASE</DefineConstants>
+        <DebugSymbols>false</DebugSymbols>
+        <DebugType>none</DebugType>
+        <Optimize>true</Optimize>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <!-- 平台特定配置 -->
+    <PropertyGroup Condition="'$(Platform)'=='x64'">
+        <PlatformTarget>x64</PlatformTarget>
+        <DefineConstants>$(DefineConstants);X64</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Platform)'=='x86'">
+        <PlatformTarget>x86</PlatformTarget>
+        <DefineConstants>$(DefineConstants);X86</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Platform)'=='ARM64'">
+        <PlatformTarget>ARM64</PlatformTarget>
+        <DefineConstants>$(DefineConstants);ARM64</DefineConstants>
+    </PropertyGroup>
+
+    <!-- Unity 支持 -->
+    <PropertyGroup Condition="'$(DefineConstants)'=='UNITY_EDITOR' or '$(DefineConstants)'=='UNITY_STANDALONE'">
+        <DefineConstants>$(DefineConstants);UNITY_BUILD</DefineConstants>
+        <TargetFramework>netstandard2.1</TargetFramework>
+    </PropertyGroup>
+
+    <!-- 依赖项 -->
+    <ItemGroup>
+        <!-- 核心依赖 -->
+        <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+        <PackageReference Include="System.Memory" Version="4.5.5" />
+        <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+
+        <!-- 性能相关 -->
+        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+
+        <!-- 条件依赖（仅 .NET Framework） -->
+        <PackageReference Include="System.ValueTuple" Version="4.5.0" Condition="'$(TargetFramework)' == 'net461'" />
+
+        <!-- 开发依赖 -->
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    </ItemGroup>
+
+    <!-- 源文件组织 -->
+    <ItemGroup>
+        <Compile Include="**/*.cs" Exclude="bin/**;obj/**" />
+    </ItemGroup>
+
+    <!-- 嵌入的资源 -->
+    <ItemGroup>
+        <EmbeddedResource Include="Resources/**/*" />
+    </ItemGroup>
+
+    <!-- 原生库文件配置 -->
+    <ItemGroup>
+        <!-- Windows 原生库 -->
+        <None Include="$(MSBuildProjectDirectory)/../../../Build/Release/CSharp/lib/oceansim_csharp.dll"
+              Condition="'$(OS)' == 'Windows_NT' and Exists('$(MSBuildProjectDirectory)/../../../Build/Release/CSharp/lib/oceansim_csharp.dll')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Pack>true</Pack>
+            <PackagePath>runtimes/win-x64/native/oceansim_csharp.dll</PackagePath>
+        </None>
+
+        <!-- Linux 原生库 -->
+        <None Include="$(MSBuildProjectDirectory)/../../../Build/Release/CSharp/lib/liboceansim_csharp.so"
+              Condition="'$(OS)' != 'Windows_NT' and Exists('$(MSBuildProjectDirectory)/../../../Build/Release/CSharp/lib/liboceansim_csharp.so')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Pack>true</Pack>
+            <PackagePath>runtimes/linux-x64/native/liboceansim_csharp.so</PackagePath>
+        </None>
+
+        <!-- macOS 原生库 -->
+        <None Include="$(MSBuildProjectDirectory)/../../../Build/Release/CSharp/lib/liboceansim_csharp.dylib"
+              Condition="Exists('$(MSBuildProjectDirectory)/../../../Build/Release/CSharp/lib/liboceansim_csharp.dylib')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Pack>true</Pack>
+            <PackagePath>runtimes/osx-x64/native/liboceansim_csharp.dylib</PackagePath>
+        </None>
+    </ItemGroup>
+
+    <!-- 文档文件 -->
+    <ItemGroup>
+        <None Include="../../../README.md" Pack="true" PackagePath="" />
+        <None Include="../../../LICENSE" Pack="true" PackagePath="" />
+        <None Include="../../../CHANGELOG.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+    <!-- 构建目标 -->
+    <Target Name="ValidateNativeLibraries" BeforeTargets="Build">
+        <Message Text="Validating native libraries..." Importance="high" />
+
+        <!-- 检查原生库是否存在 -->
+        <PropertyGroup>
+            <NativeLibPath>$(MSBuildProjectDirectory)/../../../Build/Release/CSharp/lib</NativeLibPath>
+        </PropertyGroup>
+
+        <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+            <RequiredLib Include="$(NativeLibPath)/oceansim_csharp.dll" />
+        </ItemGroup>
+
+        <ItemGroup Condition="'$(OS)' != 'Windows_NT' and '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
+            <RequiredLib Include="$(NativeLibPath)/liboceansim_csharp.so" />
+        </ItemGroup>
+
+        <ItemGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'">
+            <RequiredLib Include="$(NativeLibPath)/liboceansim_csharp.dylib" />
+        </ItemGroup>
+
+        <!-- 警告如果库文件不存在 -->
+        <Warning Text="Native library not found: %(RequiredLib.Identity). Please build C++ libraries first."
+                 Condition="!Exists('%(RequiredLib.Identity)')" />
+    </Target>
+
+    <!-- 后构建步骤 -->
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+        <!-- 创建符号包 -->
+        <Message Text="Creating symbol package..." Importance="high" />
+
+        <!-- 复制到便于分发的位置 -->
+        <PropertyGroup>
+            <DistributionPath>$(MSBuildProjectDirectory)/../../../Build/Distribution</DistributionPath>
+        </PropertyGroup>
+
+        <MakeDir Directories="$(DistributionPath)" />
+
+        <ItemGroup>
+            <OutputFiles Include="$(OutputPath)**/*" />
+        </ItemGroup>
+
+        <Copy SourceFiles="@(OutputFiles)"
+              DestinationFolder="$(DistributionPath)/%(RecursiveDir)"
+              SkipUnchangedFiles="true" />
+
+        <Message Text="Build artifacts copied to: $(DistributionPath)" Importance="high" />
+    </Target>
+
+    <!-- 清理目标 -->
+    <Target Name="CleanDistribution" BeforeTargets="Clean">
+        <PropertyGroup>
+            <DistributionPath>$(MSBuildProjectDirectory)/../../../Build/Distribution</DistributionPath>
+        </PropertyGroup>
+
+        <RemoveDir Directories="$(DistributionPath)" Condition="Exists('$(DistributionPath)')" />
+    </Target>
+
+    <!-- 源码链接配置 -->
+    <PropertyGroup>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <!-- 代码分析配置 -->
+    <PropertyGroup>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <AnalysisMode>Recommended</AnalysisMode>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <!-- 自定义 MSBuild 任务 -->
+    <UsingTask TaskName="ValidateLibraryCompatibility"
+               TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <LibraryPath ParameterType="System.String" Required="true" />
+            <TargetArchitecture ParameterType="System.String" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System" />
+            <Using Namespace="System.IO" />
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+        if (File.Exists(LibraryPath))
+        {
+            Log.LogMessage(MessageImportance.High, $"Found native library: {LibraryPath}");
+            
+            // 这里可以添加更多的库验证逻辑
+            var fileInfo = new FileInfo(LibraryPath);
+            Log.LogMessage(MessageImportance.Normal, $"Library size: {fileInfo.Length} bytes");
+            Log.LogMessage(MessageImportance.Normal, $"Last modified: {fileInfo.LastWriteTime}");
+        }
+        else
+        {
+            Log.LogWarning($"Native library not found: {LibraryPath}");
+        }
+        ]]>
+            </Code>
+        </Task>
+    </UsingTask>
+
+    <!-- 运行库验证 -->
+    <Target Name="ValidateLibraryCompatibility" BeforeTargets="Build">
+        <PropertyGroup>
+            <CurrentPlatform Condition="'$(Platform)' == 'AnyCPU'">x64</CurrentPlatform>
+            <CurrentPlatform Condition="'$(Platform)' != 'AnyCPU'">$(Platform)</CurrentPlatform>
+        </PropertyGroup>
+
+        <ValidateLibraryCompatibility LibraryPath="$(NativeLibPath)"
+                                      TargetArchitecture="$(CurrentPlatform)" />
+    </Target>
+
+</Project>

@@ -30,7 +30,7 @@
 #include <stdexcept>
 #include <memory>
 
-using namespace oceansim;
+using namespace OceanSim;
 
 // ===========================================
 // 内部辅助函数
@@ -38,11 +38,11 @@ using namespace oceansim;
 
 namespace {
     // 将C结构体转换为C++对象
-    Vector3 ConvertVector3D(const Vector3D& vec) {
-        return Vector3(vec.x, vec.y, vec.z);
+    Vector3D ConvertVector3D(const Vector3D& vec) {
+        return Vector3D(vec.x, vec.y, vec.z);
     }
 
-    Vector3D ConvertToVector3D(const Vector3& vec) {
+    Vector3D ConvertToVector3D(const Vector3D& vec) {
         Vector3D result;
         result.x = vec.x();
         result.y = vec.y();
@@ -178,7 +178,7 @@ OCEANSIM_API void Grid_SetVectorField(GridHandle grid, const double* u_data, con
 
     HANDLE_EXCEPTION({
                          auto* gridPtr = static_cast<GridDataStructure*>(grid);
-                         std::vector<Vector3> vector_field;
+                         std::vector<Vector3D> vector_field;
                          vector_field.reserve(size);
 
                          for (int i = 0; i < size; ++i) {
@@ -207,7 +207,7 @@ OCEANSIM_API double Grid_Interpolate(GridHandle grid, const Vector3D* position,
 
     HANDLE_EXCEPTION({
                          auto* gridPtr = static_cast<GridDataStructure*>(grid);
-                         Vector3 pos = ConvertVector3D(*position);
+                         Vector3D pos = ConvertVector3D(*position);
                          InterpolationMethod interp_method = static_cast<InterpolationMethod>(method);
                          return gridPtr->interpolate(std::string(field_name), pos, interp_method);
                      });
@@ -245,7 +245,7 @@ OCEANSIM_API void ParticleSim_InitializeParticles(ParticleSimulatorHandle simula
 
     HANDLE_EXCEPTION({
                          auto* simPtr = static_cast<ParticleSimulator*>(simulator);
-                         std::vector<Vector3> init_positions;
+                         std::vector<Vector3D> init_positions;
                          init_positions.reserve(count);
 
                          for (int i = 0; i < count; ++i) {
@@ -418,7 +418,7 @@ OCEANSIM_API void AdvectionSolver_SetVelocityField(AdvectionDiffusionSolverHandl
 
     HANDLE_EXCEPTION({
                          auto* solverPtr = static_cast<AdvectionDiffusionSolver*>(solver);
-                         std::vector<Vector3> velocity_field;
+                         std::vector<Vector3D> velocity_field;
                          velocity_field.reserve(size);
 
                          for (int i = 0; i < size; ++i) {
