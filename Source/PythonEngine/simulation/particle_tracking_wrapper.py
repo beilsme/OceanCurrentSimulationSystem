@@ -1,670 +1,242 @@
+# ==============================================================================
+# simulation/particle_tracking_wrapper.py
+# ==============================================================================
 """
-粒子追踪包装器
-调用C++核心模块进行高性能粒子追踪计算
-支持拉格朗日粒子追踪、轨迹预测和集合模拟
+粒子追踪包装器 - 调用C++高性能计算核心
 """
 
 import numpy as np
-import ctypes
-from ctypes import Structure, c_double, c_int, c_float, POINTER, byref, c_void_p
-from typing import List, Tuple, Optional, Dict, Any, Union
-import os
-import sys
-from dataclasses import dataclass
-from enum import Enum
+from typing import List, Tuple, Optional, Dict, Any
 import logging
-import threading
-import time
 
-# 设置日志
-logger = logging.getLogger(__name__)
+try:
+    import oceansim  # C++模块绑定
+except ImportError:
+    logging.warning("C++ oceansim module not found, using fallback implementation")
+    oceansim = None
 
-class IntegrationMethod(Enum):
-    """数值积分方法"""
-    EULER = 0
-    RK2 = 1
-    RK4 = 2
-    ADAPTIVE_RK45 = 3
-
-class BoundaryCondition(Enum):
-    """边界条件"""
-    REFLECTIVE = 0
-    ABSORBING = 1
-    PERIODIC = 2
-
-@dataclass
-class ParticleState:
-    """粒子状态"""
-    x: float
-    y: float
-    z: float
-    u: float  # x方向速度
-    v: float  # y方向速度
-    w: float  # z方向速度
-    age: float  # 粒子年龄
-    active: bool = True
-    properties: Optional[Dict[str, float]] = None
-
-@dataclass
-class TrackingParameters:
-    """追踪参数"""
-    time_step: float = 3600.0  # 时间步长(秒)
-    max_time: float = 864000.0  # 最大追踪时间(秒，10天)
-    integration_method: IntegrationMethod = IntegrationMethod.RK4
-    boundary_condition: BoundaryCondition = BoundaryCondition.REFLECTIVE
-    diffusion_coefficient: float = 10.0  # 扩散系数(m²/s)
-    enable_turbulence: bool = True
-    enable_stokes_drift: bool = False
-    enable_wind_drift: bool = False
-    wind_drift_factor: float = 0.03
-    output_interval: float = 3600.0  # 输出间隔(秒)
-
-# C++结构体定义
-class CParticleState(Structure):
-    """C++粒子状态结构体"""
-    _fields_ = [
-        ("x", c_double),
-        ("y", c_double),
-        ("z", c_double),
-        ("u", c_double),
-        ("v", c_double),
-        ("w", c_double),
-        ("age", c_double),
-        ("active", c_int),
-    ]
-
-class CTrackingParams(Structure):
-    """C++追踪参数结构体"""
-    _fields_ = [
-        ("time_step", c_double),
-        ("max_time", c_double),
-        ("integration_method", c_int),
-        ("boundary_condition", c_int),
-        ("diffusion_coefficient", c_double),
-        ("enable_turbulence", c_int),
-        ("enable_stokes_drift", c_int),
-        ("enable_wind_drift", c_int),
-        ("wind_drift_factor", c_double),
-        ("output_interval", c_double),
-    ]
-
-class CVelocityField(Structure):
-    """C++速度场结构体"""
-    _fields_ = [
-        ("data", POINTER(c_double)),
-        ("nx", c_int),
-        ("ny", c_int),
-        ("nz", c_int),
-        ("nt", c_int),
-        ("dx", c_double),
-        ("dy", c_double),
-        ("dz", c_double),
-        ("dt", c_double),
-        ("x0", c_double),
-        ("y0", c_double),
-        ("z0", c_double),
-        ("t0", c_double),
-    ]
 
 class ParticleTrackingWrapper:
-    """
-    粒子追踪包装器
-    提供对C++粒子追踪模块的Python接口
-    """
+    """粒子追踪模拟包装器"""
 
-    def __init__(self, cpp_lib_path: Optional[str] = None):
-        """
-        初始化粒子追踪包装器
-        
-        Args:
-            cpp_lib_path: C++动态库路径
-        """
-        self.lib = None
-        self.velocity_field = None
-        self.is_initialized = False
-        self.tracking_threads = []
-        self._lock = threading.Lock()
-
-        # 加载C++动态库
-        self._load_cpp_library(cpp_lib_path)
-
-        # 配置函数签名
-        self._configure_function_signatures()
-
-        logger.info("粒子追踪包装器初始化完成")
-
-    def _load_cpp_library(self, lib_path: Optional[str]):
-        """加载C++动态库"""
-        if lib_path is None:
-            # 自动查找库文件
-            possible_paths = [
-                "./build/lib/libparticle_tracking.so",
-                "./build/lib/libparticle_tracking.dll",
-                "../CppCore/build/lib/libparticle_tracking.so",
-                "../CppCore/build/lib/libparticle_tracking.dll",
-            ]
-
-            for path in possible_paths:
-                if os.path.exists(path):
-                    lib_path = path
-                    break
-
-            if lib_path is None:
-                raise FileNotFoundError("找不到粒子追踪C++库文件")
-
-        try:
-            self.lib = ctypes.CDLL(lib_path)
-            logger.info(f"成功加载C++库: {lib_path}")
-        except OSError as e:
-            logger.error(f"加载C++库失败: {e}")
-            raise
-
-    def _configure_function_signatures(self):
-        """配置C++函数签名"""
-        if self.lib is None:
-            return
-
-        # 初始化函数
-        self.lib.initialize_particle_tracker.argtypes = []
-        self.lib.initialize_particle_tracker.restype = c_int
-
-        # 设置速度场
-        self.lib.set_velocity_field.argtypes = [POINTER(CVelocityField)]
-        self.lib.set_velocity_field.restype = c_int
-
-        # 追踪单个粒子
-        self.lib.track_particle.argtypes = [
-            POINTER(CParticleState), POINTER(CTrackingParams),
-            POINTER(POINTER(CParticleState)), POINTER(c_int)
-        ]
-        self.lib.track_particle.restype = c_int
-
-        # 批量追踪粒子
-        self.lib.track_particles_batch.argtypes = [
-            POINTER(CParticleState), c_int, POINTER(CTrackingParams),
-            POINTER(POINTER(CParticleState)), POINTER(c_int), POINTER(c_int)
-        ]
-        self.lib.track_particles_batch.restype = c_int
-
-        # 释放内存
-        self.lib.free_trajectory_memory.argtypes = [POINTER(CParticleState), c_int]
-        self.lib.free_trajectory_memory.restype = None
-
-        # 清理函数
-        self.lib.cleanup_particle_tracker.argtypes = []
-        self.lib.cleanup_particle_tracker.restype = None
-
-    def initialize(self) -> bool:
+    def __init__(self, grid_data: Dict[str, Any], solver_config: Optional[Dict] = None):
         """
         初始化粒子追踪器
         
-        Returns:
-            是否初始化成功
-        """
-        if self.lib is None:
-            logger.error("C++库未加载")
-            return False
-
-        try:
-            result = self.lib.initialize_particle_tracker()
-            self.is_initialized = (result == 0)
-
-            if self.is_initialized:
-                logger.info("粒子追踪器初始化成功")
-            else:
-                logger.error("粒子追踪器初始化失败")
-
-            return self.is_initialized
-        except Exception as e:
-            logger.error(f"初始化异常: {e}")
-            return False
-
-    def set_velocity_field(self, u: np.ndarray, v: np.ndarray, w: np.ndarray,
-                           grid_info: Dict[str, Union[float, int]]) -> bool:
-        """
-        设置速度场数据
-        
         Args:
-            u, v, w: 三维速度场数组 [nt, nz, ny, nx]
-            grid_info: 网格信息字典
-            
-        Returns:
-            是否设置成功
+            grid_data: 网格数据配置
+            solver_config: 求解器配置
         """
-        if not self.is_initialized:
-            logger.error("追踪器未初始化")
-            return False
+        self.grid_data = grid_data
+        self.solver_config = solver_config or {}
+        self._cpp_simulator = None
+        self._particles = []
 
+        # 初始化C++模拟器
+        if oceansim is not None:
+            self._init_cpp_simulator()
+
+    def _init_cpp_simulator(self):
+        """初始化C++粒子模拟器"""
         try:
-            # 验证数组维度
-            if u.shape != v.shape or u.shape != w.shape:
-                raise ValueError("速度场数组维度不匹配")
-
-            nt, nz, ny, nx = u.shape
-
-            # 创建合并的速度场数据 [nt, nz, ny, nx, 3]
-            velocity_data = np.stack([u, v, w], axis=-1)
-            velocity_data = velocity_data.ascontiguousarray(dtype=np.float64)
-
-            # 创建C++速度场结构体
-            c_field = CVelocityField()
-            c_field.data = velocity_data.ctypes.data_as(POINTER(c_double))
-            c_field.nx = nx
-            c_field.ny = ny
-            c_field.nz = nz
-            c_field.nt = nt
-            c_field.dx = grid_info.get('dx', 1000.0)
-            c_field.dy = grid_info.get('dy', 1000.0)
-            c_field.dz = grid_info.get('dz', 10.0)
-            c_field.dt = grid_info.get('dt', 3600.0)
-            c_field.x0 = grid_info.get('x0', 0.0)
-            c_field.y0 = grid_info.get('y0', 0.0)
-            c_field.z0 = grid_info.get('z0', 0.0)
-            c_field.t0 = grid_info.get('t0', 0.0)
-
-            # 调用C++函数
-            result = self.lib.set_velocity_field(byref(c_field))
-
-            if result == 0:
-                self.velocity_field = velocity_data  # 保持引用
-                logger.info("速度场设置成功")
-                return True
-            else:
-                logger.error("速度场设置失败")
-                return False
-
-        except Exception as e:
-            logger.error(f"设置速度场异常: {e}")
-            return False
-
-    def track_single_particle(self, initial_state: ParticleState,
-                              params: TrackingParameters) -> List[ParticleState]:
-        """
-        追踪单个粒子
-        
-        Args:
-            initial_state: 初始粒子状态
-            params: 追踪参数
-            
-        Returns:
-            粒子轨迹列表
-        """
-        if not self.is_initialized:
-            raise RuntimeError("追踪器未初始化")
-
-        # 转换为C++结构体
-        c_particle = self._python_to_c_particle(initial_state)
-        c_params = self._python_to_c_params(params)
-
-        # 准备输出参数
-        trajectory_ptr = POINTER(CParticleState)()
-        trajectory_length = c_int()
-
-        try:
-            # 调用C++函数
-            result = self.lib.track_particle(
-                byref(c_particle), byref(c_params),
-                byref(trajectory_ptr), byref(trajectory_length)
+            # 创建网格数据结构
+            grid = oceansim.GridDataStructure(
+                self.grid_data.get('nx', 100),
+                self.grid_data.get('ny', 100),
+                self.grid_data.get('nz', 50)
             )
 
-            if result != 0:
-                raise RuntimeError(f"粒子追踪失败，错误码: {result}")
-
-            # 转换结果
-            trajectory = self._c_to_python_trajectory(
-                trajectory_ptr, trajectory_length.value
+            # 创建求解器
+            solver = oceansim.RungeKuttaSolver(
+                self.solver_config.get('order', 4),
+                self.solver_config.get('tolerance', 1e-6)
             )
 
-            # 释放C++内存
-            self.lib.free_trajectory_memory(trajectory_ptr, trajectory_length.value)
+            # 创建粒子模拟器
+            self._cpp_simulator = oceansim.ParticleSimulator(grid, solver)
 
-            return trajectory
+            # 设置并行线程数
+            threads = self.solver_config.get('num_threads', 4)
+            self._cpp_simulator.setNumThreads(threads)
 
         except Exception as e:
-            logger.error(f"单粒子追踪异常: {e}")
-            raise
+            logging.error(f"Failed to initialize C++ simulator: {e}")
+            self._cpp_simulator = None
 
-    def track_multiple_particles(self, initial_states: List[ParticleState],
-                                 params: TrackingParameters,
-                                 parallel: bool = True) -> List[List[ParticleState]]:
+    def initialize_particles(self, positions: np.ndarray) -> None:
         """
-        追踪多个粒子
+        初始化粒子位置
         
         Args:
-            initial_states: 初始粒子状态列表
-            params: 追踪参数
-            parallel: 是否并行计算
-            
-        Returns:
-            粒子轨迹列表的列表
+            positions: 粒子初始位置数组 (N, 3)
         """
-        if not self.is_initialized:
-            raise RuntimeError("追踪器未初始化")
+        self._particles = positions.copy()
 
-        if not initial_states:
-            return []
-
-        if parallel and len(initial_states) > 1:
-            return self._track_parallel(initial_states, params)
+        if self._cpp_simulator:
+            # 转换为C++格式
+            cpp_positions = [list(pos) for pos in positions]
+            self._cpp_simulator.initializeParticles(cpp_positions)
         else:
-            return self._track_sequential(initial_states, params)
+            # 使用Python fallback
+            logging.info("Using Python fallback for particle initialization")
 
-    def _track_sequential(self, initial_states: List[ParticleState],
-                          params: TrackingParameters) -> List[List[ParticleState]]:
-        """顺序追踪多个粒子"""
-        results = []
-
-        for i, state in enumerate(initial_states):
-            try:
-                trajectory = self.track_single_particle(state, params)
-                results.append(trajectory)
-                logger.debug(f"完成粒子 {i+1}/{len(initial_states)} 的追踪")
-            except Exception as e:
-                logger.error(f"粒子 {i+1} 追踪失败: {e}")
-                results.append([])
-
-        return results
-
-    def _track_parallel(self, initial_states: List[ParticleState],
-                        params: TrackingParameters) -> List[List[ParticleState]]:
-        """并行追踪多个粒子"""
-        num_particles = len(initial_states)
-
-        # 转换为C++数组
-        c_particles = (CParticleState * num_particles)()
-        for i, state in enumerate(initial_states):
-            c_particles[i] = self._python_to_c_particle(state)
-
-        c_params = self._python_to_c_params(params)
-
-        # 准备输出参数
-        trajectories_ptr = POINTER(POINTER(CParticleState))()
-        trajectory_lengths = (c_int * num_particles)()
-        total_points = c_int()
-
-        try:
-            # 调用C++批量追踪函数
-            result = self.lib.track_particles_batch(
-                c_particles, num_particles, byref(c_params),
-                byref(trajectories_ptr), trajectory_lengths, byref(total_points)
-            )
-
-            if result != 0:
-                raise RuntimeError(f"批量粒子追踪失败，错误码: {result}")
-
-            # 转换结果
-            results = []
-            for i in range(num_particles):
-                if trajectory_lengths[i] > 0:
-                    trajectory = self._c_to_python_trajectory(
-                        trajectories_ptr[i], trajectory_lengths[i]
-                    )
-                    results.append(trajectory)
-                else:
-                    results.append([])
-
-            # 释放C++内存
-            for i in range(num_particles):
-                if trajectory_lengths[i] > 0:
-                    self.lib.free_trajectory_memory(
-                        trajectories_ptr[i], trajectory_lengths[i]
-                    )
-
-            return results
-
-        except Exception as e:
-            logger.error(f"并行粒子追踪异常: {e}")
-            raise
-
-    def calculate_ensemble_statistics(self, trajectories: List[List[ParticleState]],
-                                      time_indices: Optional[List[int]] = None) -> Dict[str, np.ndarray]:
+    def step_forward(self, dt: float, velocity_field: np.ndarray) -> np.ndarray:
         """
-        计算集合统计量
+        时间步进
         
         Args:
-            trajectories: 粒子轨迹列表
-            time_indices: 时间索引列表
+            dt: 时间步长
+            velocity_field: 速度场数据
             
         Returns:
-            统计量字典
+            更新后的粒子位置
         """
-        if not trajectories:
-            return {}
+        if self._cpp_simulator:
+            # 使用C++高性能计算
+            self._cpp_simulator.stepForward(dt)
+            particles = self._cpp_simulator.getParticles()
+            # 转换回numpy数组
+            return np.array([[p.position[0], p.position[1], p.position[2]] for p in particles])
+        else:
+            # Python fallback实现
+            return self._step_forward_python(dt, velocity_field)
 
-        # 确定时间索引
-        if time_indices is None:
-            max_length = max(len(traj) for traj in trajectories if traj)
-            time_indices = list(range(max_length))
+    def _step_forward_python(self, dt: float, velocity_field: np.ndarray) -> np.ndarray:
+        """Python版本的时间步进（备用实现）"""
+        # 简化的RK4实现
+        positions = self._particles
 
-        stats = {
-            'mean_x': [],
-            'mean_y': [],
-            'std_x': [],
-            'std_y': [],
-            'center_of_mass': [],
-            'spread': [],
-            'active_count': []
-        }
+        # RK4积分
+        k1 = self._interpolate_velocity(positions, velocity_field)
+        k2 = self._interpolate_velocity(positions + 0.5*dt*k1, velocity_field)
+        k3 = self._interpolate_velocity(positions + 0.5*dt*k2, velocity_field)
+        k4 = self._interpolate_velocity(positions + dt*k3, velocity_field)
 
-        for t_idx in time_indices:
-            positions_x = []
-            positions_y = []
-            active_count = 0
+        # 更新位置
+        self._particles = positions + (dt/6.0) * (k1 + 2*k2 + 2*k3 + k4)
+        return self._particles
 
-            for trajectory in trajectories:
-                if trajectory and t_idx < len(trajectory):
-                    particle = trajectory[t_idx]
-                    if particle.active:
-                        positions_x.append(particle.x)
-                        positions_y.append(particle.y)
-                        active_count += 1
+    def _interpolate_velocity(self, positions: np.ndarray, velocity_field: np.ndarray) -> np.ndarray:
+        """简化的速度场插值"""
+        # 这里使用最近邻插值作为示例
+        # 实际应用中应使用更精确的插值方法
+        velocities = np.zeros_like(positions)
 
-            if positions_x:
-                x_array = np.array(positions_x)
-                y_array = np.array(positions_y)
+        for i, pos in enumerate(positions):
+            # 转换为网格索引
+            ix = int(np.clip(pos[0] * self.grid_data.get('nx', 100), 0, self.grid_data.get('nx', 100)-1))
+            iy = int(np.clip(pos[1] * self.grid_data.get('ny', 100), 0, self.grid_data.get('ny', 100)-1))
+            iz = int(np.clip(pos[2] * self.grid_data.get('nz', 50), 0, self.grid_data.get('nz', 50)-1))
 
-                stats['mean_x'].append(np.mean(x_array))
-                stats['mean_y'].append(np.mean(y_array))
-                stats['std_x'].append(np.std(x_array))
-                stats['std_y'].append(np.std(y_array))
+            if velocity_field.shape[0] > ix and velocity_field.shape[1] > iy and velocity_field.shape[2] > iz:
+                velocities[i] = velocity_field[ix, iy, iz]
 
-                # 质心
-                center_x = np.mean(x_array)
-                center_y = np.mean(y_array)
-                stats['center_of_mass'].append((center_x, center_y))
+        return velocities
 
-                # 扩散范围
-                distances = np.sqrt((x_array - center_x)**2 + (y_array - center_y)**2)
-                stats['spread'].append(np.mean(distances))
+    def get_trajectories(self) -> List[np.ndarray]:
+        """获取粒子轨迹"""
+        if self._cpp_simulator:
+            return self._cpp_simulator.getTrajectories()
+        else:
+            # 返回当前位置作为简化轨迹
+            return [self._particles]
 
-                stats['active_count'].append(active_count)
-            else:
-                stats['mean_x'].append(np.nan)
-                stats['mean_y'].append(np.nan)
-                stats['std_x'].append(np.nan)
-                stats['std_y'].append(np.nan)
-                stats['center_of_mass'].append((np.nan, np.nan))
-                stats['spread'].append(np.nan)
-                stats['active_count'].append(0)
-
-        # 转换为numpy数组
-        for key in ['mean_x', 'mean_y', 'std_x', 'std_y', 'spread', 'active_count']:
-            stats[key] = np.array(stats[key])
-
-        return stats
-
-    def export_trajectories(self, trajectories: List[List[ParticleState]],
-                            filename: str, format: str = 'csv') -> bool:
-        """
-        导出轨迹数据
-        
-        Args:
-            trajectories: 粒子轨迹列表
-            filename: 输出文件名
-            format: 输出格式 ('csv', 'netcdf', 'hdf5')
-            
-        Returns:
-            是否导出成功
-        """
-        try:
-            if format.lower() == 'csv':
-                return self._export_csv(trajectories, filename)
-            elif format.lower() == 'netcdf':
-                return self._export_netcdf(trajectories, filename)
-            elif format.lower() == 'hdf5':
-                return self._export_hdf5(trajectories, filename)
-            else:
-                logger.error(f"不支持的输出格式: {format}")
-                return False
-        except Exception as e:
-            logger.error(f"导出轨迹失败: {e}")
-            return False
-
-    def _export_csv(self, trajectories: List[List[ParticleState]], filename: str) -> bool:
-        """导出为CSV格式"""
-        import csv
-
-        with open(filename, 'w', newline='') as csvfile:
-            fieldnames = ['particle_id', 'time_step', 'x', 'y', 'z', 'u', 'v', 'w', 'age', 'active']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-
-            for particle_id, trajectory in enumerate(trajectories):
-                for time_step, state in enumerate(trajectory):
-                    writer.writerow({
-                        'particle_id': particle_id,
-                        'time_step': time_step,
-                        'x': state.x,
-                        'y': state.y,
-                        'z': state.z,
-                        'u': state.u,
-                        'v': state.v,
-                        'w': state.w,
-                        'age': state.age,
-                        'active': state.active
-                    })
-
-        logger.info(f"轨迹数据已导出到: {filename}")
-        return True
-
-    def _python_to_c_particle(self, state: ParticleState) -> CParticleState:
-        """转换Python粒子状态为C++结构体"""
-        c_particle = CParticleState()
-        c_particle.x = state.x
-        c_particle.y = state.y
-        c_particle.z = state.z
-        c_particle.u = state.u
-        c_particle.v = state.v
-        c_particle.w = state.w
-        c_particle.age = state.age
-        c_particle.active = 1 if state.active else 0
-        return c_particle
-
-    def _python_to_c_params(self, params: TrackingParameters) -> CTrackingParams:
-        """转换Python追踪参数为C++结构体"""
-        c_params = CTrackingParams()
-        c_params.time_step = params.time_step
-        c_params.max_time = params.max_time
-        c_params.integration_method = params.integration_method.value
-        c_params.boundary_condition = params.boundary_condition.value
-        c_params.diffusion_coefficient = params.diffusion_coefficient
-        c_params.enable_turbulence = 1 if params.enable_turbulence else 0
-        c_params.enable_stokes_drift = 1 if params.enable_stokes_drift else 0
-        c_params.enable_wind_drift = 1 if params.enable_wind_drift else 0
-        c_params.wind_drift_factor = params.wind_drift_factor
-        c_params.output_interval = params.output_interval
-        return c_params
-
-    def _c_to_python_trajectory(self, trajectory_ptr: POINTER(CParticleState),
-                                length: int) -> List[ParticleState]:
-        """转换C++轨迹为Python对象列表"""
-        trajectory = []
-
-        for i in range(length):
-            c_state = trajectory_ptr[i]
-            state = ParticleState(
-                x=c_state.x,
-                y=c_state.y,
-                z=c_state.z,
-                u=c_state.u,
-                v=c_state.v,
-                w=c_state.w,
-                age=c_state.age,
-                active=bool(c_state.active)
-            )
-            trajectory.append(state)
-
-        return trajectory
-
-    def cleanup(self):
-        """清理资源"""
-        if self.lib and self.is_initialized:
-            self.lib.cleanup_particle_tracker()
-            self.is_initialized = False
-            logger.info("粒子追踪器已清理")
-
-    def __del__(self):
-        """析构函数"""
-        self.cleanup()
+    def get_performance_stats(self) -> Dict[str, float]:
+        """获取性能统计"""
+        if self._cpp_simulator:
+            return {
+                'computation_time': self._cpp_simulator.getComputationTime(),
+                'active_particles': self._cpp_simulator.getActiveParticleCount()
+            }
+        return {'computation_time': 0.0, 'active_particles': len(self._particles)}
 
 
-# 使用示例
 if __name__ == "__main__":
-    # 创建粒子追踪包装器
-    tracker = ParticleTrackingWrapper()
+    import numpy as np
+    import matplotlib.pyplot as plt
 
-    # 初始化
-    if not tracker.initialize():
-        print("初始化失败")
-        exit(1)
-
-    # 创建示例速度场
-    nx, ny, nz, nt = 100, 80, 20, 24
-    u = np.random.randn(nt, nz, ny, nx) * 0.5
-    v = np.random.randn(nt, nz, ny, nx) * 0.3
-    w = np.random.randn(nt, nz, ny, nx) * 0.1
-
-    grid_info = {
-        'dx': 1000.0, 'dy': 1000.0, 'dz': 10.0, 'dt': 3600.0,
-        'x0': 0.0, 'y0': 0.0, 'z0': 0.0, 't0': 0.0
+    # 测试配置
+    grid_data = {
+        'nx': 50, 'ny': 50, 'nz': 20,
+        'dx': 0.1, 'dy': 0.1, 'dz': 0.05
     }
 
-    # 设置速度场
-    if not tracker.set_velocity_field(u, v, w, grid_info):
-        print("设置速度场失败")
-        exit(1)
+    solver_config = {
+        'order': 4,
+        'tolerance': 1e-6,
+        'num_threads': 2
+    }
 
-    # 创建初始粒子
-    initial_states = [
-        ParticleState(x=10000.0, y=15000.0, z=5.0, u=0.0, v=0.0, w=0.0, age=0.0),
-        ParticleState(x=12000.0, y=18000.0, z=8.0, u=0.0, v=0.0, w=0.0, age=0.0),
-        ParticleState(x=8000.0, y=12000.0, z=3.0, u=0.0, v=0.0, w=0.0, age=0.0),
-    ]
+    # 创建粒子追踪器
+    tracker = ParticleTrackingWrapper(grid_data, solver_config)
 
-    # 设置追踪参数
-    params = TrackingParameters(
-        time_step=1800.0,
-        max_time=172800.0,  # 2天
-        integration_method=IntegrationMethod.RK4,
-        diffusion_coefficient=10.0,
-        output_interval=3600.0
-    )
+    # 初始化粒子（圆形分布）
+    n_particles = 100
+    theta = np.linspace(0, 2*np.pi, n_particles)
+    radius = 0.1
+    positions = np.column_stack([
+        0.5 + radius * np.cos(theta),  # x
+        0.5 + radius * np.sin(theta),  # y
+        np.full(n_particles, 0.5)      # z
+    ])
 
-    # 执行追踪
-    print("开始粒子追踪...")
-    trajectories = tracker.track_multiple_particles(initial_states, params)
+    tracker.initialize_particles(positions)
 
-    print(f"追踪完成，获得 {len(trajectories)} 条轨迹")
-    for i, traj in enumerate(trajectories):
-        print(f"粒子 {i+1}: {len(traj)} 个时间步")
+    # 创建简单的旋转速度场
+    u = np.zeros((grid_data['nx'], grid_data['ny'], grid_data['nz']))
+    v = np.zeros((grid_data['nx'], grid_data['ny'], grid_data['nz']))
+    w = np.zeros((grid_data['nx'], grid_data['ny'], grid_data['nz']))
 
-    # 计算统计量
-    stats = tracker.calculate_ensemble_statistics(trajectories)
-    print(f"平均扩散范围: {np.nanmean(stats['spread']):.2f} m")
+    # 旋转流场
+    for i in range(grid_data['nx']):
+        for j in range(grid_data['ny']):
+            x = i / grid_data['nx'] - 0.5
+            y = j / grid_data['ny'] - 0.5
+            u[i, j, :] = -y * 2.0  # 旋转速度
+            v[i, j, :] = x * 2.0
 
-    # 导出结果
-    tracker.export_trajectories(trajectories, "particle_trajectories.csv")
+    velocity_field = np.stack([u, v, w], axis=-1)
 
-    # 清理
-    tracker.cleanup()
-    print("粒子追踪示例完成")
+    # 运行模拟
+    print("开始粒子追踪模拟...")
+    positions_history = [tracker._particles.copy()]
+
+    for step in range(50):
+        new_positions = tracker.step_forward(0.01, velocity_field)
+        positions_history.append(new_positions.copy())
+        if step % 10 == 0:
+            print(f"步骤 {step}: {len(new_positions)} 个活跃粒子")
+
+    # 可视化结果
+    plt.figure(figsize=(10, 5))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(positions_history[0][:, 0], positions_history[0][:, 1], 'bo', label='初始位置')
+    plt.plot(positions_history[-1][:, 0], positions_history[-1][:, 1], 'ro', label='最终位置')
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('粒子位置变化')
+    plt.legend()
+    plt.axis('equal')
+
+    plt.subplot(1, 2, 2)
+    # 绘制轨迹
+    for i in range(0, n_particles, 10):
+        trajectory = np.array([pos[i] for pos in positions_history])
+        plt.plot(trajectory[:, 0], trajectory[:, 1], 'g-', alpha=0.5)
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('粒子轨迹')
+    plt.axis('equal')
+
+    plt.tight_layout()
+    plt.show()
+
+    # 性能统计
+    stats = tracker.get_performance_stats()
+    print(f"\n性能统计:")
+    print(f"计算时间: {stats['computation_time']:.4f}s")
+    print(f"活跃粒子数: {stats['active_particles']}")
+
+
+

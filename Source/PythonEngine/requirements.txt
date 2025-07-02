@@ -102,3 +102,6 @@ pytz>=2021.3
 
 # 数学优化
 cvxpy>=1.2.0
+
+flask
+flask_cors
