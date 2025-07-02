@@ -181,6 +181,48 @@ namespace OceanSimulation {
             ++counters_.vectorOperations;
         }
 
+        // ─────────── 私有模板工具 ───────────
+        template<typename T, typename F>
+        static inline void _elementwise(const T* a, const T* b, T* r,
+                                        size_t n, F op,
+                                        VectorizedOperations::PerformanceCounters& cnt)
+        {
+            for (size_t i = 0; i < n; ++i) r[i] = op(a[i], b[i]);
+            cnt.scalarOperations += n;
+        }
+
+        // ─────────── double 版本实现 ───────────
+        void VectorizedOperations::vectorAdd(const double* a, const double* b,
+                                             double* result, size_t size)
+        {
+            _elementwise(a, b, result, size,
+                         [](double x, double y){ return x + y; }, counters_);
+        }
+
+        void VectorizedOperations::vectorSub(const double* a, const double* b,
+                                             double* result, size_t size)
+        {
+            _elementwise(a, b, result, size,
+                         [](double x, double y){ return x - y; }, counters_);
+        }
+
+        void VectorizedOperations::vectorMul(const double* a, const double* b,
+                                             double* result, size_t size)
+        {
+            _elementwise(a, b, result, size,
+                         [](double x, double y){ return x * y; }, counters_);
+        }
+
+        double VectorizedOperations::dotProduct(const double* a, const double* b,
+                                                size_t size)
+        {
+            double acc = 0.0;
+            for (size_t i = 0; i < size; ++i) acc += a[i] * b[i];
+            counters_.scalarOperations += size;
+            return acc;
+        }
+        
+        
         void VectorizedOperations::vectorMulScalar(const float* a, const float* b, float* result, size_t size) {
             for (size_t i = 0; i < size; ++i) {
                 result[i] = a[i] * b[i];

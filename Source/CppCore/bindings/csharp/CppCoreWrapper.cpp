@@ -1126,7 +1126,7 @@ OCEANSIM_API void StartTiming(PerformanceProfilerHandle handle, const char* sect
 
     HANDLE_EXCEPTION({
                          auto* profilerPtr = static_cast<PerformanceProfiler*>(handle);
-                         profilerPtr->startTiming(std::string(section_name));
+                         profilerPtr->startTimer(std::string(section_name));
                      });
 }
 
@@ -1135,7 +1135,7 @@ OCEANSIM_API void EndTiming(PerformanceProfilerHandle handle, const char* sectio
 
     HANDLE_EXCEPTION({
                          auto* profilerPtr = static_cast<PerformanceProfiler*>(handle);
-                         profilerPtr->endTiming(std::string(section_name));
+                         profilerPtr->stopTimer(std::string(section_name));
                      });
 }
 

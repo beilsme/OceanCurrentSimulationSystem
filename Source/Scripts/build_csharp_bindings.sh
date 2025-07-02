@@ -641,13 +641,13 @@ build_csharp_projects() {
     dotnet_args+=("--no-restore")
     dotnet_args+=("--verbosity" "minimal")
     
-    if [[ "$TARGET_PLATFORM" == "x64" ]]; then
-        dotnet_args+=("--arch" "x64")
-    elif [[ "$TARGET_PLATFORM" == "x86" ]]; then
-        dotnet_args+=("--arch" "x86")
-    elif [[ "$TARGET_PLATFORM" == "arm64" ]]; then
-        dotnet_args+=("--arch" "arm64")
-    fi
+#    if [[ "$TARGET_PLATFORM" == "x64" ]]; then
+#        dotnet_args+=("--arch" "x64")
+#    elif [[ "$TARGET_PLATFORM" == "x86" ]]; then
+#        dotnet_args+=("--arch" "x86")
+#    elif [[ "$TARGET_PLATFORM" == "arm64" ]]; then
+#        dotnet_args+=("--arch" "arm64")
+#    fi
     
     if dotnet "${dotnet_args[@]}"; then
         log_info "C# 解决方案构建成功"
@@ -678,11 +678,15 @@ publish_csharp_projects() {
     local publish_dir="$OUTPUT_DIR/publish"
     mkdir -p "$publish_dir"
     
+    FRAMEWORK=${OCEANSIM_TARGET_FRAMEWORK:-$(grep -m1 -oE '<TargetFrameworks?>[^<]+' OceanSim.Core/OceanSim.Core.csproj \
+                 | sed -E 's/<TargetFrameworks?>//;s/>//;s/^[[:space:]]*//;s/;.*//')}
+    
     # 发布核心项目
     if [[ -f "OceanSim.Core/OceanSim.Core.csproj" ]]; then
         log_info "发布 OceanSim.Core..."
         if dotnet publish "OceanSim.Core/OceanSim.Core.csproj" \
             --configuration "$BUILD_TYPE" \
+            --framework "$FRAMEWORK" \
             --output "$publish_dir/Core" \
             --no-restore \
             --verbosity minimal; then
@@ -697,6 +701,7 @@ publish_csharp_projects() {
         log_info "发布 OceanSim.Examples..."
         if dotnet publish "OceanSim.Examples/OceanSim.Examples.csproj" \
             --configuration "$BUILD_TYPE" \
+            --framework "$FRAMEWORK" \
             --output "$publish_dir/Examples" \
             --no-restore \
             --verbosity minimal; then
@@ -749,13 +754,24 @@ test_cpp_library_loading() {
     
     # 这里可以添加一个简单的C++测试程序来验证库的加载
     local lib_files=()
+    # 根据平台决定搜索后缀
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        mapfile -t lib_files < <(find "$OUTPUT_DIR/lib" -name "*.dylib" 2>/dev/null)
+        pattern="*.dylib"
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        mapfile -t lib_files < <(find "$OUTPUT_DIR/lib" -name "*.so*" 2>/dev/null)
+        pattern="*.so*"
     else
-        mapfile -t lib_files < <(find "$OUTPUT_DIR/lib" -name "*.dll" 2>/dev/null)
+        pattern="*.dll"
     fi
+    
+    # ========= 兼容处理：如果 shell 支持 mapfile 就用原逻辑 =========
+    if command -v mapfile >/dev/null 2>&1; then        # Bash ≥ 4
+        mapfile -t lib_files < <(find "$OUTPUT_DIR/lib" -name "$pattern" -print0)
+    else                                                # Bash 3.2（macOS 默认）
+        while IFS= read -r -d '' f; do
+            lib_files+=("$f")
+        done < <(find "$OUTPUT_DIR/lib" -name "$pattern" -print0)
+    fi
+    # ============================================================
     
     for lib in "${lib_files[@]}"; do
         if [[ -f "$lib" ]]; then

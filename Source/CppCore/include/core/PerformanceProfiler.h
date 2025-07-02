@@ -44,6 +44,9 @@ namespace OceanSim {
                     call_count++;
                     avg_time = total_time / call_count;
                 }
+                
+                
+                
             };
 
             // 计时器类
@@ -106,6 +109,19 @@ namespace OceanSim {
             double getTotalTime() const;
             size_t getTotalMemoryUsage() const;
 
+            /**
+             * @brief 获取某个操作累计耗时（秒）
+             * @param name 操作名称
+             * @return 累计时间，不存在则 0.0
+             */
+            double getElapsedTime(const std::string& name) const;
+
+            /**
+             * @brief 生成性能报告文件
+             * @param filename 输出文件名，支持 .json / .csv / .txt
+             */
+            void generateReport(const std::string& filename) const;
+            
             // 统计分析
             void printSummary(std::ostream& os = std::cout) const;
             void printDetailedReport(std::ostream& os = std::cout) const;

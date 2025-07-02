@@ -7,6 +7,8 @@
 #include <thread>
 #include <fstream>
 #include <mutex>
+#include <filesystem>   // C++17
+namespace fs = std::filesystem;
 
 #ifdef _WIN32
 #include <windows.h>
@@ -237,6 +239,36 @@ namespace OceanSim {
             return memory_monitor_->getCurrentMemoryUsage();
         }
 
+        /* === getElapsedTime 实现 === */
+        double PerformanceProfiler::getElapsedTime(const std::string& name) const {
+            std::lock_guard<std::mutex> lock(data_mutex_);
+            auto it = profile_data_.find(name);
+            return (it != profile_data_.end()) ? it->second.total_time : 0.0;
+        }
+
+        /* === generateReport 实现 === */
+        void PerformanceProfiler::generateReport(const std::string& filename) const {
+            if (filename.empty()) return;
+
+            fs::path path(filename);
+            std::string ext = path.extension().string();
+
+            try {
+                if (ext == ".json" || ext == ".JSON") {
+                    exportToJSON(filename);
+                } else if (ext == ".csv" || ext == ".CSV") {
+                    exportToCSV(filename);
+                } else {                 // 其它一律写纯文本
+                    std::ofstream ofs(filename);
+                    if (!ofs) throw std::runtime_error("无法打开文件: " + filename);
+                    printDetailedReport(ofs);
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "[PerformanceProfiler] 生成报告失败: "
+                          << e.what() << std::endl;
+            }
+        }
+        
         void PerformanceProfiler::printSummary(std::ostream& os) const {
             std::lock_guard<std::mutex> lock(data_mutex_);
 
