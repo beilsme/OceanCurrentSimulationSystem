@@ -53,11 +53,14 @@ class FieldGenerator:
         self.x = np.linspace(0, self.nx * self.dx, self.nx)
         self.y = np.linspace(0, self.ny * self.dy, self.ny)
         self.z = np.linspace(0, self.nz * self.dz, self.nz)
-        self.X, self.Y = np.meshgrid(self.x, self.y, indexing='ij')
+        self.X, self.Y = np.meshgrid(self.x, self.y, indexing="xy")
+
 
         # 中文支持
         if chinese_support and chinese_config:
             self.font_config = chinese_config.setup_chinese_support()
+            allowed_keys = {"family", "size", "weight", "color"}
+            self.font_config = {k: v for k, v in self.font_config.items() if k in allowed_keys}
         else:
             self.font_config = {}
 

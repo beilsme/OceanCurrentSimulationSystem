@@ -52,11 +52,13 @@ class AnimationGenerator:
         # 坐标网格
         self.x = np.linspace(0, self.nx * self.dx, self.nx)
         self.y = np.linspace(0, self.ny * self.dy, self.ny)
-        self.X, self.Y = np.meshgrid(self.x, self.y, indexing='ij')
+        self.X, self.Y = np.meshgrid(self.x, self.y, indexing='xy')
 
         # 中文支持
         if chinese_support and chinese_config:
             self.font_config = chinese_config.setup_chinese_support()
+            allowed_keys = {"family", "size", "weight", "color"}
+            self.font_config = {k: v for k, v in self.font_config.items() if k in allowed_keys}
         else:
             self.font_config = {}
 
@@ -143,7 +145,7 @@ class AnimationGenerator:
             # 更新时间
             time_text.set_text(f'{title} - 时间: {time_steps[frame]:.2f}h')
 
-            return strm.lines + cs.collections
+            return []
 
         # 创建动画
         anim = animation.FuncAnimation(fig, animate, frames=len(velocity_time_series),
@@ -276,7 +278,7 @@ class AnimationGenerator:
             # 更新时间
             time_text.set_text(f'{title} - 时间: {time_steps[frame]:.2f}h')
 
-            return cs.collections + [im, stats_text]
+            return []
 
         # 创建动画
         anim = animation.FuncAnimation(fig, animate, frames=len(concentration_time_series),

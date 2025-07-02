@@ -57,6 +57,9 @@ class RenderingEngine:
         # 中文支持
         if chinese_support and chinese_config:
             self.font_config = chinese_config.setup_chinese_support()
+            allowed_keys = {"family", "size", "weight", "color"}
+            self.font_config = {k: v for k, v in self.font_config.items() if k in allowed_keys}
+
         else:
             self.font_config = {}
 
