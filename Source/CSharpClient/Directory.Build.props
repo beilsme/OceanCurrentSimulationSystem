@@ -1,0 +1,48 @@
+<Project>
+
+  <!-- 全局属性 -->
+  <PropertyGroup>
+    <Company>OceanSim Research Group</Company>
+    <Product>Ocean Current Simulation System</Product>
+    <Copyright>Copyright © 2025 OceanSim Research Group</Copyright>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+
+    <!-- 编译配置 -->
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- 禁用一些严格的警告和分析器，简化开发 -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- 跳过分析器版本警告 -->
+    <_SkipUpgradeNetAnalyzersNuGetWarning>true</_SkipUpgradeNetAnalyzersNuGetWarning>
+  </PropertyGroup>
+
+  <!-- Debug配置 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
+    <Optimize>false</Optimize>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+
+  <!-- Release配置 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+
+  <!-- 测试项目特定配置 -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+</Project>

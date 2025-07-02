@@ -1,0 +1,83 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>12.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <AssemblyTitle>Ocean Simulation Domain Tests</AssemblyTitle>
+        <AssemblyDescription>洋流模拟系统领域层单元测试</AssemblyDescription>
+        <AssemblyCompany>OceanSim Research Group</AssemblyCompany>
+        <AssemblyProduct>Ocean Current Simulation System</AssemblyProduct>
+        <Copyright>Copyright © 2025 OceanSim Research Group</Copyright>
+        <Version>1.0.0</Version>
+        <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <DebugType>full</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <Optimize>false</Optimize>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DefineConstants>TRACE</DefineConstants>
+        <DebugType>pdbonly</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- 测试框架 -->
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+        <PackageReference Include="xunit" Version="2.6.4" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="xunit.runner.console" Version="2.5.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+
+        <!-- 模拟框架 -->
+        <PackageReference Include="Moq" Version="4.20.69" />
+        <PackageReference Include="AutoFixture" Version="4.18.0" />
+        <PackageReference Include="AutoFixture.Xunit2" Version="4.18.0" />
+
+        <!-- 断言扩展 -->
+        <PackageReference Include="FluentAssertions" Version="6.12.0" />
+
+        <!-- 测试数据生成 -->
+        <PackageReference Include="Bogus" Version="34.0.2" />
+
+        <!-- 内存数据库 -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+
+        <!-- 覆盖率收集 -->
+        <PackageReference Include="coverlet.collector" Version="6.0.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.msbuild" Version="6.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\OceanSimulation.Domain\OceanSimulation.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Entities\" />
+        <Folder Include="ValueObjects\" />
+        <Folder Include="DomainServices\" />
+        <Folder Include="Fixtures\" />
+        <Folder Include="Builders\" />
+        <Folder Include="TestData\" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="Ocean Simulation StyleCop Rules" ToolsVersion="16.0">
+    <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
+        <!-- 禁用一些严格的规则，便于开发 -->
+        <Rule Id="SA1633" Action="None" />  <!-- 文件头注释 -->
+        <Rule Id="SA1200" Action="None" />  <!-- using语句位置 -->
+        <Rule Id="SA1600" Action="None" />  <!-- 元素必须有文档 -->
+        <Rule Id="SA1309" Action="None" />  <!-- 字段名不应以下划线开头 -->
+        <Rule Id="SA1311" Action="None" />  <!-- 静态只读字段应使用PascalCase -->
+        <Rule Id="SA1413" Action="None" />  <!-- 使用尾随逗号 -->
+        <Rule Id="SA1028" Action="None" />  <!-- 代码不应包含尾随空格 -->
+    </Rules>
+</RuleSet>
