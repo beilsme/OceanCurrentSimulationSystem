@@ -4,43 +4,45 @@
   目录     : Source/CSharpClient/Tests/IntegrationTests/CoreIntegrationTests
   项目名称 : OceanSim ▶ 集成测试（托管侧 API 冒烟测试）
   作者     : beilsm
-  版本     : v0.1.0
+  版本     : v0.1.1            ← ↑ 小改版
   功能说明 :
     • 目标框架：net8.0（可按需再加多个 <TargetFrameworks>）
     • 引用 OceanSim.Core.csproj，自动解析同级本地库
     • 构建为可执行文件，直接在 Rider / CLI 运行
+  本次改进 :
+    1) 修正本地动态库复制路径，适配 macOS 构建输出
+       → $(SolutionDir)Source/CppCore/cmake-build-csharp/liboceansim_csharp.dylib
+    2) 其余编译/接口保持不变
   最近更新 : 2025-07-02
 -->
 <Project Sdk="Microsoft.NET.Sdk">
 
     <!-- *** 基本配置 ******************************************************* -->
     <PropertyGroup>
-        <!-- 需要单一框架即可；如要多框架改为 <TargetFrameworks>net8.0;net6.0</TargetFrameworks> -->
         <TargetFramework>net8.0</TargetFramework>
-
-        <!-- 输出类型：ConsoleExe -->
         <OutputType>Exe</OutputType>
 
-        <!-- 可选：启用关键编译特性 -->
+        <!-- 可选编译特性 -->
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
 
-        <!-- 运行时复制本地库（跨平台） -->
+        <!-- 控制是否复制原生库 -->
         <EnableNativeCopy>true</EnableNativeCopy>
     </PropertyGroup>
 
     <!-- *** 项目引用：托管封装库 ******************************************* -->
     <ItemGroup>
-        <!-- 相对路径指向 OceanSim.Core.csproj -->
         <ProjectReference Include="../../../OceanSim.Core/OceanSim.Core.csproj" />
     </ItemGroup>
 
     <!-- *** 复制本地动态库到输出目录 ************************************** -->
-    <!-- 编译后自动把 *.dylib / *.so / *.dll 带过去，方便 Rider 直接运行 -->
+    <!-- macOS 构建 artefact：liboceansim_csharp.dylib -->
     <ItemGroup Condition="'$(EnableNativeCopy)'=='true'">
-        <None Include="$(SolutionDir)Build\Release\CSharp\lib\liboceansim_csharp.*"
-              CopyToOutputDirectory="PreserveNewest" />
+        <None Include="$(SolutionDir)Source/CppCore/cmake-build-csharp/liboceansim_csharp.dylib">
+            <Link>liboceansim_csharp.dylib</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

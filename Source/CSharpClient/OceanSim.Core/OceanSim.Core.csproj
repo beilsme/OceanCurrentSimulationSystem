@@ -6,4 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- 引入跨语言绑定的 C# 封装源码 -->
+  <ItemGroup>
+    <Compile Include="..\..\CppCore\bindings\csharp\CppCoreInterop.cs" Link="CppCoreInterop.cs" />
+    <Compile Include="..\..\CppCore\bindings\csharp\OceanSimWrapper.cs" Link="OceanSimWrapper.cs" />
+  </ItemGroup>
+
+
 </Project>
