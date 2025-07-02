@@ -15,6 +15,8 @@ using System.Collections.Generic;
 using System.Numerics;
 using OceanSim.Core.Interop;
 using static OceanSim.Core.Interop.NativeMethods;
+using System.Runtime.InteropServices;
+
 
 namespace OceanSim.Core
 {
@@ -40,7 +42,7 @@ namespace OceanSim.Core
                 if (!_isInitialized)
                 {
                     int result = OceanSim_Initialize();
-                    _isInitialized = result == 1;
+                    _isInitialized = result == 0;
                 }
                 return _isInitialized;
             }
@@ -64,7 +66,17 @@ namespace OceanSim.Core
         /// <summary>
         /// 获取库版本
         /// </summary>
-        public static string Version => OceanSim_GetVersion();
+        public static string Version
+        {
+            get
+            {
+                var ptr = NativeMethods.OceanSim_GetVersion();
+                var result = Marshal.PtrToStringAnsi(ptr);
+                NativeMethods.OceanSim_FreeString(ptr);
+                return result;
+            }
+        }
+
 
         /// <summary>
         /// 设置日志级别

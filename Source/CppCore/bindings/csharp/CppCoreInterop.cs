@@ -21,23 +21,16 @@ namespace OceanSim.Core.Interop
     public static class NativeMethods
     {
         // 动态库名称配置
-        #if UNITY_EDITOR || UNITY_STANDALONE_WIN
+        #if WINDOWS || UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
             private const string DllName = "oceansim_csharp.dll";
-        #elif UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            private const string DllName = "liboceansim_csharp.dylib";
-        #elif UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
-            private const string DllName = "liboceansim_csharp.so";
-        #elif NETFRAMEWORK || NETCOREAPP || NET5_0_OR_GREATER
-            #if WINDOWS
-                private const string DllName = "oceansim_csharp.dll";
-            #elif OSX
-                private const string DllName = "liboceansim_csharp.dylib";
-            #else
-                private const string DllName = "liboceansim_csharp.so";
-            #endif
+        #elif OSX || UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            private const string DllName = "oceansim_csharp"; // macOS自动补 lib + .dylib
+        #elif LINUX || UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
+            private const string DllName = "oceansim_csharp"; // Linux自动补 lib + .so
         #else
-            private const string DllName = "oceansim_csharp";
+                private const string DllName = "oceansim_csharp";
         #endif
+
 
         // ===========================================
         // 数据结构定义
@@ -450,8 +443,10 @@ namespace OceanSim.Core.Interop
         // ===========================================
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        [return: MarshalAs(UnmanagedType.LPStr)]
-        public static extern string OceanSim_GetVersion();
+        public static extern IntPtr OceanSim_GetVersion();
+        
+        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void OceanSim_FreeString(IntPtr ptr);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int OceanSim_Initialize();

@@ -39,7 +39,7 @@
     <!-- *** 复制本地动态库到输出目录 ************************************** -->
     <!-- macOS 构建 artefact：liboceansim_csharp.dylib -->
     <ItemGroup Condition="'$(EnableNativeCopy)'=='true'">
-        <None Include="$(SolutionDir)Source/CppCore/cmake-build-csharp/liboceansim_csharp.dylib">
+        <None Include="$(MSBuildThisFileDirectory)../../../../CppCore/cmake-build-csharp/liboceansim_csharp.dylib">
             <Link>liboceansim_csharp.dylib</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

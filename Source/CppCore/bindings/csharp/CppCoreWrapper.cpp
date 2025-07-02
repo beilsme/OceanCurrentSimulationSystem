@@ -27,6 +27,7 @@
 #include "utils/Logger.h"
 
 #include <cstring>
+#include <cstdlib>
 #include <stdexcept>
 #include <memory>
 #include <vector>
@@ -1158,3 +1159,85 @@ OCEANSIM_API void GenerateReport(PerformanceProfilerHandle handle, const char* f
                          profilerPtr->generateReport(std::string(filename));
                      });
 }
+
+extern "C" int OceanSim_Initialize()
+{
+    return 0;
+}
+
+
+extern "C" const char* OceanSim_GetVersion()
+{
+    const char* version = "OceanSim C++ Core v1.0.0";
+    char* result = (char*)malloc(strlen(version) + 1);
+    strcpy(result, version);
+    return result;
+}
+
+extern "C" void OceanSim_FreeString(const char* ptr)
+{
+    free((void*)ptr);
+}
+
+extern "C" void OceanSim_Cleanup()
+{
+    // 这里可以清理资源, 如果你暂时没有就留空
+}
+
+
+extern "C" void OceanSim_SetLogLevel(int level) { }
+
+
+extern "C" void Grid_Destroy(void*) { }
+extern "C" void Grid_GetDimensions(void*, int*, int*, int*) { }
+
+extern "C" void Grid_GetScalarField(void*, const char*, double*, int) { }
+
+
+extern "C" void* ParticleSim_Create(void*, void*) { return nullptr; }
+extern "C" void ParticleSim_Destroy(void*) { }
+
+extern "C" void ParticleSim_StepForward(void*, double) { }
+
+extern "C" int ParticleSim_GetParticleCount(void*) { return 0; }
+
+
+extern "C" void CurrentSolver_Destroy(void*) { }
+extern "C" void CurrentSolver_ComputeVelocityField(void*, double) { }
+
+extern "C" double CurrentSolver_ComputeKineticEnergy(void*) { return 0.0; }
+extern "C" double CurrentSolver_CheckMassConservation(void*) { return 0.0; }
+
+
+extern "C" void AdvectionSolver_Destroy(void*) { }
+
+extern "C" void AdvectionSolver_Solve(void*, double, double*, int) { }
+
+extern "C" void* RungeKutta_Create(int, double) { return nullptr; }
+extern "C" void RungeKutta_Destroy(void*) { }
+extern "C" void RungeKutta_SetTimeStep(void*, double) { }
+extern "C" double RungeKutta_GetTimeStep(void*) { return 0.0; }
+
+extern "C" void* FiniteDiff_Create(int, double) { return nullptr; }
+extern "C" void FiniteDiff_Destroy(void*) { }
+
+
+extern "C" void VectorOps_Destroy(void*) { }
+
+
+
+extern "C" void ParallelEngine_Destroy(void*) { }
+extern "C" void ParallelEngine_SetThreadCount(void*, int) { }
+extern "C" int ParallelEngine_GetThreadCount(void*) { return 0; }
+
+extern "C" void* DataExporter_Create() { return nullptr; }
+extern "C" void DataExporter_Destroy(void*) { }
+extern "C" int DataExporter_ExportToNetCDF(void*, void*, const char*) { return 0; }
+extern "C" int DataExporter_ExportToVTK(void*, void*, const char*) { return 0; }
+
+extern "C" void* Profiler_Create() { return nullptr; }
+extern "C" void Profiler_Destroy(void*) { }
+extern "C" void Profiler_StartTiming(void*, const char*) { }
+extern "C" void Profiler_EndTiming(void*, const char*) { }
+extern "C" double Profiler_GetElapsedTime(void*, const char*) { return 0.0; }
+extern "C" void Profiler_GenerateReport(void*, const char*) { }
