@@ -4,6 +4,7 @@
     <option name="projectPerEditor">
       <map>
         <entry key="OceanSimulation.Presentation.Avalonia/App.axaml" value="OceanSimulation.Presentation.Avalonia/OceanSimulation.Presentation.Avalonia.csproj" />
+        <entry key="OceanSimulation.Presentation.Avalonia/Views/MainWindow.axaml" value="OceanSimulation.Presentation.Avalonia/OceanSimulation.Presentation.Avalonia.csproj" />
       </map>
     </option>
   </component>

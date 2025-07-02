@@ -91,7 +91,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ComputeEngines\" />
     <Folder Include="DataAccess\" />
     <Folder Include="ExternalServices\" />
     <Folder Include="Caching\" />
