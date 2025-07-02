@@ -3,7 +3,7 @@
 #include <cstddef>
 
 #ifdef _WIN32
-#ifdef OCEANSIM_EXPORTS
+#ifdef OCEANSIM_CSHARP_EXPORTS
         #define OCEANSIM_API __declspec(dllexport)
     #else
         #define OCEANSIM_API __declspec(dllimport)
@@ -14,27 +14,47 @@
 
 extern "C" {
 
-/**
- * @brief C#互操作接口
- * 提供C++核心功能的C风格包装器
- */
+// ===========================================
+// 基础数据类型定义
+// ===========================================
 
-// ========================= 粒子模拟器接口 =========================
+typedef void* GridHandle;
+typedef void* ParticleSimulatorHandle;
+typedef void* CurrentFieldSolverHandle;
+typedef void* AdvectionDiffusionSolverHandle;
+typedef void* RungeKuttaSolverHandle;
+typedef void* FiniteDifferenceSolverHandle;
+typedef void* ParallelComputeEngineHandle;
+typedef void* VectorizedOperationsHandle;
+typedef void* MemoryManagerHandle;
+typedef void* DataExporterHandle;
+typedef void* PerformanceProfilerHandle;
+
+// 坐标和向量数据结构
 
 typedef struct {
     double x, y, z;
 } Vector3D;
 
 typedef struct {
+    float x, y, z;
+} Vector3F;
+
+typedef struct {
+    double latitude;
+    double longitude;
+    double depth;
+} GeographicCoordinate;
+
+// 粒子数据结构
+typedef struct {
+    int id;
     Vector3D position;
     Vector3D velocity;
     double age;
-    int id;
     int active;
 } ParticleData;
 
-// 粒子模拟器句柄
-typedef void* ParticleSimulatorHandle;
 
 OCEANSIM_API ParticleSimulatorHandle CreateParticleSimulator(
         int nx, int ny, int nz, double dx, double dy, double dz);
@@ -119,10 +139,10 @@ OCEANSIM_API int CheckMassConservation(CurrentFieldSolverHandle handle, double t
 typedef void* GridDataHandle;
 
 typedef enum {
-    COORD_CARTESIAN = 0,
-    COORD_SPHERICAL = 1,
-    COORD_HYBRID_SIGMA = 2,
-    COORD_ISOPYCNAL = 3
+    COORDINATE_CARTESIAN = 0,
+    COORDINATE_SPHERICAL = 1,
+    COORDINATE_HYBRID_SIGMA = 2,
+    COORDINATE_ISOPYCNAL = 3
 } CoordinateSystemType;
 
 typedef enum {
@@ -187,20 +207,34 @@ typedef void* AdvectionDiffusionHandle;
 
 typedef enum {
     SCHEME_UPWIND = 0,
-    SCHEME_LAX_WENDROFF = 1,
+    SCHEME_CENTRAL = 1,
     SCHEME_TVD_SUPERBEE = 2,
-    SCHEME_WENO5 = 3,
-    SCHEME_QUICK = 4,
-    SCHEME_MUSCL = 5
+    SCHEME_WENO = 3
 } NumericalSchemeType;
 
 typedef enum {
-    TIME_EXPLICIT_EULER = 0,
-    TIME_IMPLICIT_EULER = 1,
-    TIME_CRANK_NICOLSON = 2,
+    TIME_EULER = 0,
+    TIME_RUNGE_KUTTA_2 = 1,
+    TIME_RUNGE_KUTTA_3 = 2,
     TIME_RUNGE_KUTTA_4 = 3,
     TIME_ADAMS_BASHFORTH = 4
 } TimeIntegrationType;
+
+typedef enum {
+    EXECUTION_SEQUENTIAL = 0,
+    EXECUTION_PARALLEL = 1,
+    EXECUTION_VECTORIZED = 2,
+    EXECUTION_HYBRID_PARALLEL = 3
+} ExecutionPolicyType;
+
+typedef enum {
+    SIMD_NONE = 0,
+    SIMD_SSE = 1,
+    SIMD_AVX = 2,
+    SIMD_AVX2 = 3,
+    SIMD_AVX512 = 4,
+    SIMD_NEON = 5
+} SimdTypeEnum;
 
 typedef enum {
     BC_DIRICHLET = 0,

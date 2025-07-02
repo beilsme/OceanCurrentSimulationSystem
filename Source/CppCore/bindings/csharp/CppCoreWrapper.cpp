@@ -46,11 +46,11 @@ using namespace OceanSim::Utils;
 
 namespace {
     // 将C结构体转换为C++对象
-    Vector3D ConvertVector3D(const Vector3D& vec) {
-        return Vector3D(vec.x, vec.y, vec.z);
+    Eigen::Vector3d ConvertVector3D(const Vector3D& vec) {
+        return Eigen::Vector3d(vec.x, vec.y, vec.z);
     }
 
-    Vector3D ConvertToVector3D(const Vector3D& vec) {
+    Vector3D ConvertToVector3D(const Eigen::Vector3d& vec) {
         Vector3D result;
         result.x = vec.x();
         result.y = vec.y();
@@ -546,10 +546,8 @@ OCEANSIM_API VectorizedOperationsHandle VectorOps_Create(const PerformanceConfig
     if (!config) return nullptr;
 
     HANDLE_EXCEPTION({
-                         VectorConfig vec_config;
-                         vec_config.execution_policy = ConvertExecutionPolicy(config->execution_policy);
-                         vec_config.simd_type = ConvertSimdType(config->simd_type);
-                         vec_config.num_threads = config->num_threads;
+                         VectorizedOperations::Config vec_config;
+                         vec_config.preferredSimd = ConvertSimdType(config->simd_type);
 
                          auto ops = std::make_unique<VectorizedOperations>(vec_config);
                          return ops.release();
@@ -614,9 +612,9 @@ OCEANSIM_API ParallelComputeEngineHandle ParallelEngine_Create(const Performance
     if (!config) return nullptr;
 
     HANDLE_EXCEPTION({
-                         EngineConfig engine_config;
-                         engine_config.execution_policy = ConvertExecutionPolicy(config->execution_policy);
-                         engine_config.num_threads = config->num_threads;
+                         ParallelComputeEngine::Config engine_config;
+                         engine_config.maxThreads = static_cast<size_t>(config->num_threads);
+                         engine_config.defaultPolicy = ConvertExecutionPolicy(config->execution_policy);
 
                          auto engine = std::make_unique<ParallelComputeEngine>(engine_config);
                          return engine.release();

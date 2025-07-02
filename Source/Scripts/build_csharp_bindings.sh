@@ -20,10 +20,33 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJ_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# 自动检测系统架构
+detect_system_arch() {
+    local arch
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS 系统
+        arch=$(uname -m)
+        if [[ "$arch" == "arm64" ]]; then
+            echo "arm64"
+        else
+            echo "x64"
+        fi
+    else
+        # Linux/Windows 系统
+        arch=$(uname -m)
+        case $arch in
+            x86_64) echo "x64" ;;
+            i386|i686) echo "x86" ;;
+            aarch64|arm64) echo "arm64" ;;
+            *) echo "x64" ;;  # 默认回退
+        esac
+    fi
+}
+
 # 构建配置
 BUILD_TYPE="${BUILD_TYPE:-Release}"
 CLEAN_BUILD="${CLEAN_BUILD:-ON}"
-TARGET_PLATFORM="${TARGET_PLATFORM:-x64}"
+TARGET_PLATFORM="${TARGET_PLATFORM:-$(detect_system_arch)}"  # 自动检测架构
 DOTNET_VERSION="${DOTNET_VERSION:-8.0}"
 
 # 路径配置 - 修复了C#客户端路径
@@ -317,8 +340,13 @@ configure_cmake() {
 }
 
 configure_cmake_macos() {
-    # macOS 特定配置 - 修复了 local -n 兼容性问题和路径拼接
+    # macOS 特定配置 - 修复了架构检测和 SIMD 支持
     local cmake_args_ref="$1"
+    
+    # 检测真实的系统架构
+    local real_arch
+    real_arch=$(uname -m)
+    log_info "检测到系统架构: $real_arch"
     
     # macOS 特定配置
     if command -v brew >/dev/null; then
@@ -348,27 +376,34 @@ configure_cmake_macos() {
         fi
     fi
     
-    # 设置目标架构和SIMD支持
-    if [[ "$TARGET_PLATFORM" == "arm64" ]]; then
+    # 根据真实架构设置编译选项
+    if [[ "$real_arch" == "arm64" ]]; then
+        log_info "配置 Apple Silicon (ARM64) 构建"
         eval "${cmake_args_ref}+=(\"-DCMAKE_OSX_ARCHITECTURES=arm64\")"
-        # ARM64 使用 NEON 而不是 AVX
+        
+        # ARM64 使用 NEON 优化
         if [[ "${DISABLE_SIMD:-}" != "ON" ]]; then
-            eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-march=armv8-a\")"
+            eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-mcpu=apple-m1\")"
+            log_info "启用 Apple M1 NEON 优化"
+        else
+            log_info "SIMD 优化已禁用"
         fi
-    elif [[ "$TARGET_PLATFORM" == "x64" ]]; then
+    else
+        log_info "配置 Intel x64 构建"
         eval "${cmake_args_ref}+=(\"-DCMAKE_OSX_ARCHITECTURES=x86_64\")"
-        # x64 启用 AVX2 支持，除非被禁用
+        
+        # x64 Intel 处理器
         if [[ "${DISABLE_SIMD:-}" == "ON" ]]; then
             log_info "SIMD 优化已禁用"
             eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-mno-avx -mno-avx2\")"
         else
-            # 检测 CPU 是否支持 AVX2
+            # 检测 CPU 是否支持 AVX2（Intel Mac）
             if sysctl -n machdep.cpu.features machdep.cpu.leaf7_features 2>/dev/null | grep -q AVX2; then
                 eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-mavx2 -mfma\")"
                 log_info "启用 AVX2 SIMD 优化"
             else
-                log_warning "CPU 不支持 AVX2，使用基础优化"
-                eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-march=native\")"
+                log_info "使用安全的优化选项"
+                eval "${cmake_args_ref}+=(\"-DCMAKE_CXX_FLAGS=-mtune=native\")"
             fi
         fi
     fi
@@ -842,6 +877,16 @@ main() {
     log_info "构建配置: $BUILD_TYPE, 平台: $TARGET_PLATFORM"
     log_info "C# 客户端路径: $CSHARP_CLIENT"
     
+    # 显示系统信息
+    local real_arch
+    real_arch=$(uname -m)
+    log_info "系统架构: $real_arch ($(uname -s))"
+    
+    if [[ "$real_arch" != "$TARGET_PLATFORM" ]] && [[ ! ("$real_arch" == "x86_64" && "$TARGET_PLATFORM" == "x64") ]]; then
+        log_warning "目标平台 ($TARGET_PLATFORM) 与系统架构 ($real_arch) 不匹配"
+        log_info "将使用系统架构进行构建"
+    fi
+    
     local start_time
     start_time=$(date +%s)
     
@@ -887,7 +932,9 @@ main() {
     echo "📋 项目结构:"
     echo "   - C# 客户端: $CSHARP_CLIENT"
     echo "   - 解决方案文件: $CSHARP_CLIENT/OceanSim.sln"
+    echo "   - 目标架构: $TARGET_PLATFORM ($real_arch)"
 }
+
 
 # ===========================================
 # 错误处理
