@@ -138,9 +138,11 @@ namespace OceanSim {
                                    int iterations = 1000);
             void compareBenchmarks(const std::string& baseline, const std::string& comparison) const;
 
-        private:
-            PerformanceProfiler();
             ~PerformanceProfiler();
+
+            PerformanceProfiler();
+
+        private:
 
             bool enabled_ = false;
             mutable std::mutex data_mutex_;
