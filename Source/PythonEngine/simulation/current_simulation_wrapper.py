@@ -8,10 +8,14 @@
 import numpy as np
 from typing import Dict, Any, Optional, Tuple
 import logging
+import netCDF4
+import os
+
 
 try:
     import oceansim
 except ImportError:
+    logging.warning("Oceansim package not found, using Python implementation instead.")
     oceansim = None
 
 
@@ -29,6 +33,59 @@ class CurrentSimulationWrapper:
         self.domain_config = domain_config
         self.solver_config = solver_config or {}
         self._cpp_solver = None
+
+        # 自动计算 coriolis
+        # ==========================================================
+        # 自动计算 coriolis + dx/dy/dz
+        # ==========================================================
+        nc_file = self.domain_config.get('nc_file')
+        if nc_file and os.path.exists(nc_file):
+            try:
+                with netCDF4.Dataset(nc_file) as ds:
+                    # 经纬度
+                    lat = ds.variables['lat'][:]
+                    lon = ds.variables['lon'][:]
+                    # 中心纬度
+                    lat_center = (np.min(lat) + np.max(lat)) / 2
+                    omega = 7.2921e-5
+                    coriolis = 2 * omega * np.sin(np.radians(lat_center))
+        
+                    if 'coriolis' not in self.solver_config:
+                        self.solver_config['coriolis'] = coriolis
+                        logging.info(f"自动计算 coriolis={coriolis:.6e} s^-1 based on nc")
+        
+                    # 计算 dx/dy
+                    if len(lat) > 1:
+                        dy = abs(lat[1] - lat[0]) * np.pi/180 * 6371000
+                    else:
+                        dy = 0
+        
+                    if len(lon) > 1:
+                        dx = abs(lon[1] - lon[0]) * np.pi/180 * 6371000 * np.cos(np.radians(lat_center))
+                    else:
+                        dx = 0
+        
+                    depth = ds.variables.get('depth')
+                    if depth is not None and len(depth) > 1:
+                        dz = abs(depth[1] - depth[0])
+                    else:
+                        dz = 0
+        
+                    self.domain_config['dx'] = dx
+                    self.domain_config['dy'] = dy
+                    self.domain_config['dz'] = dz
+        
+                    logging.info(f"自动计算 dx={dx:.2f} m dy={dy:.2f} m dz={dz:.2f} m from nc")
+        
+            except Exception as e:
+                logging.warning(f"从 nc_file 自动计算失败，将使用默认值: {e}")
+        
+        else:
+            if 'coriolis' not in self.solver_config:
+                logging.warning("未提供 nc_file 且未传入 coriolis，默认 coriolis=0")
+                self.solver_config['coriolis'] = 0.0
+
+
 
         if oceansim is not None:
             self._init_cpp_solver()
@@ -149,12 +206,13 @@ if __name__ == "__main__":
     # 测试配置
     domain_config = {
         'nx': 40, 'ny': 40, 'nz': 10,
-        'dx': 1.0, 'dy': 1.0, 'dz': 1.0
+        'dx': 1.0, 'dy': 1.0, 'dz': 1.0,
+        "nc_file" : "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/data/raw_data/merged_data.nc"
     }
 
     solver_config = {
         'viscosity': 0.01,
-        'coriolis': 1e-4
+        # 'coriolis': 1e-4
     }
 
     # 创建洋流模拟器

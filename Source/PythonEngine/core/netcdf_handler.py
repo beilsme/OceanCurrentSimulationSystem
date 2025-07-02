@@ -29,6 +29,15 @@ class NetCDFHandler:
         """
         self.ds = xr.open_dataset(file_path)
 
+    def list_variables(self):
+        """
+        输出当前NetCDF文件包含的全部变量名
+        """
+        print("变量列表：")
+        for var in self.ds.variables:
+            print(f" - {var}")
+
+
     def get_uv(self, time_idx=0, depth_idx=0):
         """
         提取指定时间、深度层的u/v/lat/lon（2D场）
@@ -63,6 +72,7 @@ class NetCDFHandler:
 if __name__ == '__main__':
     test_path = r'../data/raw_data/merged_data.nc'
     handler = NetCDFHandler(test_path)
+    handler.list_variables()
     u, v, lat, lon = handler.get_uv(time_idx=0, depth_idx=0)
     print("u shape:", u.shape)
     print("v shape:", v.shape)
