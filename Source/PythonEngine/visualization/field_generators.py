@@ -27,14 +27,20 @@ except ImportError:
 class FieldGenerator:
     """海洋物理场数据生成器"""
 
-    def __init__(self, grid_config: Dict[str, Any], chinese_support: bool = True):
+    def __init__(self, grid_config: Optional[Dict[str, Any]] = None, chinese_support: bool = True):
         """
         初始化场生成器
         
         Args:
-            grid_config: 网格配置参数
+            grid_config: 网格配置参数，如果为 ``None`` 则使用默认配置
             chinese_support: 是否启用中文支持
         """
+
+        if grid_config is None:
+            grid_config = {
+                'nx': 100, 'ny': 100, 'nz': 20,
+                'dx': 1.0, 'dy': 1.0, 'dz': 1.0
+            }
         self.grid_config = grid_config
         self.nx = grid_config.get('nx', 100)
         self.ny = grid_config.get('ny', 100)

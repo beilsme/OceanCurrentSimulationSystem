@@ -28,14 +28,21 @@ except ImportError:
 class AnimationGenerator:
     """海洋数据动画生成器"""
 
-    def __init__(self, grid_config: Dict[str, Any], chinese_support: bool = True):
+    def __init__(self, grid_config: Optional[Dict[str, Any]] = None, chinese_support: bool = True):
         """
         初始化动画生成器
         
         Args:
-            grid_config: 网格配置
+            grid_config: 网格配置，如果为 ``None`` 则使用默认配置
             chinese_support: 中文支持
         """
+
+        if grid_config is None:
+            grid_config = {
+                'nx': 100, 'ny': 100,
+                'dx': 1.0, 'dy': 1.0
+            }
+
         self.grid_config = grid_config
         self.nx = grid_config.get('nx', 100)
         self.ny = grid_config.get('ny', 100)
@@ -342,6 +349,7 @@ class AnimationGenerator:
 
         def animate(frame):
             """动画更新函数"""
+            nonlocal particles, trail_lines
             current_positions = particle_trajectories[frame]
 
             # 更新粒子位置
@@ -382,8 +390,9 @@ class AnimationGenerator:
                 # 重新绘制粒子和轨迹
                 particles = ax.scatter(x_particles, y_particles, s=20, c='red', alpha=0.8, zorder=5)
                 for i, line in enumerate(trail_lines):
-                    line = ax.plot(line.get_xdata(), line.get_ydata(), 'b-',
-                                   alpha=line.get_alpha(), linewidth=1)[0]
+                    trail_lines[i], = ax.plot(line.get_xdata(), line.get_ydata(), 'b-',
+                                              alpha=line.get_alpha(), linewidth=1)
+
 
             # 更新时间和统计信息
             active_particles = len(current_positions)
