@@ -985,6 +985,361 @@ def _compute_divergence_stats(divergence):
         "divergence_zones": int(np.sum(divergence > 1e-5))
     }
 
+def lagrangian_particle_tracking(input_data):
+    """拉格朗日粒子追踪模拟"""
+    try:
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+        output_path = params.get('output_path', 'particle_tracking_animation.gif')
+
+        # 模拟参数
+        particle_count = params.get('particle_count', 50)
+        time_steps = params.get('time_steps', 100)
+        dt = params.get('dt', 3600.0)  # 时间步长（秒）
+        trail_length = params.get('trail_length', 10)
+
+        # 初始位置设置
+        initial_positions = params.get('initial_positions', 'random')
+        bounds = params.get('bounds', {})
+
+        print(f"[INFO] 开始拉格朗日粒子追踪模拟")
+        print(f"[INFO] 粒子数量: {particle_count}, 时间步数: {time_steps}, 步长: {dt}s")
+
+        # 读取流场数据
+        handler = NetCDFHandler(netcdf_path)
+        try:
+            u, v, lat, lon = handler.get_uv(time_idx=0, depth_idx=0)
+
+            # 创建网格和粒子模拟器
+            nx, ny = len(lon), len(lat)
+            grid = oceansim.GridDataStructure(ny, nx, 1)
+            rk_solver = oceansim.RungeKuttaSolver()
+            particle_sim = oceansim.ParticleSimulator(grid, rk_solver)
+
+            # 设置流场数据
+            try:
+                grid.add_field2d("u_velocity", u.flatten().astype(np.float64))
+                grid.add_field2d("v_velocity", v.flatten().astype(np.float64))
+            except Exception as e:
+                print(f"[WARNING] 使用oceansim设置流场失败: {e}")
+                return _fallback_particle_tracking(input_data)
+
+            # 初始化粒子位置
+            initial_particle_positions = _generate_initial_positions(
+                initial_positions, particle_count, lat, lon, bounds
+            )
+
+            particle_sim.initialize_particles(initial_particle_positions)
+
+            # 粒子追踪模拟
+            trajectories = []
+            time_series = []
+
+            for step in range(time_steps):
+                current_time = step * dt
+                time_series.append(current_time / 3600.0)  # 转换为小时
+
+                # 获取当前粒子位置
+                particles = particle_sim.get_particles()
+                current_positions = np.array([[p.position[0], p.position[1]] for p in particles])
+                trajectories.append(current_positions.copy())
+
+                # 前进一个时间步
+                particle_sim.step_forward(dt)
+
+                if step % 10 == 0:
+                    active_count = sum(1 for p in particles if p.active)
+                    print(f"[INFO] 步骤 {step}/{time_steps}, 活跃粒子: {active_count}/{particle_count}")
+
+            # 生成可视化动画
+            animation_result = _create_particle_animation(
+                trajectories, time_series, u, v, lat, lon, output_path, trail_length
+            )
+
+            # 计算统计信息
+            tracking_stats = _compute_tracking_statistics(trajectories, particles)
+
+            return {
+                "success": True,
+                "message": "拉格朗日粒子追踪模拟完成",
+                "output_path": output_path,
+                "statistics": tracking_stats,
+                "metadata": {
+                    "particle_count": particle_count,
+                    "time_steps": time_steps,
+                    "simulation_duration_hours": time_steps * dt / 3600.0,
+                    "trail_length": trail_length
+                }
+            }
+
+        finally:
+            handler.close()
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"拉格朗日粒子追踪失败: {str(e)}",
+            "error_trace": traceback.format_exc()
+        }
+
+
+def _generate_initial_positions(position_type, count, lat, lon, bounds):
+    """生成粒子初始位置"""
+    positions = []
+
+    if position_type == 'random':
+        # 在海域范围内随机分布
+        lat_min, lat_max = bounds.get('lat_min', lat.min()), bounds.get('lat_max', lat.max())
+        lon_min, lon_max = bounds.get('lon_min', lon.min()), bounds.get('lon_max', lon.max())
+
+        for _ in range(count):
+            pos_lat = np.random.uniform(lat_min, lat_max)
+            pos_lon = np.random.uniform(lon_min, lon_max)
+            # 转换为网格坐标系统
+            grid_x = (pos_lon - lon.min()) / (lon.max() - lon.min()) * len(lon)
+            grid_y = (pos_lat - lat.min()) / (lat.max() - lat.min()) * len(lat)
+            positions.append(np.array([grid_x, grid_y, 0.0]))
+
+    elif position_type == 'line':
+        # 在指定线段上均匀分布
+        start_lat = bounds.get('start_lat', lat.min())
+        end_lat = bounds.get('end_lat', lat.max())
+        start_lon = bounds.get('start_lon', lon.min())
+        end_lon = bounds.get('end_lon', lon.max())
+
+        for i in range(count):
+            t = i / (count - 1) if count > 1 else 0
+            pos_lat = start_lat + t * (end_lat - start_lat)
+            pos_lon = start_lon + t * (end_lon - start_lon)
+
+            grid_x = (pos_lon - lon.min()) / (lon.max() - lon.min()) * len(lon)
+            grid_y = (pos_lat - lat.min()) / (lat.max() - lat.min()) * len(lat)
+            positions.append(np.array([grid_x, grid_y, 0.0]))
+
+    elif isinstance(position_type, list):
+        # 使用指定的位置列表
+        for pos in position_type[:count]:
+            grid_x = (pos[1] - lon.min()) / (lon.max() - lon.min()) * len(lon)
+            grid_y = (pos[0] - lat.min()) / (lat.max() - lat.min()) * len(lat)
+            positions.append(np.array([grid_x, grid_y, 0.0]))
+
+    return positions
+
+
+def _create_particle_animation(trajectories, time_series, u, v, lat, lon, output_path, trail_length):
+    """创建粒子轨迹动画"""
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    from matplotlib.colors import Normalize
+
+    # 设置中文支持
+    from Source.PythonEngine.utils.chinese_config import setup_chinese_all
+    setup_chinese_all(font_size=12, dpi=100)
+
+    # 创建图形
+    fig, ax = plt.subplots(figsize=(14, 10), subplot_kw={'projection': ccrs.PlateCarree()})
+    ax.set_extent([lon.min(), lon.max(), lat.min(), lat.max()], crs=ccrs.PlateCarree())
+
+    # 添加地理特征
+    ax.add_feature(cfeature.COASTLINE, edgecolor='black', linewidth=0.8)
+    ax.add_feature(cfeature.LAND, facecolor='lightgray')
+    ax.add_feature(cfeature.BORDERS, linestyle=':', alpha=0.7)
+
+    # 绘制背景流场
+    lon_grid, lat_grid = np.meshgrid(lon, lat)
+    speed = np.sqrt(u**2 + v**2)
+
+    # 背景流速场
+    speed_contour = ax.contourf(lon_grid, lat_grid, speed, levels=20, cmap='Blues', alpha=0.6,
+                                transform=ccrs.PlateCarree(), zorder=1)
+
+    # 稀疏箭头显示流向
+    skip = max(1, min(len(lat), len(lon)) // 15)
+    ax.quiver(lon_grid[::skip, ::skip], lat_grid[::skip, ::skip],
+              u[::skip, ::skip], v[::skip, ::skip],
+              transform=ccrs.PlateCarree(), color='gray', alpha=0.7, scale=50, zorder=2)
+
+    # 初始化粒子绘制对象
+    particles_scatter = ax.scatter([], [], c='red', s=20, alpha=0.8,
+                                   transform=ccrs.PlateCarree(), zorder=4)
+    trail_lines = []
+
+    def animate(frame):
+        """动画更新函数"""
+        ax.clear()
+
+        # 重新设置地图
+        ax.set_extent([lon.min(), lon.max(), lat.min(), lat.max()], crs=ccrs.PlateCarree())
+        ax.add_feature(cfeature.COASTLINE, edgecolor='black', linewidth=0.8)
+        ax.add_feature(cfeature.LAND, facecolor='lightgray')
+        ax.add_feature(cfeature.BORDERS, linestyle=':', alpha=0.7)
+
+        # 重绘背景
+        ax.contourf(lon_grid, lat_grid, speed, levels=20, cmap='Blues', alpha=0.6,
+                    transform=ccrs.PlateCarree(), zorder=1)
+        ax.quiver(lon_grid[::skip, ::skip], lat_grid[::skip, ::skip],
+                  u[::skip, ::skip], v[::skip, ::skip],
+                  transform=ccrs.PlateCarree(), color='gray', alpha=0.7, scale=50, zorder=2)
+
+        # 获取当前帧的粒子位置
+        current_positions = trajectories[frame]
+
+        # 转换回地理坐标
+        geo_lons = lon.min() + (current_positions[:, 0] / len(lon)) * (lon.max() - lon.min())
+        geo_lats = lat.min() + (current_positions[:, 1] / len(lat)) * (lat.max() - lat.min())
+
+        # 绘制粒子轨迹
+        trail_start = max(0, frame - trail_length)
+        for i in range(len(current_positions)):
+            trail_x = []
+            trail_y = []
+            for t in range(trail_start, frame + 1):
+                if t < len(trajectories):
+                    pos = trajectories[t][i]
+                    trail_lon = lon.min() + (pos[0] / len(lon)) * (lon.max() - lon.min())
+                    trail_lat = lat.min() + (pos[1] / len(lat)) * (lat.max() - lat.min())
+                    trail_x.append(trail_lon)
+                    trail_y.append(trail_lat)
+
+            if len(trail_x) > 1:
+                ax.plot(trail_x, trail_y, color='orange', alpha=0.6, linewidth=1.5,
+                        transform=ccrs.PlateCarree(), zorder=3)
+
+        # 绘制当前粒子位置
+        ax.scatter(geo_lons, geo_lats, c='red', s=25, alpha=0.9,
+                   transform=ccrs.PlateCarree(), zorder=4)
+
+        # 设置标题
+        current_time = time_series[frame] if frame < len(time_series) else 0
+        ax.set_title(f'拉格朗日粒子追踪 - 时间: {current_time:.1f}小时', fontsize=14, pad=20)
+
+        return []
+
+    # 创建动画
+    anim = animation.FuncAnimation(fig, animate, frames=len(trajectories),
+                                   interval=200, blit=False, repeat=True)
+
+    # 保存动画
+    try:
+        if output_path.endswith('.gif'):
+            anim.save(output_path, writer='pillow', fps=5, dpi=100)
+        elif output_path.endswith('.mp4'):
+            anim.save(output_path, writer='ffmpeg', fps=5, bitrate=1800, dpi=100)
+        else:
+            anim.save(output_path + '.gif', writer='pillow', fps=5, dpi=100)
+
+        print(f"[INFO] 粒子追踪动画保存成功: {output_path}")
+    except Exception as e:
+        print(f"[WARNING] 动画保存失败: {e}")
+
+    plt.close(fig)
+    return anim
+
+
+def _compute_tracking_statistics(trajectories, particles):
+    """计算粒子追踪统计信息"""
+    if not trajectories:
+        return {"error": "无轨迹数据"}
+
+    # 计算粒子位移统计
+    initial_positions = trajectories[0]
+    final_positions = trajectories[-1]
+
+    displacements = np.linalg.norm(final_positions - initial_positions, axis=1)
+
+    # 计算轨迹长度
+    trajectory_lengths = []
+    for i in range(len(initial_positions)):
+        length = 0
+        for t in range(1, len(trajectories)):
+            prev_pos = trajectories[t-1][i]
+            curr_pos = trajectories[t][i]
+            length += np.linalg.norm(curr_pos - prev_pos)
+        trajectory_lengths.append(length)
+
+    # 活跃粒子统计
+    active_particles = [p for p in particles if p.active]
+
+    return {
+        "displacement_statistics": {
+            "mean_displacement": float(np.mean(displacements)),
+            "max_displacement": float(np.max(displacements)),
+            "std_displacement": float(np.std(displacements))
+        },
+        "trajectory_statistics": {
+            "mean_trajectory_length": float(np.mean(trajectory_lengths)),
+            "max_trajectory_length": float(np.max(trajectory_lengths))
+        },
+        "particle_status": {
+            "total_particles": len(particles),
+            "active_particles": len(active_particles),
+            "inactive_particles": len(particles) - len(active_particles)
+        }
+    }
+
+
+def _fallback_particle_tracking(input_data):
+    """Python后备粒子追踪实现"""
+    try:
+        print("[INFO] 使用Python后备方案进行粒子追踪")
+
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+
+        # 简化的Python实现
+        handler = NetCDFHandler(netcdf_path)
+        try:
+            u, v, lat, lon = handler.get_uv(time_idx=0, depth_idx=0)
+
+            # 简单的欧拉积分方法
+            particle_count = params.get('particle_count', 20)
+            time_steps = params.get('time_steps', 50)
+            dt = params.get('dt', 3600.0)
+
+            # 随机初始位置
+            np.random.seed(42)
+            initial_lats = np.random.uniform(lat.min(), lat.max(), particle_count)
+            initial_lons = np.random.uniform(lon.min(), lon.max(), particle_count)
+
+            trajectories = []
+            positions = np.column_stack([initial_lats, initial_lons])
+
+            for step in range(time_steps):
+                trajectories.append(positions.copy())
+
+                # 简单的位置更新（欧拉方法）
+                for i in range(len(positions)):
+                    lat_idx = np.argmin(np.abs(lat - positions[i, 0]))
+                    lon_idx = np.argmin(np.abs(lon - positions[i, 1]))
+
+                    if 0 <= lat_idx < len(lat) and 0 <= lon_idx < len(lon):
+                        u_interp = u[lat_idx, lon_idx]
+                        v_interp = v[lat_idx, lon_idx]
+
+                        if np.isfinite(u_interp) and np.isfinite(v_interp):
+                            # 简单的位置更新
+                            positions[i, 1] += u_interp * dt / 111000  # 经度更新
+                            positions[i, 0] += v_interp * dt / 111000  # 纬度更新
+
+            return {
+                "success": True,
+                "message": "Python后备粒子追踪完成",
+                "trajectories": trajectories,
+                "metadata": {"method": "python_fallback"}
+            }
+
+        finally:
+            handler.close()
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Python后备方案失败: {str(e)}"
+        }
+    
+    
 def main():
     if len(sys.argv) != 3:
         print("用法: python ocean_data_wrapper.py input.json output.json")
@@ -1015,6 +1370,8 @@ def main():
             result = calculate_vorticity_divergence(input_data)
         elif action == 'calculate_flow_statistics':  # 新增流速统计功能
             result = calculate_flow_statistics(input_data)
+        elif action == 'lagrangian_particle_tracking':
+            result = lagrangian_particle_tracking(input_data)
         else:
             result = {
                 "success": False,
@@ -1042,7 +1399,10 @@ def main():
 
         print(f"[ERROR] 错误: {str(e)}")
         sys.exit(1)
-
+        
+        
+# ============================ 测试代码 ===========
+# 涡度散度测试
 if __name__ == "__main__":
     import json
     import os
@@ -1211,3 +1571,46 @@ if __name__ == "__main__":
         print("\n⚠️  部分测试失败，请检查错误信息并修复相关问题。")
 
     print("=" * 60)
+
+# 拉格朗日粒子测试
+if __name__ == "__main__":
+    print("="*60)
+    print("🌊 海洋粒子追踪模块测试")
+    print("="*60)
+
+    # 这里可以按需修改
+    test_netcdf_path = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/data/raw_data/merged_data.nc"
+    output_gif = "test_outputs/particle_tracking_animation.gif"
+
+    print(f"📁 测试数据文件: {test_netcdf_path}")
+
+    test_input = {
+        "action": "lagrangian_particle_tracking",
+        "parameters": {
+            "netcdf_path": test_netcdf_path,
+            "output_path": output_gif,
+            "particle_count": 30,
+            "time_steps": 50,
+            "dt": 3600.0,
+            "trail_length": 10,
+            "initial_positions": "random",
+            "bounds": {}
+        }
+    }
+
+    print("🔄 开始粒子追踪测试...")
+    result = lagrangian_particle_tracking(test_input)
+
+    if result["success"]:
+        print("✅ 粒子追踪完成")
+        print(f"📈 输出动画: {result['output_path']}")
+        if result.get("statistics"):
+            stats = result["statistics"]
+            print("📊 统计信息:")
+            print(stats)
+    else:
+        print(f"❌ 失败: {result['message']}")
+        if result.get("error_trace"):
+            print(result["error_trace"])
+
+    print("\n🎯 粒子追踪测试结束")
