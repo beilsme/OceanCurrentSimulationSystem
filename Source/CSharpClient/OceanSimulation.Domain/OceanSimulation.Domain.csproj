@@ -72,8 +72,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\" />
-    <Folder Include="ValueObjects\" />
     <Folder Include="DomainServices\" />
     <Folder Include="Fixtures\" />
     <Folder Include="Builders\" />
