@@ -161,6 +161,9 @@ set(CORE_SOURCES
         src/utils/ThreadPool.cpp
         src/utils/Logger.cpp
 
+        # 预测模块
+        src/prediction/EnsembleKalmanFilter.cpp
+        
         include/algorithms/FiniteDifferenceSolver.h
         include/algorithms/RungeKuttaSolver.h
         include/algorithms/ParallelComputeEngine.h
@@ -175,6 +178,9 @@ set(CORE_SOURCES
         include/utils/MathUtils.h
         include/utils/ThreadPool.h
         include/utils/Logger.h
+        
+        include/prediction/EnsembleKalmanFilter.h
+        
 
 
 )
@@ -242,7 +248,8 @@ if(BUILD_CSHARP_BINDINGS)
             bindings/csharp/CppCoreInterop.cpp
             bindings/csharp/ParticleSimulatorWrapper.cpp
             bindings/csharp/GridDataWrapper.cpp
-            
+            bindings/csharp/EnKFWrapper.cpp
+
     )
 
     add_library(OceanSimCSharp SHARED ${CSHARP_BINDING_SOURCES})
