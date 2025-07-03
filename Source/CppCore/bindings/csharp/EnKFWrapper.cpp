@@ -263,40 +263,6 @@ OCEANSIM_API int EnKF_GetSystemInfo(EnKFHandle handle, char* info_buffer, int bu
 // EnKF核心算法接口实现
 // ==============================================================================
 
-OCEANSIM_API int EnKF_ExecuteForecast(EnKFHandle handle,
-                                      double time_step,
-                                      ForecastResult* result) {
-    try {
-        if (!handle || !result || time_step <= 0.0) {
-            return -1;
-        }
-
-        auto wrapper = static_cast<EnKFWrapper*>(handle);
-
-        if (!wrapper->is_initialized) {
-            SetError(handle, "EnKF系统未初始化");
-            return -2;
-        }
-
-        auto cpp_covariance = wrapper->filter->getCurrentCovariance();
-        int expected_size = cpp_covariance.rows() * cpp_covariance.cols();
-
-        if (expected_size != matrix_size) {
-            SetError(handle, "协方差矩阵大小不匹配");
-            return -3;
-        }
-
-        // 复制矩阵数据（按行展平）
-        Eigen::Map<Eigen::MatrixXd>(covariance, cpp_covariance.rows(), cpp_covariance.cols()) = cpp_covariance;
-
-        ClearError(handle);
-        return 0;
-
-    } catch (const std::exception& e) {
-        SetError(handle, std::string("获取当前协方差失败: ") + e.what());
-        return -4;
-    }
-}
 
 OCEANSIM_API int EnKF_GetEnsembleMember(EnKFHandle handle,
                                         int member_index,
@@ -1070,45 +1036,66 @@ OCEANSIM_API bool EnKF_CheckHardwareSupport(const char* feature_name) {
     }
 
     return false;
-} "EnKF系统未初始化");
-return -2;
 }
 
-// 执行预报步骤
-auto cpp_result = wrapper->filter->executeForecastStep(time_step);
 
-if (!cpp_result.success) {
-SetError(handle, "预报步骤执行失败");
-return -3;
+
+// =============================================================================
+// EnKF核心算法接口实现
+// =============================================================================
+OCEANSIM_API int EnKF_ExecuteForecast(EnKFHandle handle,
+                                      double time_step,
+                                      ForecastResult* result) {
+    try {
+        if (!handle || !result || time_step <= 0.0) {
+            return -1;
+        }
+
+        auto wrapper = static_cast<EnKFWrapper*>(handle);
+        if (!wrapper->is_initialized) {
+            SetError(handle, "EnKF系统未初始化");
+            return -2;
+        }
+
+        // 执行预报步骤
+        auto cpp_result = wrapper->filter->executeForecastStep(time_step);
+        
+        if (!cpp_result.success) {
+            SetError(handle, "预报步骤执行失败");
+            return -3;
+        };
+
+        // 转换结果
+        result->state_size = static_cast<int>(cpp_result.ensemble_mean.size());
+        result->ensemble_mean = new OceanState[result->state_size];
+        for (int i = 0; i < result->state_size; ++i) {
+            ConvertStateVector(cpp_result.ensemble_mean[i], &result->ensemble_mean[i]);
+        }
+        // 复制协方差矩阵（展平）
+        int covariance_size =
+                cpp_result.forecast_covariance.rows() * cpp_result.forecast_covariance.cols();
+        result->forecast_covariance = new double[covariance_size];
+        Eigen::Map<Eigen::MatrixXd>(result->forecast_covariance,
+                                    cpp_result.forecast_covariance.rows(),
+                                    cpp_result.forecast_covariance.cols()) =
+                cpp_result.forecast_covariance;
+
+        result->ensemble_spread =
+                wrapper->filter->getCurrentEnsemble().computeEnsembleSpread();
+        result->computation_time_ms = cpp_result.computation_time.count();
+        result->success = true;
+
+        ClearError(handle);
+        return 0;
+
+    } catch (const std::exception& e) {
+        SetError(handle, std::string("预报执行失败: ") + e.what());
+        return -4;
+    }
 }
 
-// 转换结果
-result->state_size = static_cast<int>(cpp_result.ensemble_mean.size());
-result->ensemble_mean = new OceanState[result->state_size];
 
-for (int i = 0; i < result->state_size; ++i) {
-ConvertStateVector(cpp_result.ensemble_mean[i], &result->ensemble_mean[i]);
-}
 
-// 复制协方差矩阵（展平）
-int covariance_size = cpp_result.forecast_covariance.rows() * cpp_result.forecast_covariance.cols();
-result->forecast_covariance = new double[covariance_size];
-Eigen::Map<Eigen::MatrixXd>(result->forecast_covariance,
-cpp_result.forecast_covariance.rows(),
-        cpp_result.forecast_covariance.cols()) = cpp_result.forecast_covariance;
-
-result->ensemble_spread = wrapper->filter->getCurrentEnsemble().computeEnsembleSpread();
-result->computation_time_ms = cpp_result.computation_time.count();
-result->success = true;
-
-ClearError(handle);
-return 0;
-
-} catch (const std::exception& e) {
-SetError(handle, std::string("预报执行失败: ") + e.what());
-return -4;
-}
-}
 
 OCEANSIM_API int EnKF_ExecuteAnalysis(EnKFHandle handle,
                                       const ObservationData* observations,
@@ -1268,7 +1255,25 @@ OCEANSIM_API int EnKF_GetCurrentCovariance(EnKFHandle handle,
             SetError(handle, "EnKF系统未初始化");
             return -2;
         }
-        
+        auto cpp_covariance = wrapper->filter->getCurrentCovariance();
+        int expected_size = cpp_covariance.rows() * cpp_covariance.cols();
+        if (expected_size != matrix_size) {
+            SetError(handle, "协方差矩阵大小不匹配");
+            return -3;
+        }
+
+        Eigen::Map<Eigen::MatrixXd>(covariance,
+                                    cpp_covariance.rows(),
+                                    cpp_covariance.cols()) = cpp_covariance;
+
+        ClearError(handle);
+        return 0;
+
+    } catch (const std::exception& e) {
+        SetError(handle, std::string("获取当前协方差失败: ") + e.what());
+        return -4;
+    }
+}
 
 OCEANSIM_API int EnKF_SetCustomIntegrator(EnKFHandle handle,
                                           OceanModelIntegrator integrator_func,
