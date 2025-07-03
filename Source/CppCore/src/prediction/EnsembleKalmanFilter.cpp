@@ -14,6 +14,7 @@
 #include <execution>
 #include <cmath>
 #include <iomanip>
+#include "utils/ThreadPool.h"
 
 namespace OceanSim {
     namespace Prediction {
@@ -110,8 +111,9 @@ namespace OceanSim {
             }
 
             // 初始化线程池
-            thread_pool_ = std::make_unique<Utils::ThreadPool>(
-                    std::thread::hardware_concurrency());
+            OceanSimulation::Core::ThreadPool::Config pool_config;
+            pool_config.threadCount = std::thread::hardware_concurrency();
+            thread_pool_ = std::make_unique<OceanSimulation::Core::ThreadPool>(pool_config);
         }
 
         EnsembleCollection::~EnsembleCollection() = default;
@@ -215,7 +217,7 @@ namespace OceanSim {
             std::vector<std::future<void>> futures;
 
             for (int i = 0; i < TOPAZ_ENSEMBLE_SIZE; ++i) {
-                futures.push_back(thread_pool_->enqueue([this, operation, i]() {
+                futures.push_back(thread_pool_->submit([this, operation, i]() {
                     operation(members_[i].get(), i);
                 }));
             }
@@ -555,8 +557,8 @@ namespace OceanSim {
             inflation_ = std::make_unique<InflationAlgorithm>(InflationAlgorithm::InflationType::Multiplicative,
                                                               config_.inflation_factor);
             rk_solver_ = std::make_unique<Algorithms::RungeKuttaSolver>();
-            parallel_engine_ = std::make_unique<Algorithms::ParallelComputeEngine>();
-            vector_ops_ = std::make_unique<Algorithms::VectorizedOperations>();
+            parallel_engine_ = std::make_unique<OceanSimulation::Core::ParallelComputeEngine>();
+            vector_ops_ = std::make_unique<OceanSimulation::Core::VectorizedOperations>();
 
             // 初始化日志记录器
             logger_ = std::make_shared<Utils::Logger>("EnKF");

@@ -21,8 +21,10 @@
 #include "algorithms/RungeKuttaSolver.h"
 #include "algorithms/ParallelComputeEngine.h"
 #include "algorithms/VectorizedOperations.h"
+#include "utils/ThreadPool.h"
 #include "core/AdvectionDiffusionSolver.h"
 #include "utils/Logger.h"
+
 
 
 namespace OceanSim {
@@ -81,7 +83,7 @@ namespace OceanSim {
         private:
             std::vector<std::unique_ptr<OceanStateVector[]>> members_;
             size_t state_size_;
-            std::unique_ptr<Utils::ThreadPool> thread_pool_;
+            std::unique_ptr<OceanSimulation::Core::ThreadPool> thread_pool_;
         };
 
 /**
@@ -349,8 +351,8 @@ namespace OceanSim {
             std::unique_ptr<GaspariCohnLocalization> localization_;
             std::unique_ptr<InflationAlgorithm> inflation_;
             std::unique_ptr<Algorithms::RungeKuttaSolver> rk_solver_;
-            std::unique_ptr<Algorithms::ParallelComputeEngine> parallel_engine_;
-            std::unique_ptr<Algorithms::VectorizedOperations> vector_ops_;
+            std::unique_ptr<OceanSimulation::Core::ParallelComputeEngine> parallel_engine_;
+            std::unique_ptr<OceanSimulation::Core::VectorizedOperations> vector_ops_;
 
             // 性能监控
             mutable std::mutex metrics_mutex_;
@@ -396,7 +398,7 @@ namespace OceanSim {
         public:
             static bool validateLinearGaussianCase(const EnsembleKalmanFilter& filter);
             static bool validateLorenz96System(const EnsembleKalmanFilter& filter);
-            static double computeAnalysisAccuracy(const AnalysisResult& result,
+            static double computeAnalysisAccuracy(const EnsembleKalmanFilter::AnalysisResult& result,
                                                   const std::vector<OceanStateVector>& truth);
 
             // 数值稳定性检查
