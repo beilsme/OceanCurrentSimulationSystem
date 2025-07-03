@@ -10,10 +10,10 @@ import time
 
 # 导入具体的ML模块
 
-from core.netcdf_handler import NetCDFHandler
-from core.data_processor import DataProcessor
-from visualization.field_generators import FieldGenerator
-from utils.performance_utils import PerformanceMonitor
+from PythonEngine.core.netcdf_handler import NetCDFHandler
+from PythonEngine.core.data_processor import DataProcessor
+from PythonEngine.visualization.field_generators import FieldGenerator
+from PythonEngine.utils.performance_utils import PerformanceMonitor
 
 app = Flask(__name__)
 CORS(app)

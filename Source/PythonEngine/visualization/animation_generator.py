@@ -19,7 +19,7 @@ from typing import Tuple
 # 导入中文配置
 sys.path.append(str(Path(__file__).parent.parent / "utils"))
 try:
-    from chinese_config import ChineseConfig
+    from PythonEngine.utils.chinese_config import ChineseConfig
     chinese_config = ChineseConfig()
 except ImportError:
     chinese_config = None

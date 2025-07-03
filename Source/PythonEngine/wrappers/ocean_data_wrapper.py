@@ -17,11 +17,12 @@ import os
 # 添加Python引擎路径到sys.path
 current_dir = Path(__file__).parent
 python_engine_root = current_dir.parent
-sys.path.insert(0, str(python_engine_root))
+sys.path.insert(0, str(python_engine_root.parent))
+
 
 try:
-    from core.data_processor import DataProcessor
-    from core.netcdf_handler import NetCDFHandler
+    from PythonEngine.core.data_processor import DataProcessor
+    from PythonEngine.core.netcdf_handler import NetCDFHandler
 except ImportError as e:
     print(f"导入模块失败: {e}")
     print(f"当前工作目录: {os.getcwd()}")

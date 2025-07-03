@@ -23,7 +23,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from shapely.geometry import LineString, Point
 import geopandas as gpd
-from Source.PythonEngine.utils.chinese_config import setup_chinese_all
+from PythonEngine.utils.chinese_config import setup_chinese_all
 from typing import Optional
 from datetime import datetime
 

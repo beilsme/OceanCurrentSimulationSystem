@@ -16,20 +16,20 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 导入simulation模块
-from simulation import (
+from PythonEngine.simulation import (
     ParticleTrackingWrapper, CurrentSimulationWrapper,
     PollutionDispersionSimulator, HybridSolver
 )
-from simulation.particle_tracking_wrapper import ParticleState, TrackingParameters, IntegrationMethod
-from simulation.current_simulation_wrapper import (
+from PythonEngine.simulation.particle_tracking_wrapper import ParticleState, TrackingParameters, IntegrationMethod
+from PythonEngine.simulation.current_simulation_wrapper import (
     GridConfiguration, SimulationParameters, BoundaryCondition,
     BoundaryType, SolverMethod, TimeScheme, ForceField
 )
-from simulation.pollution_dispersion import (
+from PythonEngine.simulation.pollution_dispersion import (
     DischargeSource, DischargeType, PollutantProperties, PollutantType,
     EnvironmentalConditions, OIL_PROPERTIES, CHEMICAL_PROPERTIES
 )
-from simulation.hybrid_solver import (
+from PythonEngine.simulation.hybrid_solver import (
     SolverConfiguration, CouplingParameters, AdaptiveParameters,
     MultiScaleParameters, SolverCoupling, AdaptationCriteria
 )

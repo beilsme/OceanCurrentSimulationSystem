@@ -18,17 +18,17 @@ from contextlib import asynccontextmanager
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent))
 
-from core.data_processor import DataProcessor
-from core.netcdf_handler import NetCDFHandler
-from core.interpolation_engine import InterpolationEngine
-from core.cpp_interface import CppInterface
-from simulation.particle_tracking_wrapper import ParticleTrackingWrapper
-from simulation.current_simulation_wrapper import CurrentSimulationWrapper
-from machine_learning.deep_learning.lstm_current_predictor import LSTMCurrentPredictor
-from machine_learning.deep_learning.pinn_ocean_models import PINNOceanModel
-from api.endpoints import setup_routes
-from utils.logging_utils import setup_logging
-from utils.performance_utils import PerformanceMonitor
+from PythonEngine.core.data_processor import DataProcessor
+from PythonEngine.core.netcdf_handler import NetCDFHandler
+from PythonEngine.core.interpolation_engine import InterpolationEngine
+from PythonEngine.core.cpp_interface import CppInterface
+from PythonEngine.simulation.particle_tracking_wrapper import ParticleTrackingWrapper
+from PythonEngine.simulation.current_simulation_wrapper import CurrentSimulationWrapper
+from PythonEngine.machine_learning.deep_learning.lstm_current_predictor import LSTMCurrentPredictor
+from PythonEngine.machine_learning.deep_learning.pinn_ocean_models import PINNOceanModel
+from PythonEngine.api.endpoints import setup_routes
+from PythonEngine.utils.logging_utils import setup_logging
+from PythonEngine.utils.performance_utils import PerformanceMonitor
 
 class OceanSimulationEngine:
     """洋流模拟引擎主类"""

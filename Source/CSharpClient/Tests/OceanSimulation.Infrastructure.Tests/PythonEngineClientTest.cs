@@ -78,7 +78,8 @@ namespace OceanSimulation.Tests.Manual
             services.AddLogging(builder =>
             {
                 builder.AddConsole();
-                builder.SetMinimumLevel(LogLevel.Information);
+                builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
+
             });
 
             // 添加PythonEngineClient配置

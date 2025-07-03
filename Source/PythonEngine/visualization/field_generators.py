@@ -17,7 +17,7 @@ import sys
 # 导入中文配置
 sys.path.append(str(Path(__file__).parent.parent / "utils"))
 try:
-    from chinese_config import ChineseConfig
+    from PythonEngine.utils.chinese_config import ChineseConfig
     chinese_config = ChineseConfig()
 except ImportError:
     logging.warning("无法导入中文配置，将使用默认字体设置")

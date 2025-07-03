@@ -8,9 +8,9 @@
 import numpy as np
 from typing import Dict, Any, Optional, List, Tuple
 import logging
-from simulation.particle_tracking_wrapper import ParticleTrackingWrapper
-from simulation.current_simulation_wrapper import CurrentSimulationWrapper
-from simulation.pollution_dispersion import PollutionDispersionSimulator
+from PythonEngine.simulation.particle_tracking_wrapper import ParticleTrackingWrapper
+from PythonEngine.simulation.current_simulation_wrapper import CurrentSimulationWrapper
+from PythonEngine.simulation.pollution_dispersion import PollutionDispersionSimulator
 
 
 class HybridSolver:
