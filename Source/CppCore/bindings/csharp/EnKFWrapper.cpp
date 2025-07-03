@@ -1113,7 +1113,7 @@ OCEANSIM_API int EnKF_ExecuteAnalysis(EnKFHandle handle,
         }
 
         // 转换观测数据
-        ObservationData cpp_obs;
+        OceanSim::Prediction::ObservationData cpp_obs;
         cpp_obs.values = Eigen::Map<const Eigen::VectorXd>(observations->values, observations->num_observations);
 
         // 构建观测误差协方差矩阵
@@ -1447,9 +1447,9 @@ OCEANSIM_API int EnKF_ExportEnsemble(EnKFHandle handle,
 
             // 写入集合数据
             for (int i = 0; i < ensemble_size; ++i) {
-                const OceanStateVector* member = ensemble.getMember(i);
+                const OceanSim::Prediction::OceanStateVector* member = ensemble.getMember(i);
                 for (int j = 0; j < state_size; ++j) {
-                    file.write(reinterpret_cast<const char*>(&member[j]), sizeof(OceanStateVector));
+                    file.write(reinterpret_cast<const char*>(&member[j]), sizeof(OceanSim::Prediction::OceanStateVector));
                 }
             }
 
@@ -1834,7 +1834,7 @@ OCEANSIM_API int EnKF_GetMemoryUsage(EnKFHandle handle,
         auto covariance = wrapper->filter->getCurrentCovariance();
 
         // 计算集合内存使用
-        *ensemble_memory = ensemble.getEnsembleSize() * ensemble.getStateSize() * sizeof(OceanStateVector);
+        *ensemble_memory = ensemble.getEnsembleSize() * ensemble.getStateSize() * sizeof(OceanSim::Prediction::OceanStateVector);
 
         // 计算协方差矩阵内存使用
         *covariance_memory = covariance.rows() * covariance.cols() * sizeof(double);
