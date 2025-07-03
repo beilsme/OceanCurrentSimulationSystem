@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "8xh6Moxnw/U=",
+  "success": true,
+  "projectFilePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/Tests/IntegrationTests/CppIntegrationTests/CoreIntegrationTests.csproj",
+  "expectedPackageFiles": [
+    "/Users/beilsmindex/.nuget/packages/microsoft.netcore.app.ref/8.0.14/microsoft.netcore.app.ref.8.0.14.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.14/microsoft.aspnetcore.app.ref.8.0.14.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.14/microsoft.netcore.app.host.osx-arm64.8.0.14.nupkg.sha512"
+  ],
+  "logs": []
+}

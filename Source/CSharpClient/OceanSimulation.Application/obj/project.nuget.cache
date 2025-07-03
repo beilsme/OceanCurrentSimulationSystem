@@ -1,0 +1,124 @@
+{
+  "version": 2,
+  "dgSpecHash": "dhESyJjb8Mw=",
+  "success": false,
+  "projectFilePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+  "expectedPackageFiles": [
+    "/Users/beilsmindex/.nuget/packages/autofixture/4.18.0/autofixture.4.18.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/autofixture.xunit2/4.18.0/autofixture.xunit2.4.18.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/automapper/12.0.1/automapper.12.0.1.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/automapper.extensions.microsoft.dependencyinjection/12.0.1/automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/bogus/34.0.2/bogus.34.0.2.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/castle.core/5.1.1/castle.core.5.1.1.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/fare/2.1.1/fare.2.1.1.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/fluentassertions/6.12.0/fluentassertions.6.12.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/fluentvalidation/11.9.0/fluentvalidation.11.9.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/fluentvalidation.dependencyinjectionextensions/11.9.0/fluentvalidation.dependencyinjectionextensions.11.9.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/mathnet.numerics/5.0.0/mathnet.numerics.5.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/mediatr/12.2.0/mediatr.12.2.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/mediatr.contracts/2.0.1/mediatr.contracts.2.0.1.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/mediatr.extensions.microsoft.dependencyinjection/11.1.0/mediatr.extensions.microsoft.dependencyinjection.11.1.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.codecoverage/17.8.0/microsoft.codecoverage.17.8.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.entityframeworkcore/8.0.0/microsoft.entityframeworkcore.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.entityframeworkcore.abstractions/8.0.0/microsoft.entityframeworkcore.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.entityframeworkcore.analyzers/8.0.0/microsoft.entityframeworkcore.analyzers.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.entityframeworkcore.inmemory/8.0.0/microsoft.entityframeworkcore.inmemory.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.caching.abstractions/8.0.0/microsoft.extensions.caching.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.caching.memory/8.0.0/microsoft.extensions.caching.memory.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.configuration.abstractions/8.0.0/microsoft.extensions.configuration.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.dependencyinjection/8.0.0/microsoft.extensions.dependencyinjection.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.0/microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.diagnostics.abstractions/8.0.0/microsoft.extensions.diagnostics.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.diagnostics.healthchecks/8.0.0/microsoft.extensions.diagnostics.healthchecks.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.diagnostics.healthchecks.abstractions/8.0.0/microsoft.extensions.diagnostics.healthchecks.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.fileproviders.abstractions/8.0.0/microsoft.extensions.fileproviders.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.hosting.abstractions/8.0.0/microsoft.extensions.hosting.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.logging/8.0.0/microsoft.extensions.logging.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.0/microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.options/8.0.0/microsoft.extensions.options.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.extensions.primitives/8.0.0/microsoft.extensions.primitives.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.net.test.sdk/17.8.0/microsoft.net.test.sdk.17.8.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.netcore.platforms/1.1.0/microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.testplatform.objectmodel/17.8.0/microsoft.testplatform.objectmodel.17.8.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.testplatform.testhost/17.8.0/microsoft.testplatform.testhost.17.8.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/moq/4.20.69/moq.4.20.69.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/netstandard.library/1.6.1/netstandard.library.1.6.1.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/nuget.frameworks/6.5.0/nuget.frameworks.6.5.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/system.configuration.configurationmanager/4.4.0/system.configuration.configurationmanager.4.4.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/system.diagnostics.diagnosticsource/8.0.0/system.diagnostics.diagnosticsource.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/system.diagnostics.eventlog/6.0.0/system.diagnostics.eventlog.6.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/system.reactive/6.0.0/system.reactive.6.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/system.security.cryptography.protecteddata/4.4.0/system.security.cryptography.protecteddata.4.4.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/system.text.json/8.0.0/system.text.json.8.0.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/system.threading.tasks.extensions/4.5.4/system.threading.tasks.extensions.4.5.4.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/xunit/2.6.4/xunit.2.6.4.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/xunit.abstractions/2.0.3/xunit.abstractions.2.0.3.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/xunit.analyzers/1.8.0/xunit.analyzers.1.8.0.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/xunit.assert/2.6.4/xunit.assert.2.6.4.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/xunit.core/2.6.4/xunit.core.2.6.4.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/xunit.extensibility.core/2.6.4/xunit.extensibility.core.2.6.4.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/xunit.extensibility.execution/2.6.4/xunit.extensibility.execution.2.6.4.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.netcore.app.ref/8.0.14/microsoft.netcore.app.ref.8.0.14.nupkg.sha512",
+    "/Users/beilsmindex/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.14/microsoft.aspnetcore.app.ref.8.0.14.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Error",
+      "message": "错误形式的警告: 将不会删除 PackageReference System.Threading.Tasks.Extensions。请考虑从依赖项中删除此包，因为它可能不需要。",
+      "projectPath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "filePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1510",
+      "level": "Error",
+      "message": "错误形式的警告: 将不会删除 PackageReference System.Text.Json。请考虑从依赖项中删除此包，因为它可能不需要。",
+      "projectPath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "filePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1510",
+      "level": "Error",
+      "message": "错误形式的警告: 将不会删除 PackageReference System.Diagnostics.DiagnosticSource。请考虑从依赖项中删除此包，因为它可能不需要。",
+      "projectPath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "filePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "targetGraphs": []
+    },
+    {
+      "code": "NU1608",
+      "level": "Error",
+      "message": "错误形式的警告: 检测到的包版本在依赖项约束之外: MediatR.Extensions.Microsoft.DependencyInjection 11.1.0 需要 MediatR (>= 11.0.0 && < 12.0.0)，但版本 MediatR 12.2.0 已解决。",
+      "projectPath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "filePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "libraryId": "MediatR",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Error",
+      "message": "错误形式的警告: 包 \"System.Text.Json\" 8.0.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-8g4q-xg66-9fp4",
+      "projectPath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "filePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "libraryId": "System.Text.Json",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Error",
+      "message": "错误形式的警告: 包 \"System.Text.Json\" 8.0.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-hh2w-p6rv-4g7w",
+      "projectPath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "filePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Application/OceanSimulation.Application.csproj",
+      "libraryId": "System.Text.Json",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

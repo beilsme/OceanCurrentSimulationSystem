@@ -1,0 +1,12 @@
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/bin/Debug/net8.0/OceanSim.Core.deps.json
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/bin/Debug/net8.0/OceanSim.Core.dll
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/bin/Debug/net8.0/OceanSim.Core.pdb
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/OceanSim.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/OceanSim.Core.AssemblyInfoInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/OceanSim.Core.AssemblyInfo.cs
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/OceanSim.Core.csproj.CoreCompileInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/OceanSim.Core.sourcelink.json
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/OceanSim.Core.dll
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/refint/OceanSim.Core.dll
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/OceanSim.Core.pdb
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSim.Core/obj/Debug/net8.0/ref/OceanSim.Core.dll

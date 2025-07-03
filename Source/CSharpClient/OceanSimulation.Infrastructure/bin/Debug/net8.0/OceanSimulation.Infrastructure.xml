@@ -1,0 +1,186 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>OceanSimulation.Infrastructure</name>
+    </assembly>
+    <members>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.OceanAnimationInterface">
+            <summary>
+            海洋数据动画生成接口 - 从NetCDF时间序列生成GIF动画
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanAnimationInterface.InitializeAsync">
+            <summary>
+            初始化Python环境
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanAnimationInterface.GenerateOceanAnimationAsync(System.String,System.String,System.Int32,System.Int32)">
+            <summary>
+            生成洋流时间序列GIF动画
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="outputPath">输出GIF路径（可选）</param>
+            <param name="maxFrames">最大帧数（默认20）</param>
+            <param name="frameDelay">帧延迟毫秒（默认500）</param>
+            <returns>生成的GIF文件路径</returns>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.OceanDataInterface">
+            <summary>
+            极简海洋数据处理接口 - 只传文件路径，生成PNG图像
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanDataInterface.InitializeAsync">
+            <summary>
+            初始化Python环境
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanDataInterface.GenerateVisualizationFromFileAsync(System.String,System.String)">
+            <summary>
+            从NetCDF文件生成可视化图像 - 核心功能
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.OceanStatisticalAnalysis">
+            <summary>
+            海洋统计分析接口 - 计算专业海洋学指标
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanStatisticalAnalysis.CalculateVorticityDivergenceFieldAsync(System.String,System.String,System.Int32,System.Int32)">
+            <summary>
+            计算涡度场和散度场
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanStatisticalAnalysis.CalculateFlowStatisticsAsync(System.String,System.Int32,System.Int32)">
+            <summary>
+            计算流速统计分布
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface">
+            <summary>
+            拉格朗日粒子追踪分析接口
+            提供粒子释放、轨迹追踪和结果分析的完整功能
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.InitializeAsync">
+            <summary>
+            初始化粒子分析环境
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.ExecuteParticleTrackingAsync(System.String,OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig)">
+            <summary>
+            执行拉格朗日粒子追踪模拟
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="config">粒子追踪配置</param>
+            <returns>追踪结果包含轨迹数据和统计分析</returns>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.AnalyzeDispersionPatternsAsync(System.String,System.Collections.Generic.List{System.ValueTuple{System.Double,System.Double}},OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig)">
+            <summary>
+            分析预定义位置的粒子扩散模式
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="releasePositions">粒子释放位置列表</param>
+            <param name="analysisConfig">分析配置参数</param>
+            <returns>扩散分析结果</returns>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.ExecuteLinearReleaseTrackingAsync(System.String,System.ValueTuple{System.Double,System.Double},System.ValueTuple{System.Double,System.Double},System.Int32,OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig)">
+            <summary>
+            执行线性释放粒子追踪分析
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="startPosition">起始位置</param>
+            <param name="endPosition">结束位置</param>
+            <param name="particleCount">粒子数量</param>
+            <param name="analysisConfig">分析配置</param>
+            <returns>线性释放追踪结果</returns>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.BatchTimeIntervalAnalysisAsync(System.String,OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig,System.Int32[])">
+            <summary>
+            批量执行多时间段粒子追踪分析
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="baseConfig">基础配置</param>
+            <param name="timeIntervals">时间间隔数组</param>
+            <returns>多时间段追踪结果列表</returns>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.OceanState">
+            <summary>
+            海洋状态向量结构
+            </summary>
+        </member>
+        <member name="P:OceanSimulation.Infrastructure.Interop.OceanState.Zero">
+            <summary>
+            创建零状态
+            </summary>
+        </member>
+        <member name="P:OceanSimulation.Infrastructure.Interop.OceanState.IsPhysicallyValid">
+            <summary>
+            检查状态物理有效性
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.Interop.OceanState.ApplyPhysicalConstraints">
+            <summary>
+            应用物理约束
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.EnKFConfig">
+            <summary>
+            EnKF配置参数
+            </summary>
+        </member>
+        <member name="P:OceanSimulation.Infrastructure.Interop.EnKFConfig.DefaultTOPAZ">
+            <summary>
+            获取TOPAZ标准配置
+            </summary>
+        </member>
+        <member name="P:OceanSimulation.Infrastructure.Interop.EnKFConfig.IsValid">
+            <summary>
+            验证配置有效性
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.ObservationData">
+            <summary>
+            观测数据结构
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.ForecastResult">
+            <summary>
+            预报结果结构
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.AnalysisResult">
+            <summary>
+            分析结果结构
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.PerformanceMetrics">
+            <summary>
+            性能指标结构
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.GridParameters">
+            <summary>
+            网格参数结构
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.Interop.GridParameters.CreateTOPAZGrid">
+            <summary>
+            创建北大西洋和北极海域网格（基于TOPAZ系统）
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.ObservationType">
+            <summary>
+            观测类型枚举
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.InflationType">
+            <summary>
+            充气类型枚举
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.Interop.EnKFNative">
+            <summary>
+            EnKF预测模块的P/Invoke接口声明
+            </summary>
+        </member>
+    </members>
+</doc>

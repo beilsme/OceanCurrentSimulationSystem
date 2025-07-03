@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "CoreIntegrationTests/1.0.0": {
+        "dependencies": {
+          "OceanSim.Core": "1.0.0"
+        },
+        "runtime": {
+          "CoreIntegrationTests.dll": {}
+        }
+      },
+      "OceanSim.Core/1.0.0": {
+        "runtime": {
+          "OceanSim.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CoreIntegrationTests/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "OceanSim.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

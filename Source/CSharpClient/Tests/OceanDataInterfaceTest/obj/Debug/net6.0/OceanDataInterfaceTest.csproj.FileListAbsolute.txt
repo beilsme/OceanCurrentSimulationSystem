@@ -1,0 +1,12 @@
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/Tests/Source/CSharpClient/OceanDataInterfaceTest/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.csproj.AssemblyReference.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/Tests/Source/CSharpClient/OceanDataInterfaceTest/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.GeneratedMSBuildEditorConfig.editorconfig
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/Tests/Source/CSharpClient/OceanDataInterfaceTest/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.AssemblyInfoInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/Tests/Source/CSharpClient/OceanDataInterfaceTest/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.AssemblyInfo.cs
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/Tests/Source/CSharpClient/OceanDataInterfaceTest/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.csproj.CoreCompileInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/Tests/Source/CSharpClient/OceanDataInterfaceTest/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.sourcelink.json
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.csproj.AssemblyReference.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.GeneratedMSBuildEditorConfig.editorconfig
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.AssemblyInfoInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.AssemblyInfo.cs
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.csproj.CoreCompileInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanDataInterfaceTest/obj/Debug/net6.0/OceanDataInterfaceTest.sourcelink.json

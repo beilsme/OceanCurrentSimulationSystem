@@ -1,0 +1,15 @@
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/bin/Debug/net10.0/PythonTest
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/bin/Debug/net10.0/PythonTest.deps.json
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/bin/Debug/net10.0/PythonTest.runtimeconfig.json
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/bin/Debug/net10.0/PythonTest.dll
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/bin/Debug/net10.0/PythonTest.pdb
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.GeneratedMSBuildEditorConfig.editorconfig
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.AssemblyInfoInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.AssemblyInfo.cs
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.csproj.CoreCompileInputs.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.sourcelink.json
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.dll
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/refint/PythonTest.dll
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.pdb
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/PythonTest.genruntimeconfig.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/PythonTest/PythonTest/obj/Debug/net10.0/ref/PythonTest.dll
