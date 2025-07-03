@@ -56,7 +56,7 @@ class DataProcessor:
                           font_size: int = 14,
                           dpi: int = 120):
             """
-            严格复刻 show.py 的可视化，含底图、掩膜、箭头层、地图范围、标题等
+            可视化，含底图、掩膜、箭头层、地图范围、标题等
             """
             # ====== 中文配置 ======
             setup_chinese_all(font_size=font_size, dpi=dpi, test=False)

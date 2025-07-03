@@ -44,9 +44,12 @@ def nan_to_none(obj):
 def load_netcdf_data(input_data):
     """加载NetCDF数据"""
     try:
-        netcdf_path = input_data['netcdf_path']
-        params = input_data['parameters']
-
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+        if not netcdf_path:
+            raise ValueError("netcdf_path 未提供，无法加载 NetCDF")
+        
+        
         print(f"[INFO] 正在加载NetCDF文件: {netcdf_path}")
 
         # 检查文件是否存在
@@ -113,8 +116,8 @@ def load_netcdf_data(input_data):
                 "dataset": {
                     "u": u.tolist(),
                     "v": v.tolist(),
-                    "latitude": lat.tolist(),
-                    "longitude": lon.tolist(),
+                    "lat": lat.tolist(),
+                    "lon": lon.tolist(),
                     "depth": params.get('depth_idx', 0),
                     "time_info": f"时间索引: {params.get('time_idx', 0)}"
                 }
@@ -131,49 +134,57 @@ def load_netcdf_data(input_data):
             "error_trace": traceback.format_exc()
         }
 
+
+
 def plot_vector_field(input_data):
-    """生成矢量场可视化"""
+    """简化版: 仅传入 netcdf_path，自动读取并绘图"""
     try:
-        data = input_data['data']
-        params = input_data['parameters']
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+        if not netcdf_path or not os.path.exists(netcdf_path):
+            raise ValueError(f"netcdf_path 未提供或文件不存在: {netcdf_path}")
 
-        print(f"[INFO] 正在生成矢量场可视化...")
+        print(f"[INFO] 自动加载NetCDF并生成矢量场: {netcdf_path}")
 
-        # 从输入数据重建numpy数组
-        u = np.array(data['u'])
-        v = np.array(data['v'])
-        lat = np.array(data['lat'])
-        lon = np.array(data['lon'])
+        # 先读取数据
+        handler = NetCDFHandler(netcdf_path)
+        u, v, lat, lon = handler.get_uv(time_idx=0, depth_idx=0)
+        handler.close()
 
-        print(f"[INFO] 数据形状: u={u.shape}, v={v.shape}, lat={len(lat)}, lon={len(lon)}")
+        # 读取时间信息
+        selected_time_idx = 0
+        time_value = handler.get_time(index=selected_time_idx)
+        if not time_value:
+            time_value = "未知"
+        
+        # 读取深度信息
+        selected_depth_idx = 0
+        depth_value = handler.get_depth(index=selected_depth_idx)
+        if depth_value is None:
+            depth_value = 0.0
 
-        # 创建数据处理器
+
+    # 创建数据处理器
         processor = DataProcessor(
             u=u,
             v=v,
             lat=lat,
             lon=lon,
-            depth=data.get('depth', 0.0),
-            time_info=data.get('time_info', '')
+            depth=depth_value,
+            time_info=time_value
         )
 
-        # 生成可视化
-        save_path = params['save_path']
+        save_path = params.get('save_path', "auto_plot.png")
 
         # 确保输出目录存在
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-        print(f"[INFO] 保存路径: {save_path}")
-        print(f"[INFO] 可视化参数: skip={params.get('skip', 3)}, 范围=({params.get('lon_min')}, {params.get('lon_max')}, {params.get('lat_min')}, {params.get('lat_max')})")
+        print(f"[INFO] 输出图像: {save_path}")
 
         processor.plot_vector_field(
+            save_path=save_path,
             skip=params.get('skip', 3),
             show=params.get('show', False),
-            save_path=save_path,
-            lon_min=params.get('lon_min'),
-            lon_max=params.get('lon_max'),
-            lat_min=params.get('lat_min'),
-            lat_max=params.get('lat_max'),
             contourf_levels=params.get('contourf_levels', 100),
             contourf_cmap=params.get('contourf_cmap', 'coolwarm'),
             quiver_scale=params.get('quiver_scale', 30),
@@ -182,38 +193,31 @@ def plot_vector_field(input_data):
             dpi=params.get('dpi', 120)
         )
 
-        # 检查文件是否成功生成
         if os.path.exists(save_path):
             file_size = os.path.getsize(save_path)
-            print(f"[INFO] 矢量场图像生成成功，文件大小: {file_size / 1024:.1f} KB")
-
             return {
                 "success": True,
-                "message": "矢量场可视化生成成功",
+                "message": "矢量场绘制完成",
                 "image_path": save_path,
                 "metadata": {
                     "file_size_kb": round(file_size / 1024, 1),
-                    "data_shape": f"{u.shape}",
-                    "parameter_skip": params.get('skip', 3),
-                    "lon_range": f"{lon.min():.3f} - {lon.max():.3f}",
-                    "lat_range": f"{lat.min():.3f} - {lat.max():.3f}",
-                    "generation_time": "just_now"
+                    "shape": str(u.shape)
                 }
             }
         else:
             return {
                 "success": False,
-                "message": "矢量场图像文件未能生成",
+                "message": "图像文件未能生成",
                 "image_path": save_path
             }
 
     except Exception as e:
         return {
             "success": False,
-            "message": f"矢量场可视化失败: {str(e)}",
-            "image_path": "",
+            "message": f"矢量场绘制失败: {str(e)}",
             "error_trace": traceback.format_exc()
         }
+
 
 def export_vector_shapefile(input_data):
     """导出矢量场为Shapefile"""

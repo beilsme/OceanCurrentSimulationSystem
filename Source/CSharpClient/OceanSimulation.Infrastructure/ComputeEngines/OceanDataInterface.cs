@@ -91,8 +91,12 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 var inputData = new
                 {
                     action = "plot_vector_field",
-                    data = Path.GetFullPath(netcdfPath),
-                    output_path = outputPath
+
+                    parameters = new
+                    {
+                        netcdf_path = Path.GetFullPath(netcdfPath),
+                        save_path = outputPath
+                    }
                 };
 
                 // 执行Python脚本
