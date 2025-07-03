@@ -357,7 +357,9 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
 
                 return new Dictionary<string, object>
                 {
-                    ["error"] = result.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "获取性能指标失败"
+                    ["error"] = result.TryGetProperty("message", out var msgElement)
+                        ? (msgElement.GetString() ?? "获取性能指标失败")
+                        : "获取性能指标失败"
                 };
             }
             catch (Exception ex)
@@ -699,19 +701,20 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
 
             foreach (var property in element.EnumerateObject())
             {
-                object value = property.Value.ValueKind switch
+                object? value = property.Value.ValueKind switch
                 {
-                    JsonValueKind.String => property.Value.GetString() ?? "",
-                    JsonValueKind.Number => property.Value.GetDouble(),
+                    JsonValueKind.String => property.Value.GetString() ?? string.Empty,
+                    JsonValueKind.Number => property.Value.TryGetDouble(out var dbl) ? dbl : 0.0,
                     JsonValueKind.True => true,
                     JsonValueKind.False => false,
-                    JsonValueKind.Null => null,
+                    JsonValueKind.Null => null, // 这里允许 null
                     JsonValueKind.Array => property.Value.EnumerateArray().Select(ParseJsonValue).ToArray(),
                     JsonValueKind.Object => ParseDictionaryFromJson(property.Value),
-                    _ => property.Value.ToString()
+                    _ => property.Value.GetRawText() ?? string.Empty
                 };
 
-                result[property.Name] = value;
+
+                result[property.Name] = value ?? DBNull.Value;
             }
 
             return result;
@@ -721,16 +724,17 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         {
             return element.ValueKind switch
             {
-                JsonValueKind.String => element.GetString() ?? "",
-                JsonValueKind.Number => element.GetDouble(),
+                JsonValueKind.String => element.GetString() ?? string.Empty,
+                JsonValueKind.Number => element.TryGetDouble(out var dbl) ? dbl : 0.0,
                 JsonValueKind.True => true,
                 JsonValueKind.False => false,
-                JsonValueKind.Null => null,
+                JsonValueKind.Null => DBNull.Value, // 避免 null 传到 object
                 JsonValueKind.Array => element.EnumerateArray().Select(ParseJsonValue).ToArray(),
                 JsonValueKind.Object => ParseDictionaryFromJson(element),
-                _ => element.ToString()
+                _ => element.GetRawText() ?? string.Empty
             };
         }
+
 
         private double[][] ConvertArray2DToJsonArray(double[,] array)
         {
