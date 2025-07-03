@@ -13,6 +13,8 @@ import numpy as np
 from pathlib import Path
 import traceback
 import os
+import math
+
 
 # 添加Python引擎路径到sys.path
 current_dir = Path(__file__).parent
@@ -28,6 +30,16 @@ except ImportError as e:
     print(f"当前工作目录: {os.getcwd()}")
     print(f"Python路径: {sys.path}")
     sys.exit(1)
+
+def nan_to_none(obj):
+    if isinstance(obj, float) and math.isnan(obj):
+        return None
+    if isinstance(obj, dict):
+        return {k: nan_to_none(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [nan_to_none(x) for x in obj]
+    return obj
+
 
 def load_netcdf_data(input_data):
     """加载NetCDF数据"""
@@ -382,7 +394,7 @@ def main():
 
         # 写入输出结果
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
+            json.dump(nan_to_none(result), f, ensure_ascii=False, indent=2)
 
         print(f"[INFO] 处理完成: {result.get('message', '未知结果')}")
 
