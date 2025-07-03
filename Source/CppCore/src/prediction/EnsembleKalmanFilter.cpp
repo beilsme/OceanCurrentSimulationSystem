@@ -156,7 +156,7 @@ namespace OceanSim {
         }
 
         Eigen::MatrixXd EnsembleCollection::computeSampleCovariance() const {
-            const int state_dim = 6; // 状态向量维度
+            const int state_dim = 7; // 状态向量维度 (新增海表面高度) // 状态向量维度
             const int total_size = state_size_ * state_dim;
 
             Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(total_size, total_size);
@@ -179,6 +179,7 @@ namespace OceanSim {
                     perturbations(base_idx + 3, i) = deviation.velocity[1];
                     perturbations(base_idx + 4, i) = deviation.velocity[2];
                     perturbations(base_idx + 5, i) = deviation.sea_ice_concentration;
+                    perturbations(base_idx + 6, i) = deviation.sea_surface_height;
                 }
             }
 
@@ -201,7 +202,8 @@ namespace OceanSim {
                     member_spread += deviation.temperature * deviation.temperature +
                                      deviation.salinity * deviation.salinity +
                                      deviation.velocity.squaredNorm() +
-                                     deviation.sea_ice_concentration * deviation.sea_ice_concentration;
+                                    deviation.sea_ice_concentration * deviation.sea_ice_concentration +
+                                    deviation.sea_surface_height * deviation.sea_surface_height;
                 }
                 total_spread += member_spread;
             }
@@ -247,13 +249,13 @@ namespace OceanSim {
 
         Eigen::MatrixXd SeaLevelAnomalyOperator::computeJacobian(const std::vector<OceanStateVector>& model_state) {
             int obs_size = model_state.size();
-            int state_size = model_state.size() * 6; // 6个状态变量
+            int state_size = model_state.size() * 7; // 7个状态变量
 
             Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(obs_size, state_size);
 
             // 海平面高度异常对海表面高度的偏导数为1
             for (int i = 0; i < obs_size; ++i) {
-                int ssh_idx = i * 6 + 5; // 海表面高度是第6个变量
+                int ssh_idx = i * 7 + 6; // 海表面高度在第7个位置
                 jacobian(i, ssh_idx) = 1.0;
             }
 
@@ -286,13 +288,13 @@ namespace OceanSim {
 
         Eigen::MatrixXd SeaSurfaceTemperatureOperator::computeJacobian(const std::vector<OceanStateVector>& model_state) {
             int obs_size = model_state.size();
-            int state_size = model_state.size() * 6;
+            int state_size = model_state.size() * 7;
 
             Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(obs_size, state_size);
 
             // 海表温度对温度的偏导数为1
             for (int i = 0; i < obs_size; ++i) {
-                int temp_idx = i * 6 + 0; // 温度是第1个变量
+                int temp_idx = i * 7 + 0; // 温度是第1个变量
                 jacobian(i, temp_idx) = 1.0;
             }
 
@@ -324,13 +326,13 @@ namespace OceanSim {
 
         Eigen::MatrixXd SeaIceConcentrationOperator::computeJacobian(const std::vector<OceanStateVector>& model_state) {
             int obs_size = model_state.size();
-            int state_size = model_state.size() * 6;
+            int state_size = model_state.size() * 7;
 
             Eigen::MatrixXd jacobian = Eigen::MatrixXd::Zero(obs_size, state_size);
 
             // 海冰浓度对海冰浓度的偏导数为1
             for (int i = 0; i < obs_size; ++i) {
-                int ice_idx = i * 6 + 5; // 海冰浓度是第6个变量
+                int ice_idx = i * 7 + 5; // 海冰浓度位于第6个位置
                 jacobian(i, ice_idx) = 1.0;
             }
 
@@ -411,7 +413,7 @@ namespace OceanSim {
         void GaspariCohnLocalization::applyLocalization(Eigen::MatrixXd& covariance_matrix,
                                                         const std::shared_ptr<Data::GridDataStructure>& grid) const {
             int n = covariance_matrix.rows();
-            int grid_points = n / 6; // 6个状态变量
+            int grid_points = n / 7; // 7个状态变量
 
             // 构建局地化矩阵
             Eigen::MatrixXd localization_matrix = Eigen::MatrixXd::Identity(n, n);
@@ -434,10 +436,10 @@ namespace OceanSim {
                     double correlation = computeCorrelationFunction(distance);
 
                     // 应用到所有状态变量的组合
-                    for (int var_i = 0; var_i < 6; ++var_i) {
-                        for (int var_j = 0; var_j < 6; ++var_j) {
-                            int idx_i = i * 6 + var_i;
-                            int idx_j = j * 6 + var_j;
+                    for (int var_i = 0; var_i < 7; ++var_i) {
+                        for (int var_j = 0; var_j < 7; ++var_j) {
+                            int idx_i = i * 7 + var_i;
+                            int idx_j = j * 7 + var_j;
                             localization_matrix(idx_i, idx_j) = correlation;
                         }
                     }
@@ -616,7 +618,7 @@ namespace OceanSim {
 
                 // 应用扰动到状态向量
                 for (size_t j = 0; j < mean_state.size(); ++j) {
-                    int base_idx = j * 6;
+                    int base_idx = j * 7;
 
                     member[j] = mean_state[j];
                     member[j].temperature += perturbation(base_idx + 0);
@@ -625,6 +627,7 @@ namespace OceanSim {
                     member[j].velocity[1] += perturbation(base_idx + 3);
                     member[j].velocity[2] += perturbation(base_idx + 4);
                     member[j].sea_ice_concentration += perturbation(base_idx + 5);
+                    member[j].sea_surface_height += perturbation(base_idx + 6);
 
                     // 应用物理约束
                     member[j].applyPhysicalConstraints();
@@ -786,15 +789,16 @@ namespace OceanSim {
                 // 更新集合成员
                 current_ensemble_->parallelApply([&](OceanStateVector* member, int member_id) {
                     // 将状态向量转换为向量形式
-                    Eigen::VectorXd state_vector(current_ensemble_->getStateSize() * 6);
+                    Eigen::VectorXd state_vector(current_ensemble_->getStateSize() * 7);
                     for (size_t j = 0; j < current_ensemble_->getStateSize(); ++j) {
-                        int base_idx = j * 6;
+                        int base_idx = j * 7;
                         state_vector(base_idx + 0) = member[j].temperature;
                         state_vector(base_idx + 1) = member[j].salinity;
                         state_vector(base_idx + 2) = member[j].velocity[0];
                         state_vector(base_idx + 3) = member[j].velocity[1];
                         state_vector(base_idx + 4) = member[j].velocity[2];
                         state_vector(base_idx + 5) = member[j].sea_ice_concentration;
+                        state_vector(base_idx + 6) = member[j].sea_surface_height;
                     }
 
                     // 计算创新向量
@@ -806,13 +810,14 @@ namespace OceanSim {
 
                     // 将更新后的向量转换回状态结构
                     for (size_t j = 0; j < current_ensemble_->getStateSize(); ++j) {
-                        int base_idx = j * 6;
+                        int base_idx = j * 7;
                         member[j].temperature = state_vector(base_idx + 0);
                         member[j].salinity = state_vector(base_idx + 1);
                         member[j].velocity[0] = state_vector(base_idx + 2);
                         member[j].velocity[1] = state_vector(base_idx + 3);
                         member[j].velocity[2] = state_vector(base_idx + 4);
                         member[j].sea_ice_concentration = state_vector(base_idx + 5);
+                        member[j].sea_surface_height = state_vector(base_idx + 6);
 
                         // 应用物理约束
                         member[j].applyPhysicalConstraints();

@@ -209,7 +209,7 @@ OCEANSIM_API bool EnKF_Initialize(EnKFHandle handle,
         }
 
         // 转换背景误差协方差矩阵
-        int covariance_size = state_size * 6; // 6个状态变量
+        int covariance_size = state_size * 7; // 7个状态变量
         Eigen::MatrixXd cpp_covariance = Eigen::Map<const Eigen::MatrixXd>(
                 background_covariance, covariance_size, covariance_size);
 
