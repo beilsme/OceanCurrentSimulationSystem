@@ -12,6 +12,16 @@ from PythonEngine.simulation.particle_tracking_wrapper import ParticleTrackingWr
 from PythonEngine.simulation.current_simulation_wrapper import CurrentSimulationWrapper
 from PythonEngine.simulation.pollution_dispersion import PollutionDispersionSimulator
 
+# 导入中文配置
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent / "utils"))
+try:
+    from PythonEngine.utils.chinese_config import ChineseConfig
+    chinese_config = ChineseConfig()
+except ImportError:
+    chinese_config = None
+
 
 class HybridSolver:
     """混合求解器 - 集成粒子追踪、洋流模拟和污染物扩散"""

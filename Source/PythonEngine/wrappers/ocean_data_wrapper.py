@@ -148,17 +148,21 @@ def plot_vector_field(input_data):
 
         # 先读取数据
         handler = NetCDFHandler(netcdf_path)
-        u, v, lat, lon = handler.get_uv(time_idx=0, depth_idx=0)
+        u, v, lat, lon = handler.get_uv(
+            time_idx=params.get('time_idx', 0),
+            depth_idx=params.get('depth_idx', 0)
+        )
+
         handler.close()
 
         # 读取时间信息
-        selected_time_idx = 0
+        selected_time_idx = params.get('time_idx', 0)
         time_value = handler.get_time(index=selected_time_idx)
         if not time_value:
             time_value = "未知"
         
         # 读取深度信息
-        selected_depth_idx = 0
+        selected_depth_idx = params.get('depth_idx', 0)
         depth_value = handler.get_depth(index=selected_depth_idx)
         if depth_value is None:
             depth_value = 0.0
@@ -364,6 +368,190 @@ def get_statistics(input_data):
             "error_trace": traceback.format_exc()
         }
 
+def create_ocean_animation(input_data):
+    """
+    创建洋流时间序列GIF动画，复用 plot_vector_field，确保和单帧渲染一致
+    """
+    try:
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+        output_path = params.get('output_path')
+        frame_delay = params.get('frame_delay', 500)
+
+        if not netcdf_path or not os.path.exists(netcdf_path):
+            raise ValueError(f"NetCDF文件不存在: {netcdf_path}")
+
+        print(f"[INFO] 创建洋流动画: {netcdf_path}")
+        print(f"[INFO] 帧延迟: {frame_delay}ms")
+
+        # 打开NetCDF文件
+        handler = NetCDFHandler(netcdf_path)
+        try:
+            ds = handler.ds
+            if 'time' not in ds.dims:
+                raise ValueError("NetCDF文件中没有时间维度")
+
+            total_time_steps = ds.dims['time']
+            frame_stride = params.get("frame_stride", 1)
+            time_indices = list(range(0, total_time_steps, max(1, frame_stride)))
+            
+            print(f"[INFO] NetCDF文件包含 {total_time_steps} 个时间步")
+            print(f"[INFO] 使用帧步长 frame_stride={frame_stride}")
+            print(f"[INFO] 将生成 {len(time_indices)} 帧动画")
+
+
+            # 临时帧目录
+            temp_dir = os.path.join(os.path.dirname(output_path), f"temp_frames_{os.getpid()}")
+            os.makedirs(temp_dir, exist_ok=True)
+
+            frame_files = []
+
+            try:
+                # 复用 plot_vector_field
+                for i, time_idx in enumerate(time_indices):
+                    print(f"[INFO] 渲染帧 {i+1}/{len(time_indices)} (时间索引: {time_idx})")
+
+                    frame_path = os.path.join(temp_dir, f"frame_{i:03d}.png")
+
+                    # 继承参数，动态修改
+                    plot_params = params.copy()
+                    plot_params.update({
+                        "time_idx": time_idx,
+                        "save_path": frame_path,
+                        "show": False
+                    })
+
+                    # 直接调用 plot_vector_field
+                    plot_result = plot_vector_field({
+                        "parameters": plot_params
+                    })
+
+                    if plot_result.get("success") and os.path.exists(frame_path):
+                        frame_files.append(frame_path)
+                    else:
+                        print(f"[WARNING] 第 {i+1} 帧生成失败")
+
+                if not frame_files:
+                    raise ValueError("没有成功生成任何帧")
+
+                print(f"[INFO] 合成GIF动画，帧数: {len(frame_files)}")
+                _create_gif_from_frames(frame_files, output_path, frame_delay)
+
+                if os.path.exists(output_path):
+                    file_size = os.path.getsize(output_path)
+                    print(f"[INFO] GIF动画生成成功: {output_path}")
+                    return {
+                        "success": True,
+                        "message": "洋流动画生成成功",
+                        "output_path": output_path,
+                        "metadata": {
+                            "frame_count": len(frame_files),
+                            "file_size_mb": round(file_size / (1024 * 1024), 2),
+                            "frame_delay_ms": frame_delay,
+                            "total_time_steps": total_time_steps
+                        }
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": "GIF文件未生成",
+                        "output_path": output_path
+                    }
+            finally:
+                # 清理
+                try:
+                    for f in frame_files:
+                        if os.path.exists(f):
+                            os.remove(f)
+                    if os.path.exists(temp_dir):
+                        os.rmdir(temp_dir)
+                except:
+                    pass
+
+        finally:
+            handler.close()
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"洋流动画生成失败: {str(e)}",
+            "error_trace": traceback.format_exc()
+        }
+
+
+
+def _create_gif_from_frames(frame_files, output_path, frame_delay):
+    """从帧图片创建GIF动画"""
+    try:
+        from PIL import Image
+
+        # 读取所有帧
+        images = []
+        for frame_file in frame_files:
+            img = Image.open(frame_file)
+            # 转换为RGB（GIF需要）
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            images.append(img)
+
+        if not images:
+            raise ValueError("没有有效的帧图片")
+
+        # 保存为GIF
+        images[0].save(
+            output_path,
+            save_all=True,
+            append_images=images[1:],
+            duration=frame_delay,
+            loop=0,  # 无限循环
+            optimize=True
+        )
+
+        print(f"[INFO] GIF保存成功: {output_path}")
+
+    except ImportError:
+        # 如果没有PIL，尝试使用matplotlib
+        print("[INFO] PIL不可用，尝试使用matplotlib生成GIF")
+        _create_gif_with_matplotlib(frame_files, output_path, frame_delay)
+    except Exception as e:
+        print(f"[ERROR] GIF创建失败: {str(e)}")
+        raise
+
+
+def _create_gif_with_matplotlib(frame_files, output_path, frame_delay):
+    """使用matplotlib创建GIF（备用方案）"""
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+
+    # 读取第一帧获取尺寸
+    first_img = plt.imread(frame_files[0])
+
+    fig, ax = plt.subplots(figsize=(12, 10))
+    ax.axis('off')
+
+    # 初始化显示
+    im = ax.imshow(first_img)
+
+    def animate(frame_idx):
+        img = plt.imread(frame_files[frame_idx])
+        im.set_array(img)
+        return [im]
+
+    # 创建动画
+    anim = animation.FuncAnimation(
+        fig, animate, frames=len(frame_files),
+        interval=frame_delay, blit=True, repeat=True
+    )
+
+    # 保存GIF
+    try:
+        anim.save(output_path, writer='pillow', fps=1000//frame_delay)
+    except:
+        # 如果pillow writer不可用，尝试默认writer
+        anim.save(output_path, fps=1000//frame_delay)
+
+    plt.close(fig)
+
 def main():
     if len(sys.argv) != 3:
         print("用法: python ocean_data_wrapper.py input.json output.json")
@@ -373,13 +561,11 @@ def main():
     output_file = sys.argv[2]
 
     try:
-        # 读取输入数据
         with open(input_file, 'r', encoding='utf-8') as f:
             input_data = json.load(f)
 
         print(f"[INFO] 处理请求类型: {input_data.get('action', '未知')}")
 
-        # 根据请求类型处理
         action = input_data.get('action', '')
 
         if action == 'load_netcdf':
@@ -390,19 +576,18 @@ def main():
             result = export_vector_shapefile(input_data)
         elif action == 'get_statistics':
             result = get_statistics(input_data)
+        elif action == 'create_ocean_animation':  # 新增的动画功能
+            result = create_ocean_animation(input_data)
         else:
             result = {
                 "success": False,
                 "message": f"未知的请求类型: {action}"
             }
 
-        # 写入输出结果
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(nan_to_none(result), f, ensure_ascii=False, indent=2)
 
         print(f"[INFO] 处理完成: {result.get('message', '未知结果')}")
-
-        # 如果成功，返回0；否则返回1
         sys.exit(0 if result.get('success', False) else 1)
 
     except Exception as e:
@@ -416,10 +601,9 @@ def main():
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(error_result, f, ensure_ascii=False, indent=2)
         except:
-            pass  # 如果连输出文件都写不了，就算了
+            pass
 
         print(f"[ERROR] 错误: {str(e)}")
-        print(f"[ERROR] 详细信息: {traceback.format_exc()}")
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 // =====================================
-// 文件: OceanDataInterface.cs - 极简版
-// 功能: 只传文件路径生成可视化，其他全交给Python
+// 文件: OceanAnimationInterface.cs
+// 功能: 简洁的洋流时间序列动画生成
 // 位置: Source/CharpClient/OceanSimulation.Infrastructure/ComputeEngines/
 // =====================================
 using System.Diagnostics;
@@ -11,18 +11,18 @@ using OceanSimulation.Domain.ValueObjects;
 namespace OceanSimulation.Infrastructure.ComputeEngines
 {
     /// <summary>
-    /// 极简海洋数据处理接口 - 只传文件路径，生成PNG图像
+    /// 海洋数据动画生成接口 - 从NetCDF时间序列生成GIF动画
     /// </summary>
-    public class OceanDataInterface : IDisposable
+    public class OceanAnimationInterface : IDisposable
     {
-        private readonly ILogger<OceanDataInterface> _logger;
+        private readonly ILogger<OceanAnimationInterface> _logger;
         private readonly string _pythonExecutablePath;
         private readonly string _pythonEngineRootPath;
         private readonly string _workingDirectory;
         private bool _isInitialized = false;
 
-        public OceanDataInterface(ILogger<OceanDataInterface> logger,
-                                 Dictionary<string, object> configuration)
+        public OceanAnimationInterface(ILogger<OceanAnimationInterface> logger,
+                                     Dictionary<string, object> configuration)
         {
             _logger = logger;
             var config = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -41,9 +41,8 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         {
             try
             {
-                _logger.LogInformation("初始化Python环境...");
+                _logger.LogInformation("初始化动画生成环境...");
 
-                // 检查Python
                 var result = await RunPythonAsync("--version");
                 if (!result.Success)
                 {
@@ -51,7 +50,6 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                     return false;
                 }
 
-                // 检查必要文件
                 var wrapperPath = Path.Combine(_pythonEngineRootPath, "wrappers", "ocean_data_wrapper.py");
                 if (!File.Exists(wrapperPath))
                 {
@@ -60,7 +58,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 }
 
                 _isInitialized = true;
-                _logger.LogInformation("Python环境初始化成功");
+                _logger.LogInformation("动画生成环境初始化成功");
                 return true;
             }
             catch (Exception ex)
@@ -71,63 +69,74 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         }
 
         /// <summary>
-        /// 从NetCDF文件生成可视化图像 - 核心功能
+        /// 生成洋流时间序列GIF动画
         /// </summary>
-        public async Task<string> GenerateVisualizationFromFileAsync(string netcdfPath, string outputPath = "")
+        /// <param name="netcdfPath">NetCDF文件路径</param>
+        /// <param name="outputPath">输出GIF路径（可选）</param>
+        /// <param name="maxFrames">最大帧数（默认20）</param>
+        /// <param name="frameDelay">帧延迟毫秒（默认500）</param>
+        /// <returns>生成的GIF文件路径</returns>
+        public async Task<string> GenerateOceanAnimationAsync(
+            string netcdfPath,
+            string outputPath = "",
+            int maxFrames = 20,
+            int frameDelay = 500)
         {
             if (!_isInitialized)
                 throw new InvalidOperationException("尚未初始化，请先调用InitializeAsync()");
 
             try
             {
-                _logger.LogInformation($"生成可视化: {netcdfPath}");
+                _logger.LogInformation($"生成洋流动画: {netcdfPath}");
 
                 if (!File.Exists(netcdfPath))
                     throw new FileNotFoundException($"NetCDF文件不存在: {netcdfPath}");
 
                 if (string.IsNullOrEmpty(outputPath))
-                    outputPath = Path.Combine(_workingDirectory, $"ocean_viz_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                    outputPath = Path.Combine(_workingDirectory, $"ocean_animation_{DateTime.Now:yyyyMMdd_HHmmss}.gif");
 
-                // 准备输入数据 - 让Python自己处理所有参数
                 var inputData = new
                 {
-                    action = "plot_vector_field",
-
+                    action = "create_ocean_animation",
                     parameters = new
                     {
                         netcdf_path = Path.GetFullPath(netcdfPath),
-                        save_path = outputPath
+                        output_path = outputPath,
+                        max_frames = maxFrames,
+                        frame_delay = frameDelay
                     }
                 };
 
-                // 执行Python脚本
-                var inputFile = await SaveJsonAsync(inputData, "viz_input");
+                var inputFile = await SaveJsonAsync(inputData, "animation_input");
                 var outputFile = await ExecutePythonScriptAsync(inputFile);
                 var result = await ReadJsonAsync(outputFile);
 
-                // 检查结果
                 if (result.GetProperty("success").GetBoolean() && File.Exists(outputPath))
                 {
-                    _logger.LogInformation($"可视化生成成功: {outputPath}");
+                    var metadata = result.GetProperty("metadata");
+                    var frameCount = metadata.GetProperty("frame_count").GetInt32();
+                    var fileSizeMb = metadata.GetProperty("file_size_mb").GetDouble();
+
+                    _logger.LogInformation($"动画生成成功: {outputPath} ({frameCount}帧, {fileSizeMb:F1}MB)");
                     return outputPath;
                 }
 
                 var errorMsg = result.TryGetProperty("message", out var msgElement)
                               ? msgElement.GetString() ?? "未知错误"
-                              : "生成失败";
-                _logger.LogError($"可视化生成失败: {errorMsg}");
+                              : "动画生成失败";
+                _logger.LogError($"动画生成失败: {errorMsg}");
                 return "";
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "生成可视化失败");
+                _logger.LogError(ex, "生成洋流动画失败");
                 return "";
             }
         }
 
         public void Dispose()
         {
-            _logger.LogInformation("清理资源...");
+            _logger.LogInformation("清理动画生成资源...");
             try
             {
                 var tempFiles = Directory.GetFiles(_workingDirectory, "*.json");
@@ -229,7 +238,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             var document = JsonDocument.Parse(json);
             var result = document.RootElement;
 
-            File.Delete(outputFile); // 清理
+            File.Delete(outputFile);
             return result;
         }
 
