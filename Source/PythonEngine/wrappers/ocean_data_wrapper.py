@@ -392,7 +392,7 @@ def create_ocean_animation(input_data):
             if 'time' not in ds.dims:
                 raise ValueError("NetCDF文件中没有时间维度")
 
-            total_time_steps = ds.dims['time']
+            total_time_steps = ds.sizes['time']
             frame_stride = params.get("frame_stride", 1)
             time_indices = list(range(0, total_time_steps, max(1, frame_stride)))
 
@@ -929,7 +929,20 @@ def _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path):
     plt.colorbar(cs1, ax=ax1, orientation='horizontal', shrink=0.8)
 
     # 散度场（oceansim计算）
-    div_levels = _generate_levels(divergence)
+    # 为散度场使用更细致的级别，放大小数值的差异
+    div_finite = divergence[np.isfinite(divergence)]
+    if len(div_finite) > 0:
+        # 使用更小的百分位数范围来突出细微差异
+        div_low = np.percentile(div_finite, 1)   # 从5%改为1%
+        div_high = np.percentile(div_finite, 99) # 从95%改为99%
+        # 如果值域太小，人为扩大到合理范围
+        if abs(div_high - div_low) < 1e-7:
+            center = (div_high + div_low) / 2
+            div_low = center - 5e-8
+            div_high = center + 5e-8
+        div_levels = np.linspace(div_low, div_high, 31)  # 增加级别数量
+    else:
+        div_levels = np.linspace(-5e-8, 5e-8, 31)
 
     # 临时水体掩膜
     valid_ocean_mask = ~np.isnan(vorticity)
@@ -988,6 +1001,123 @@ def _compute_divergence_stats(divergence):
     }
 
 
+def validate_particle_positions_and_time(netcdf_path, initial_positions, time_index=0, simulation_days=1):
+    """
+    验证粒子位置是否在水域内，并检查时间范围
+    """
+    try:
+        handler = NetCDFHandler(netcdf_path)
+        try:
+            # 获取时间信息
+            ds = handler.ds
+            total_time_steps = ds.sizes.get('time', 1)
+
+            # 验证时间范围
+            max_available_days = total_time_steps - time_index
+            if time_index >= total_time_steps:
+                return {
+                    "success": False,
+                    "error": f"起始时间索引{time_index}超出数据范围(0-{total_time_steps-1})"
+                }
+
+            if simulation_days > max_available_days:
+                return {
+                    "success": False,
+                    "error": f"模拟天数{simulation_days}超出可用数据范围，最多可模拟{max_available_days}天",
+                    "max_days": max_available_days,
+                    "time_info": {
+                        "total_time_steps": total_time_steps,
+                        "start_index": time_index,
+                        "available_days": max_available_days
+                    }
+                }
+
+            # 获取速度场创建水域掩膜
+            u, v, lat, lon = handler.get_uv(time_idx=time_index, depth_idx=0)
+            water_mask = ~np.isnan(u) & ~np.isnan(v) & np.isfinite(u) & np.isfinite(v)
+
+            # 验证粒子位置
+            valid_positions = []
+            invalid_positions = []
+
+            for i, pos in enumerate(initial_positions):
+                lon_val, lat_val = float(pos[0]), float(pos[1])
+
+                # 检查是否在地理范围内
+                if (lon_val < lon.min() or lon_val > lon.max() or
+                        lat_val < lat.min() or lat_val > lat.max()):
+                    invalid_positions.append({
+                        "index": i,
+                        "position": [lon_val, lat_val],
+                        "reason": "超出数据地理范围"
+                    })
+                    continue
+
+                # 转换为网格索引
+                lon_idx = np.argmin(np.abs(lon - lon_val))
+                lat_idx = np.argmin(np.abs(lat - lat_val))
+
+                # 检查是否在水域
+                if water_mask[lat_idx, lon_idx]:
+                    valid_positions.append([lon_val, lat_val])
+                else:
+                    # 尝试寻找附近的水域点
+                    found_water = False
+                    search_radius = 3  # 搜索半径（网格点）
+
+                    for di in range(-search_radius, search_radius + 1):
+                        for dj in range(-search_radius, search_radius + 1):
+                            new_lat_idx = lat_idx + di
+                            new_lon_idx = lon_idx + dj
+
+                            if (0 <= new_lat_idx < len(lat) and
+                                    0 <= new_lon_idx < len(lon) and
+                                    water_mask[new_lat_idx, new_lon_idx]):
+
+                                suggested_pos = [float(lon[new_lon_idx]), float(lat[new_lat_idx])]
+                                invalid_positions.append({
+                                    "index": i,
+                                    "position": [lon_val, lat_val],
+                                    "reason": "位于陆地区域",
+                                    "suggested_position": suggested_pos,
+                                    "distance_km": np.sqrt(
+                                        ((lon[new_lon_idx] - lon_val) * 111.32 * np.cos(np.radians(lat_val)))**2 +
+                                        ((lat[new_lat_idx] - lat_val) * 111.32)**2
+                                    )
+                                })
+                                found_water = True
+                                break
+                        if found_water:
+                            break
+
+                    if not found_water:
+                        invalid_positions.append({
+                            "index": i,
+                            "position": [lon_val, lat_val],
+                            "reason": "位于陆地区域且附近无水域"
+                        })
+
+            return {
+                "success": len(invalid_positions) == 0,
+                "valid_positions": valid_positions,
+                "invalid_positions": invalid_positions,
+                "time_info": {
+                    "total_time_steps": total_time_steps,
+                    "max_available_days": max_available_days,
+                    "start_index": time_index
+                },
+                "message": f"验证完成: {len(valid_positions)}个有效位置, {len(invalid_positions)}个无效位置"
+            }
+
+        finally:
+            handler.close()
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"位置和时间验证失败: {str(e)}"
+        }
+
 def simulate_particle_tracking(input_data):
     """拉格朗日粒子追踪模拟"""
     try:
@@ -1000,10 +1130,44 @@ def simulate_particle_tracking(input_data):
         initial_positions = np.array(params.get('initial_positions', []), dtype=float)
         output_path = params.get('output_path', 'particle_tracks.png')
 
+        # 计算模拟天数
+        simulation_days = (steps * dt) / (24 * 3600)
+
         if initial_positions.size == 0:
             raise ValueError('initial_positions 不能为空')
 
-        print(f"[INFO] 运行粒子追踪模拟: 时间索引{time_index}, 深度索引{depth_index}")
+        
+
+        if initial_positions.size == 0:
+            raise ValueError('initial_positions 不能为空')
+
+        print(f"[INFO] 验证粒子位置和时间范围...")
+
+        # 新增：验证粒子位置和时间范围
+        validation_result = validate_particle_positions_and_time(
+            netcdf_path, initial_positions, time_index, simulation_days
+        )
+
+        if not validation_result["success"]:
+            return {
+                "success": False,
+                "message": validation_result.get("error", "验证失败"),
+                "validation_details": validation_result,
+                "suggested_alternatives": validation_result.get("invalid_positions", [])
+            }
+
+        # 如果有无效位置，返回详细信息
+        if validation_result.get("invalid_positions"):
+            return {
+                "success": False,
+                "message": "部分粒子位置无效",
+                "validation_details": validation_result,
+                "invalid_positions": validation_result["invalid_positions"]
+            }
+
+
+
+        print(f"[INFO] 位置验证通过，运行粒子追踪模拟: 时间索引{time_index}, 深度索引{depth_index}")
 
         handler = NetCDFHandler(netcdf_path)
         try:
@@ -1125,6 +1289,35 @@ def main():
             result = calculate_vorticity_divergence(input_data)
         elif action == 'calculate_flow_statistics':  # 新增流速统计功能
             result = calculate_flow_statistics(input_data)
+        elif action == 'validate_particle_setup':
+            # 新增：验证粒子设置和时间范围
+            result = validate_particle_positions_and_time(
+                input_data['parameters']['netcdf_path'],
+                input_data['parameters']['initial_positions'],
+                input_data['parameters'].get('time_index', 0),
+                input_data['parameters'].get('simulation_days', 1)
+            )
+        elif action == 'get_time_range':
+            # 新增：获取NetCDF时间范围信息
+            try:
+                netcdf_path = input_data['parameters']['netcdf_path']
+                handler = NetCDFHandler(netcdf_path)
+                try:
+                    ds = handler.ds
+                    total_time_steps = ds.sizes.get('time', 1)
+
+                    result = {
+                        "success": True,
+                        "time_info": {
+                            "total_time_steps": total_time_steps,
+                            "max_simulation_days": total_time_steps,
+                            "time_step_hours": 24  # 假设每步为一天
+                        }
+                    }
+                finally:
+                    handler.close()
+            except Exception as e:
+                result = {"success": False, "error": str(e)}
         else:
             result = {
                 "success": False,
