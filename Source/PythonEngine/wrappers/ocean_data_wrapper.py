@@ -980,6 +980,114 @@ def _compute_divergence_stats(divergence):
         "divergence_zones": int(np.sum(divergence > 1e-5))
     }
 
+
+def simulate_particle_tracking(input_data):
+    """拉格朗日粒子追踪模拟"""
+    try:
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+        time_index = params.get('time_index', 0)
+        depth_index = params.get('depth_index', 0)
+        dt = params.get('dt', 3600.0)
+        steps = params.get('steps', 24)
+        initial_positions = np.array(params.get('initial_positions', []), dtype=float)
+        output_path = params.get('output_path', 'particle_tracks.png')
+
+        if initial_positions.size == 0:
+            raise ValueError('initial_positions 不能为空')
+
+        print(f"[INFO] 运行粒子追踪模拟: 时间索引{time_index}, 深度索引{depth_index}")
+
+        handler = NetCDFHandler(netcdf_path)
+        try:
+            u, v, lat, lon = handler.get_uv(time_idx=time_index, depth_idx=depth_index)
+
+            test_result = check_grid_data_formats(u, v, lat, lon)
+            if not test_result["success"]:
+                raise ValueError(f"无法找到兼容的网格数据格式: {test_result.get('error', '未知错误')}")
+
+            grid_params = test_result["grid_params"]
+            u_data = test_result.get("u_data")
+            v_data = test_result.get("v_data")
+            if u_data is None or v_data is None:
+                u_data = u.astype(np.float64)
+                v_data = v.astype(np.float64)
+
+            grid = oceansim.GridDataStructure(*grid_params)
+            grid.add_field2d("u_velocity", u_data)
+            grid.add_field2d("v_velocity", v_data)
+            try:
+                grid.add_vector_field("velocity", [u_data, v_data, np.zeros_like(u_data)])
+            except Exception:
+                pass
+
+            rk_solver = oceansim.RungeKuttaSolver()
+            simulator = oceansim.ParticleSimulator(grid, rk_solver)
+
+            lon0, lat0 = float(lon.min()), float(lat.min())
+            dx = float(lon[1]-lon[0]) if len(lon) > 1 else 1.0
+            dy = float(lat[1]-lat[0]) if len(lat) > 1 else 1.0
+
+            init_particles = []
+            for p in initial_positions:
+                ix = (p[0] - lon0) / dx
+                iy = (p[1] - lat0) / dy
+                init_particles.append([ix, iy, 0.0])
+
+            simulator.initialize_particles(init_particles)
+
+            trajectories = []
+            for _ in range(steps):
+                simulator.step_forward(dt)
+                parts = simulator.get_particles()
+                frame = []
+                for pt in parts:
+                    x = lon0 + pt.position[0] * dx
+                    y = lat0 + pt.position[1] * dy
+                    frame.append([x, y])
+                trajectories.append(frame)
+
+            _plot_particle_tracks(trajectories, lon, lat, output_path)
+
+            return {
+                "success": True,
+                "message": "粒子追踪模拟完成",
+                "output_path": output_path,
+                "trajectories": trajectories,
+            }
+        finally:
+            handler.close()
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"粒子追踪模拟失败: {str(e)}",
+            "error_trace": traceback.format_exc(),
+        }
+
+
+def _plot_particle_tracks(trajectories, lon, lat, output_path):
+    """绘制粒子轨迹"""
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    from Source.PythonEngine.utils.chinese_config import setup_chinese_all
+
+    setup_chinese_all(font_size=12, dpi=120)
+
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.add_feature(cfeature.COASTLINE)
+    ax.add_feature(cfeature.LAND, facecolor='lightgray')
+    ax.set_extent([float(lon.min()), float(lon.max()), float(lat.min()), float(lat.max())])
+
+    for traj in trajectories:
+        arr = np.array(traj)
+        ax.plot(arr[:,0], arr[:,1], '-', transform=ccrs.PlateCarree(), linewidth=1)
+        ax.plot(arr[0,0], arr[0,1], 'go', markersize=3, transform=ccrs.PlateCarree())
+        ax.plot(arr[-1,0], arr[-1,1], 'ro', markersize=3, transform=ccrs.PlateCarree())
+
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    plt.close()
+
 def main():
     if len(sys.argv) != 3:
         print("用法: python ocean_data_wrapper.py input.json output.json")
@@ -1180,17 +1288,59 @@ if __name__ == "__main__":
         print(f"错误信息: {result_flow.get('message', '未知错误')}")
 
     print("\n" + "=" * 60)
+
+    # ========== 测试3: 拉格朗日粒子追踪 ==========
+    print("🔄 测试3: 拉格朗日粒子追踪")
+    print("-" * 40)
+
+    # 选择两个初始粒子位置用于示例
+    handler = NetCDFHandler(test_netcdf_path)
+    u_tmp, v_tmp, lat_tmp, lon_tmp = handler.get_uv(time_idx=0, depth_idx=0)
+    handler.close()
+    init_positions = [
+        [float(lon_tmp[len(lon_tmp)//2]), float(lat_tmp[len(lat_tmp)//2])],
+        [float(lon_tmp[len(lon_tmp)//3]), float(lat_tmp[len(lat_tmp)//3])]
+    ]
+
+    test_input_particles = {
+        "action": "simulate_particle_tracking",
+        "parameters": {
+            "netcdf_path": test_netcdf_path,
+            "time_index": 0,
+            "depth_index": 0,
+            "initial_positions": init_positions,
+            "dt": 3600.0,
+            "steps": 12,
+            "output_path": "test_outputs/particle_tracks.png"
+        }
+    }
+
+    print(f"⚙️  粒子数: {len(init_positions)}, 步数: {test_input_particles['parameters']['steps']}")
+
+    result_particles = simulate_particle_tracking(test_input_particles)
+
+    print("📊 粒子追踪结果:")
+    if result_particles["success"]:
+        print("✅ 模拟成功")
+        print(f"📈 轨迹图: {result_particles.get('output_path', '未生成')}")
+    else:
+        print("❌ 模拟失败")
+        print(f"错误信息: {result_particles.get('message', '未知错误')}")
+
+    print("\n" + "=" * 60)
     print("🎯 测试完成总结")
     print("-" * 40)
 
     # 测试结果总结
     vort_success = result_vort.get("success", False)
     flow_success = result_flow.get("success", False)
+    particle_success = result_particles.get("success", False)
 
     print(f"涡度散度场计算: {'✅ 成功' if vort_success else '❌ 失败'}")
     print(f"流速统计分析: {'✅ 成功' if flow_success else '❌ 失败'}")
+    print(f"粒子追踪模拟: {'✅ 成功' if particle_success else '❌ 失败'}")
 
-    if vort_success and flow_success:
+    if vort_success and flow_success and particle_success:
         print("\n🎉 所有测试通过！海洋统计分析模块运行正常。")
 
         # 显示生成的文件
