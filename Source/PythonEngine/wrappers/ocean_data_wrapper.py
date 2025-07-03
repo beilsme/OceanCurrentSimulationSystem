@@ -781,9 +781,10 @@ def calculate_flow_statistics(input_data):
 
             # 使用C++计算动能和其他指标
             try:
-                kinetic_energy = current_solver.compute_kinetic_energy()
+                kinetic_energy_field = current_solver.compute_kinetic_energy()
                 total_energy = current_solver.compute_total_energy()
                 mass_imbalance = current_solver.compute_mass_imbalance()
+                kinetic_energy = float(np.mean(kinetic_energy_field))
             except Exception as e:
                 print(f"[WARNING] C++高级计算失败: {e}")
                 kinetic_energy = float(0.5 * 1025 * np.mean(valid_speed**2))
@@ -878,6 +879,31 @@ def _compute_geophysical_parameters(lat, valid_speed):
         }
 
 
+def _generate_levels(field, num_levels=21):
+    """根据数据生成稳定的等值线级别，避免级别非递增导致绘图错误"""
+    finite_vals = field[np.isfinite(field)]
+    if finite_vals.size == 0:
+        return np.linspace(-1, 1, num_levels)
+
+    low = np.nanpercentile(finite_vals, 5)
+    high = np.nanpercentile(finite_vals, 95)
+
+    if not np.isfinite(low) or not np.isfinite(high) or low == high:
+        span = abs(low) if np.isfinite(low) else 1.0
+        low -= span * 0.1
+        high += span * 0.1
+        if low == high:
+            low -= 1e-6
+            high += 1e-6
+
+    if high < low:
+        low, high = high, low
+    if high == low:
+        high += 1e-6
+
+    return np.linspace(low, high, num_levels)
+
+
 def _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path):
     """绘制涡度和散度场"""
     import matplotlib.pyplot as plt
@@ -893,7 +919,7 @@ def _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path):
     lon_grid, lat_grid = np.meshgrid(lon, lat)
 
     # 涡度场
-    vort_levels = np.linspace(np.nanpercentile(vorticity, 5), np.nanpercentile(vorticity, 95), 21)
+    vort_levels = _generate_levels(vorticity)
     cs1 = ax1.contourf(lon_grid, lat_grid, vorticity,
                        levels=vort_levels, cmap='RdBu_r',
                        transform=ccrs.PlateCarree())
@@ -903,7 +929,7 @@ def _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path):
     plt.colorbar(cs1, ax=ax1, orientation='horizontal', shrink=0.8)
 
     # 散度场（oceansim计算）
-    div_levels = np.linspace(np.nanpercentile(divergence, 5), np.nanpercentile(divergence, 95), 21)
+    div_levels = _generate_levels(divergence)
     cs2 = ax2.contourf(lon_grid, lat_grid, divergence,
                        levels=div_levels, cmap='RdYlBu_r',
                        transform=ccrs.PlateCarree())
@@ -1017,6 +1043,8 @@ if __name__ == "__main__":
     import os
 
     print("=" * 60)
+
+
     print("🌊 海洋数据统计分析模块测试")
     print("=" * 60)
 
