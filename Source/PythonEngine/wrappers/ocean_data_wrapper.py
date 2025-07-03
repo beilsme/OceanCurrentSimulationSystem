@@ -925,17 +925,22 @@ def _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path):
                        transform=ccrs.PlateCarree())
     ax1.add_feature(cfeature.COASTLINE)
     ax1.add_feature(cfeature.LAND, facecolor='lightgray')
-    ax1.set_title('相对涡度场 (s⁻¹)')
+    ax1.set_title('相对涡度场 (s^-1)')
     plt.colorbar(cs1, ax=ax1, orientation='horizontal', shrink=0.8)
 
     # 散度场（oceansim计算）
     div_levels = _generate_levels(divergence)
-    cs2 = ax2.contourf(lon_grid, lat_grid, divergence,
+
+    # 临时水体掩膜
+    valid_ocean_mask = ~np.isnan(vorticity)
+    divergence_masked = np.where(valid_ocean_mask, divergence, np.nan)
+    
+    cs2 = ax2.contourf(lon_grid, lat_grid, divergence_masked,
                        levels=div_levels, cmap='RdYlBu_r',
                        transform=ccrs.PlateCarree())
     ax2.add_feature(cfeature.COASTLINE)
     ax2.add_feature(cfeature.LAND, facecolor='lightgray')
-    ax2.set_title('散度场 (s⁻¹) - oceansim计算')
+    ax2.set_title('散度场 (s^-1) - oceansim计算')
     plt.colorbar(cs2, ax=ax2, orientation='horizontal', shrink=0.8)
 
     plt.tight_layout()
