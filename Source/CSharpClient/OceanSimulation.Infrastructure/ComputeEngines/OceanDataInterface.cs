@@ -1,6 +1,6 @@
 // =====================================
 // 文件: OceanDataInterface.cs
-// 功能: 基于data_processor.py的海洋数据接口
+// 功能: 基于IPythonMLEngine接口的海洋数据处理实现
 // 位置: Source/CharpClient/OceanSimulation.Infrastructure/ComputeEngines/
 // =====================================
 using System;
@@ -9,14 +9,18 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.Extensions.Logging;
+using OceanSimulation.Domain.Interfaces;
+using OceanSimulation.Domain.ValueObjects;
+using OceanSimulation.Domain.Entities;
 
 namespace OceanSimulation.Infrastructure.ComputeEngines
 {
     /// <summary>
-    /// 海洋数据处理接口 - 调用Python data_processor.py
+    /// 海洋数据处理接口 - 实现IPythonMLEngine接口，调用Python ocean_data_wrapper.py
     /// </summary>
-    public class OceanDataInterface : IDisposable
+    public class OceanDataInterface : IPythonMLEngine, IDisposable
     {
         private readonly ILogger<OceanDataInterface> _logger;
         private readonly string _pythonExecutablePath;
@@ -38,6 +42,8 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
 
             EnsureDirectoriesExist();
         }
+
+        #region IPythonMLEngine接口实现
 
         public async Task<bool> InitializeAsync()
         {
@@ -67,6 +73,14 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                     return false;
                 }
 
+                // 检查ocean_data_wrapper.py是否存在
+                var wrapperPath = Path.Combine(_pythonEngineRootPath, "wrappers", "ocean_data_wrapper.py");
+                if (!File.Exists(wrapperPath))
+                {
+                    _logger.LogError($"未找到ocean_data_wrapper.py: {wrapperPath}");
+                    return false;
+                }
+
                 _isInitialized = true;
                 _logger.LogInformation("海洋数据处理接口初始化成功");
                 return true;
@@ -78,26 +92,187 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             }
         }
 
-        /// <summary>
-        /// 加载并处理NetCDF文件
-        /// </summary>
-        public async Task<OceanDataLoadResult> LoadNetCDFDataAsync(string ncFilePath, NetCDFLoadParameters parameters)
+        public async Task<string> GenerateVectorFieldVisualizationAsync(VectorFieldData vectorField, VisualizationParameters parameters)
         {
             EnsureInitialized();
 
             try
             {
-                _logger.LogInformation($"正在加载NetCDF文件: {ncFilePath}");
+                _logger.LogInformation("正在生成矢量场可视化...");
 
-                if (!File.Exists(ncFilePath))
+                var outputPath = Path.Combine(_workingDirectory, $"vector_field_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+
+                var inputData = new
                 {
-                    throw new FileNotFoundException($"NetCDF文件不存在: {ncFilePath}");
+                    action = "plot_vector_field",
+                    data = new
+                    {
+                        u = ConvertArray2DToJsonArray(vectorField.U ?? new double[0,0]),
+                        v = ConvertArray2DToJsonArray(vectorField.V ?? new double[0,0]),
+                        lat = vectorField.Latitude ?? Array.Empty<double>(),
+                        lon = vectorField.Longitude ?? Array.Empty<double>(),
+                        depth = vectorField.Depth,
+                        time_info = vectorField.TimeInfo ?? ""
+                    },
+                    parameters = new
+                    {
+                        skip = parameters.Skip,
+                        show = false, // 不显示，只保存
+                        save_path = outputPath,
+                        lon_min = parameters.LonMin,
+                        lon_max = parameters.LonMax,
+                        lat_min = parameters.LatMin,
+                        lat_max = parameters.LatMax,
+                        font_size = parameters.FontSize,
+                        dpi = parameters.DPI
+                    }
+                };
+
+                var inputFile = await SaveInputDataAsync(inputData, "vector_field");
+                var outputFile = await ExecutePythonScriptAsync("ocean_data_wrapper.py", inputFile);
+
+                var result = await ReadOutputDataAsync<dynamic>(outputFile);
+
+                if (result.GetProperty("success").GetBoolean() && File.Exists(outputPath))
+                {
+                    _logger.LogInformation($"矢量场可视化生成成功: {outputPath}");
+                    return outputPath;
+                }
+
+                var errorMessage = result.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "未知错误";
+                _logger.LogError($"矢量场可视化生成失败: {errorMessage}");
+                return "";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "生成矢量场可视化失败");
+                return "";
+            }
+        }
+
+        public async Task<string> Generate3DVelocityVisualizationAsync(VelocityField3D velocityField, Visualization3DParameters parameters)
+        {
+            EnsureInitialized();
+
+            try
+            {
+                _logger.LogInformation("正在生成3D速度场可视化...");
+
+                var outputPath = Path.Combine(_workingDirectory, $"velocity_3d_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+
+                var inputData = new
+                {
+                    action = "plot_3d_velocity",
+                    data = new
+                    {
+                        u = ConvertArray3DToJsonArray(velocityField.U ?? new double[0,0,0]),
+                        v = ConvertArray3DToJsonArray(velocityField.V ?? new double[0,0,0]),
+                        w = ConvertArray3DToJsonArray(velocityField.W ?? new double[0,0,0]),
+                        nx = velocityField.NX,
+                        ny = velocityField.NY,
+                        nz = velocityField.NZ,
+                        dx = velocityField.DX,
+                        dy = velocityField.DY,
+                        dz = velocityField.DZ
+                    },
+                    parameters = new
+                    {
+                        title = parameters.Title ?? "3D海洋数据可视化",
+                        slice_positions = parameters.SlicePositions ?? new Dictionary<string, int>(),
+                        save_path = outputPath,
+                        show = false
+                    }
+                };
+
+                var inputFile = await SaveInputDataAsync(inputData, "velocity_3d");
+                var outputFile = await ExecutePythonScriptAsync("ocean_data_wrapper.py", inputFile);
+
+                var result = await ReadOutputDataAsync<dynamic>(outputFile);
+
+                if (result.GetProperty("success").GetBoolean() && File.Exists(outputPath))
+                {
+                    _logger.LogInformation($"3D速度场可视化生成成功: {outputPath}");
+                    return outputPath;
+                }
+
+                var errorMessage = result.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "未知错误";
+                _logger.LogError($"3D速度场可视化生成失败: {errorMessage}");
+                return "";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "生成3D速度场可视化失败");
+                return "";
+            }
+        }
+
+        public async Task<string> GenerateComprehensiveDashboardAsync(DashboardData dashboardData, DashboardParameters parameters)
+        {
+            EnsureInitialized();
+
+            try
+            {
+                _logger.LogInformation("正在生成综合仪表板...");
+
+                var outputPath = Path.Combine(_workingDirectory, $"dashboard_{DateTime.Now:yyyyMMdd_HHmmss}.html");
+
+                var inputData = new
+                {
+                    action = "generate_dashboard",
+                    data = new
+                    {
+                        velocity_data = dashboardData.VelocityData,
+                        concentration_data = dashboardData.ConcentrationData,
+                        particle_positions = ConvertArray2DToJsonArray(dashboardData.ParticlePositions ?? new double[0,0]),
+                        time_info = dashboardData.TimeInfo ?? new Dictionary<string, object>(),
+                        statistics = dashboardData.Statistics ?? new Dictionary<string, object>()
+                    },
+                    parameters = new
+                    {
+                        title = parameters.Title ?? "海洋模拟综合仪表板",
+                        save_path = outputPath
+                    }
+                };
+
+                var inputFile = await SaveInputDataAsync(inputData, "dashboard");
+                var outputFile = await ExecutePythonScriptAsync("ocean_data_wrapper.py", inputFile);
+
+                var result = await ReadOutputDataAsync<dynamic>(outputFile);
+
+                if (result.GetProperty("success").GetBoolean() && File.Exists(outputPath))
+                {
+                    _logger.LogInformation($"综合仪表板生成成功: {outputPath}");
+                    return outputPath;
+                }
+
+                var errorMessage = result.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "未知错误";
+                _logger.LogError($"综合仪表板生成失败: {errorMessage}");
+                return "";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "生成综合仪表板失败");
+                return "";
+            }
+        }
+
+        public async Task<OceanDataResult> ProcessNetCDFDataAsync(string filePath, DataProcessingParameters parameters)
+        {
+            EnsureInitialized();
+
+            try
+            {
+                _logger.LogInformation($"正在处理NetCDF文件: {filePath}");
+
+                if (!File.Exists(filePath))
+                {
+                    throw new FileNotFoundException($"NetCDF文件不存在: {filePath}");
                 }
 
                 var inputData = new
                 {
                     action = "load_netcdf",
-                    netcdf_path = Path.GetFullPath(ncFilePath),
+                    netcdf_path = Path.GetFullPath(filePath),
                     parameters = new
                     {
                         time_idx = parameters.TimeIndex,
@@ -112,95 +287,97 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 var inputFile = await SaveInputDataAsync(inputData, "load_netcdf");
                 var outputFile = await ExecutePythonScriptAsync("ocean_data_wrapper.py", inputFile);
 
-                var result = await ReadOutputDataAsync<OceanDataLoadResult>(outputFile);
+                var result = await ReadOutputDataAsync<dynamic>(outputFile);
 
-                _logger.LogInformation($"NetCDF文件加载完成: {result.Message}");
-                return result;
+                var oceanDataResult = new OceanDataResult
+                {
+                    Success = result.GetProperty("success").GetBoolean(),
+                    Message = result.GetProperty("message").GetString() ?? "",
+                    U = new double[0, 0],
+                    V = new double[0, 0],
+                    Latitude = Array.Empty<double>(),
+                    Longitude = Array.Empty<double>(),
+                    Metadata = new Dictionary<string, object>()
+                };
+
+                // 如果成功，解析数据
+                if (oceanDataResult.Success && result.TryGetProperty("data_set", out var dataSetElement))
+                {
+                    oceanDataResult.U = ParseArray2D(dataSetElement.GetProperty("u"));
+                    oceanDataResult.V = ParseArray2D(dataSetElement.GetProperty("v"));
+                    oceanDataResult.Latitude = ParseArray1D(dataSetElement.GetProperty("lat"));
+                    oceanDataResult.Longitude = ParseArray1D(dataSetElement.GetProperty("lon"));
+                }
+
+                // 解析元数据
+                if (result.TryGetProperty("data_info", out var dataInfoElement))
+                {
+                    oceanDataResult.Metadata = ParseDictionaryFromJson(dataInfoElement);
+                }
+
+                _logger.LogInformation($"NetCDF文件处理完成: {oceanDataResult.Message}");
+                return oceanDataResult;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "加载NetCDF文件失败");
-                return new OceanDataLoadResult
+                _logger.LogError(ex, "处理NetCDF文件失败");
+                return new OceanDataResult
                 {
                     Success = false,
                     Message = ex.Message,
-                    DataInfo = new Dictionary<string, object>()
+                    U = new double[0, 0],
+                    V = new double[0, 0],
+                    Latitude = Array.Empty<double>(),
+                    Longitude = Array.Empty<double>(),
+                    Metadata = new Dictionary<string, object>()
                 };
             }
         }
 
-        /// <summary>
-        /// 生成专业的海流矢量场可视化
-        /// </summary>
-        public async Task<VisualizationResult> GenerateVectorFieldAsync(OceanDataSet dataSet, VectorFieldParameters parameters)
+        public async Task<Dictionary<string, object>> GetPerformanceMetricsAsync()
         {
             EnsureInitialized();
 
             try
             {
-                _logger.LogInformation("正在生成海流矢量场可视化...");
-
-                var outputPath = Path.Combine(_workingDirectory, $"vector_field_{DateTime.Now:yyyyMMdd_HHmmss}.png");
-
                 var inputData = new
                 {
-                    action = "plot_vector_field",
-                    data = new
-                    {
-                        u = dataSet.U,
-                        v = dataSet.V,
-                        lat = dataSet.Latitude,
-                        lon = dataSet.Longitude,
-                        depth = dataSet.Depth,
-                        time_info = dataSet.TimeInfo
-                    },
-                    parameters = new
-                    {
-                        skip = parameters.Skip,
-                        show = false, // 不显示，只保存
-                        save_path = outputPath,
-                        lon_min = parameters.LonMin,
-                        lon_max = parameters.LonMax,
-                        lat_min = parameters.LatMin,
-                        lat_max = parameters.LatMax,
-                        contourf_levels = parameters.ContourLevels,
-                        contourf_cmap = parameters.ColorMap,
-                        quiver_scale = parameters.QuiverScale,
-                        quiver_width = parameters.QuiverWidth,
-                        font_size = parameters.FontSize,
-                        dpi = parameters.DPI
-                    }
+                    action = "get_performance_metrics"
                 };
 
-                var inputFile = await SaveInputDataAsync(inputData, "vector_field");
+                var inputFile = await SaveInputDataAsync(inputData, "performance");
                 var outputFile = await ExecutePythonScriptAsync("ocean_data_wrapper.py", inputFile);
 
-                var result = await ReadOutputDataAsync<VisualizationResult>(outputFile);
+                var result = await ReadOutputDataAsync<dynamic>(outputFile);
 
-                if (result.Success && File.Exists(outputPath))
+                if (result.GetProperty("success").GetBoolean() && result.TryGetProperty("metrics", out var metricsElement))
                 {
-                    result.ImagePath = outputPath;
-                    _logger.LogInformation($"矢量场可视化生成成功: {outputPath}");
+                    return ParseDictionaryFromJson(metricsElement);
                 }
 
-                return result;
+                return new Dictionary<string, object>
+                {
+                    ["error"] = result.TryGetProperty("message", out var msgElement) ? msgElement.GetString() : "获取性能指标失败"
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "生成矢量场可视化失败");
-                return new VisualizationResult
+                _logger.LogError(ex, "获取性能指标失败");
+                return new Dictionary<string, object>
                 {
-                    Success = false,
-                    Message = ex.Message,
-                    ImagePath = ""
+                    ["error"] = ex.Message
                 };
             }
         }
 
+        #endregion
+
+        #region 扩展方法（兼容原有功能）
+
         /// <summary>
         /// 导出矢量场为Shapefile
         /// </summary>
-        public async Task<ExportResult> ExportVectorShapefileAsync(OceanDataSet dataSet, ShapefileExportParameters parameters)
+        public async Task<ExportResult> ExportVectorShapefileAsync(VectorFieldData vectorField, ShapefileExportParameters parameters)
         {
             EnsureInitialized();
 
@@ -215,26 +392,35 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                     action = "export_vector_shapefile",
                     data = new
                     {
-                        u = dataSet.U,
-                        v = dataSet.V,
-                        lat = dataSet.Latitude,
-                        lon = dataSet.Longitude
+                        u = ConvertArray2DToJsonArray(vectorField.U),
+                        v = ConvertArray2DToJsonArray(vectorField.V),
+                        lat = vectorField.Latitude,
+                        lon = vectorField.Longitude
                     },
                     parameters = new
                     {
                         out_path = outputPath,
                         skip = parameters.Skip,
-                        file_type = parameters.FileType // "shp" 或 "geojson"
+                        file_type = parameters.FileType
                     }
                 };
 
                 var inputFile = await SaveInputDataAsync(inputData, "export_shapefile");
                 var outputFile = await ExecutePythonScriptAsync("ocean_data_wrapper.py", inputFile);
 
-                var result = await ReadOutputDataAsync<ExportResult>(outputFile);
+                var result = await ReadOutputDataAsync<dynamic>(outputFile);
 
-                _logger.LogInformation($"Shapefile导出完成: {result.Message}");
-                return result;
+                var exportResult = new ExportResult
+                {
+                    Success = result.GetProperty("success").GetBoolean(),
+                    Message = result.GetProperty("message").GetString() ?? "",
+                    OutputPath = result.TryGetProperty("output_path", out var pathElement)
+                                ? pathElement.GetString() ?? ""
+                                : ""
+                };
+
+                _logger.LogInformation($"Shapefile导出完成: {exportResult.Message}");
+                return exportResult;
             }
             catch (Exception ex)
             {
@@ -249,9 +435,9 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         }
 
         /// <summary>
-        /// 获取处理后的数据统计信息
+        /// 获取数据统计信息
         /// </summary>
-        public async Task<DataStatistics> GetDataStatisticsAsync(OceanDataSet dataSet)
+        public async Task<DataStatistics> GetDataStatisticsAsync(VectorFieldData vectorField)
         {
             EnsureInitialized();
 
@@ -262,18 +448,31 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                     action = "get_statistics",
                     data = new
                     {
-                        u = dataSet.U,
-                        v = dataSet.V,
-                        lat = dataSet.Latitude,
-                        lon = dataSet.Longitude
+                        u = ConvertArray2DToJsonArray(vectorField.U),
+                        v = ConvertArray2DToJsonArray(vectorField.V),
+                        lat = vectorField.Latitude,
+                        lon = vectorField.Longitude
                     }
                 };
 
                 var inputFile = await SaveInputDataAsync(inputData, "statistics");
                 var outputFile = await ExecutePythonScriptAsync("ocean_data_wrapper.py", inputFile);
 
-                var result = await ReadOutputDataAsync<DataStatistics>(outputFile);
-                return result;
+                var result = await ReadOutputDataAsync<dynamic>(outputFile);
+
+                var statistics = new DataStatistics
+                {
+                    Success = result.GetProperty("success").GetBoolean(),
+                    Message = result.GetProperty("message").GetString() ?? "",
+                    Statistics = new Dictionary<string, object>()
+                };
+
+                if (result.TryGetProperty("statistics", out var statsElement))
+                {
+                    statistics.Statistics = ParseDictionaryFromJson(statsElement);
+                }
+
+                return statistics;
             }
             catch (Exception ex)
             {
@@ -281,10 +480,13 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 return new DataStatistics
                 {
                     Success = false,
-                    Message = ex.Message
+                    Message = ex.Message,
+                    Statistics = new Dictionary<string, object>()
                 };
             }
         }
+
+        #endregion
 
         public void Dispose()
         {
@@ -341,7 +543,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             var requiredModules = new[]
             {
                 "numpy", "matplotlib", "cartopy", "netCDF4",
-                "geopandas", "shapely", "Source.PythonEngine.utils.chinese_config"
+                "geopandas", "shapely", "json", "pathlib"
             };
 
             foreach (var module in requiredModules)
@@ -447,7 +649,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             return inputFile;
         }
 
-        private async Task<T> ReadOutputDataAsync<T>(string outputFile)
+        private async Task<JsonElement> ReadOutputDataAsync<T>(string outputFile)
         {
             if (!File.Exists(outputFile))
             {
@@ -455,13 +657,118 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             }
 
             var jsonString = await File.ReadAllTextAsync(outputFile);
-            var result = JsonSerializer.Deserialize<T>(jsonString, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var document = JsonDocument.Parse(jsonString);
+            var result = document.RootElement;
 
             // 清理输出文件
             File.Delete(outputFile);
+
+            return result;
+        }
+
+        private double[,] ParseArray2D(JsonElement element)
+        {
+            var arrays = element.EnumerateArray().ToArray();
+            if (arrays.Length == 0) return new double[0, 0];
+
+            var firstArray = arrays[0].EnumerateArray().ToArray();
+            var result = new double[arrays.Length, firstArray.Length];
+
+            for (int i = 0; i < arrays.Length; i++)
+            {
+                var row = arrays[i].EnumerateArray().ToArray();
+                for (int j = 0; j < row.Length; j++)
+                {
+                    result[i, j] = row[j].GetDouble();
+                }
+            }
+
+            return result;
+        }
+
+        private double[] ParseArray1D(JsonElement element)
+        {
+            return element.EnumerateArray()
+                         .Select(e => e.GetDouble())
+                         .ToArray();
+        }
+
+        private Dictionary<string, object> ParseDictionaryFromJson(JsonElement element)
+        {
+            var result = new Dictionary<string, object>();
+
+            foreach (var property in element.EnumerateObject())
+            {
+                object value = property.Value.ValueKind switch
+                {
+                    JsonValueKind.String => property.Value.GetString() ?? "",
+                    JsonValueKind.Number => property.Value.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    JsonValueKind.Null => null,
+                    JsonValueKind.Array => property.Value.EnumerateArray().Select(ParseJsonValue).ToArray(),
+                    JsonValueKind.Object => ParseDictionaryFromJson(property.Value),
+                    _ => property.Value.ToString()
+                };
+
+                result[property.Name] = value;
+            }
+
+            return result;
+        }
+
+        private object ParseJsonValue(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString() ?? "",
+                JsonValueKind.Number => element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                JsonValueKind.Array => element.EnumerateArray().Select(ParseJsonValue).ToArray(),
+                JsonValueKind.Object => ParseDictionaryFromJson(element),
+                _ => element.ToString()
+            };
+        }
+
+        private double[][] ConvertArray2DToJsonArray(double[,] array)
+        {
+            var rows = array.GetLength(0);
+            var cols = array.GetLength(1);
+            var result = new double[rows][];
+
+            for (int i = 0; i < rows; i++)
+            {
+                result[i] = new double[cols];
+                for (int j = 0; j < cols; j++)
+                {
+                    result[i][j] = array[i, j];
+                }
+            }
+
+            return result;
+        }
+
+        private double[][][] ConvertArray3DToJsonArray(double[,,] array)
+        {
+            var depth = array.GetLength(0);
+            var rows = array.GetLength(1);
+            var cols = array.GetLength(2);
+            var result = new double[depth][][];
+
+            for (int d = 0; d < depth; d++)
+            {
+                result[d] = new double[rows][];
+                for (int r = 0; r < rows; r++)
+                {
+                    result[d][r] = new double[cols];
+                    for (int c = 0; c < cols; c++)
+                    {
+                        result[d][r][c] = array[d, r, c];
+                    }
+                }
+            }
 
             return result;
         }
@@ -505,51 +812,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         #endregion
     }
 
-    #region 数据模型定义
-
-    /// <summary>
-    /// 海洋数据集
-    /// </summary>
-    public class OceanDataSet
-    {
-        public double[,] U { get; set; }          // 东向速度分量
-        public double[,] V { get; set; }          // 北向速度分量
-        public double[] Latitude { get; set; }    // 纬度数组
-        public double[] Longitude { get; set; }   // 经度数组
-        public double? Depth { get; set; }        // 深度
-        public string TimeInfo { get; set; }      // 时间信息
-    }
-
-    /// <summary>
-    /// NetCDF加载参数
-    /// </summary>
-    public class NetCDFLoadParameters
-    {
-        public int TimeIndex { get; set; } = 0;
-        public int DepthIndex { get; set; } = 0;
-        public double? LonMin { get; set; }
-        public double? LonMax { get; set; }
-        public double? LatMin { get; set; }
-        public double? LatMax { get; set; }
-    }
-
-    /// <summary>
-    /// 矢量场可视化参数
-    /// </summary>
-    public class VectorFieldParameters
-    {
-        public int Skip { get; set; } = 3;                    // 矢量跳过间隔
-        public double? LonMin { get; set; }                   // 经度最小值
-        public double? LonMax { get; set; }                   // 经度最大值
-        public double? LatMin { get; set; }                   // 纬度最小值
-        public double? LatMax { get; set; }                   // 纬度最大值
-        public int ContourLevels { get; set; } = 100;         // 等值线级数
-        public string ColorMap { get; set; } = "coolwarm";    // 颜色映射
-        public double QuiverScale { get; set; } = 30.0;       // 箭头缩放
-        public double QuiverWidth { get; set; } = 0.001;      // 箭头宽度
-        public int FontSize { get; set; } = 14;               // 字体大小
-        public int DPI { get; set; } = 120;                   // 分辨率
-    }
+    #region 扩展数据模型定义（原有兼容性）
 
     /// <summary>
     /// Shapefile导出参数
@@ -561,35 +824,13 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
     }
 
     /// <summary>
-    /// 数据加载结果
-    /// </summary>
-    public class OceanDataLoadResult
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; }
-        public Dictionary<string, object> DataInfo { get; set; }
-        public OceanDataSet DataSet { get; set; }
-    }
-
-    /// <summary>
-    /// 可视化结果
-    /// </summary>
-    public class VisualizationResult
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; }
-        public string ImagePath { get; set; }
-        public Dictionary<string, object> Metadata { get; set; } = new();
-    }
-
-    /// <summary>
     /// 导出结果
     /// </summary>
     public class ExportResult
     {
         public bool Success { get; set; }
-        public string Message { get; set; }
-        public string OutputPath { get; set; }
+        public string Message { get; set; } = "";
+        public string OutputPath { get; set; } = "";
     }
 
     /// <summary>
@@ -598,7 +839,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
     public class DataStatistics
     {
         public bool Success { get; set; }
-        public string Message { get; set; }
+        public string Message { get; set; } = "";
         public Dictionary<string, object> Statistics { get; set; } = new();
     }
 
