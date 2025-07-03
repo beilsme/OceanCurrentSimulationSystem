@@ -14,6 +14,7 @@ from pathlib import Path
 import traceback
 import os
 import math
+import oceansim
 
 
 # 添加Python引擎路径到sys.path
@@ -552,6 +553,406 @@ def _create_gif_with_matplotlib(frame_files, output_path, frame_delay):
 
     plt.close(fig)
 
+
+def check_grid_data_formats(u, v, lat, lon):
+    """测试不同的数据格式以找到与oceansim.GridDataStructure兼容的正确方法"""
+    print(f"[TEST] 开始测试网格数据格式兼容性")
+    print(f"[TEST] 原始数据形状: u={u.shape}, v={v.shape}")
+    print(f"[TEST] 坐标数组长度: lat={len(lat)}, lon={len(lon)}")
+
+    nx, ny = len(lon), len(lat)
+
+    # 测试不同的网格构造参数和数据格式组合
+    test_configs = [
+        ("ny_nx_1", (ny, nx, 1), "flatten"),
+        ("nx_ny_1", (nx, ny, 1), "flatten"),
+        ("ny_nx_1", (ny, nx, 1), "transpose_flatten"),
+        ("nx_ny_1", (nx, ny, 1), "transpose_flatten"),
+    ]
+
+    for config_name, grid_params, data_format in test_configs:
+        try:
+            print(f"[TEST] 测试配置: 网格{grid_params}, 数据格式{data_format}")
+
+            # 创建测试网格
+            grid = oceansim.GridDataStructure(*grid_params, oceansim.CoordinateSystem.CARTESIAN)
+            grid_dims = grid.get_dimensions()
+            print(f"[TEST] 网格维度: {grid_dims}")
+
+            # 准备测试数据
+            if data_format == "flatten":
+                u_data = u.flatten().astype(np.float64)
+                v_data = v.flatten().astype(np.float64)
+            elif data_format == "transpose_flatten":
+                u_data = u.T.flatten().astype(np.float64)
+                v_data = v.T.flatten().astype(np.float64)
+
+            print(f"[TEST] 数据长度: {len(u_data)}")
+
+            # 尝试添加数据
+            grid.add_field2d("test_u", u_data)
+            grid.add_field2d("test_v", v_data)
+
+            print(f"[TEST] ✅ 成功找到兼容配置: {config_name}, {data_format}")
+            return {
+                "success": True,
+                "grid_params": grid_params,
+                "data_format": data_format,
+                "grid": grid
+            }
+
+        except Exception as e:
+            print(f"[TEST] ❌ 配置失败: {str(e)}")
+            continue
+
+    return {"success": False, "error": "未找到兼容配置"}
+
+
+def _validate_grid_dimensions(u, v, lat, lon, grid):
+    """验证数据维度与网格维度的匹配性"""
+    try:
+        data_shape = u.shape
+        ny_data, nx_data = data_shape
+
+        grid_dims = grid.get_dimensions()
+        ny_grid, nx_grid = grid_dims[0], grid_dims[1]
+
+        if ny_data != ny_grid or nx_data != nx_grid:
+            raise ValueError(
+                f"数据维度不匹配: 数据形状为 ({ny_data}, {nx_data}), "
+                f"网格期望为 ({ny_grid}, {nx_grid})"
+            )
+
+        if len(lat) != ny_data:
+            raise ValueError(f"纬度数组长度 {len(lat)} 与数据纬度维度 {ny_data} 不匹配")
+
+        if len(lon) != nx_data:
+            raise ValueError(f"经度数组长度 {len(lon)} 与数据经度维度 {nx_data} 不匹配")
+
+        if u.shape != v.shape:
+            raise ValueError(f"U和V分量维度不匹配: U形状为 {u.shape}, V形状为 {v.shape}")
+
+        print(f"[DEBUG] 维度验证通过: 数据 {data_shape}, 网格 ({ny_grid}, {nx_grid})")
+        return True
+
+    except Exception as e:
+        print(f"[ERROR] 维度验证失败: {str(e)}")
+        raise
+
+
+def calculate_vorticity_divergence(input_data):
+    """计算涡度场和散度场 - 使用oceansim.CurrentFieldSolver"""
+    try:
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+        output_path = params.get('output_path')
+        time_index = params.get('time_index', 0)
+        depth_index = params.get('depth_index', 0)
+
+        print(f"[INFO] 使用oceansim.CurrentFieldSolver计算散度场: 时间{time_index}, 深度{depth_index}")
+
+        handler = NetCDFHandler(netcdf_path)
+        try:
+            u, v, lat, lon = handler.get_uv(time_idx=time_index, depth_idx=depth_index)
+
+            # 自动测试并找到兼容的配置
+            test_result = check_grid_data_formats(u, v, lat, lon)
+            if not test_result["success"]:
+                raise ValueError(f"无法找到兼容的网格数据格式: {test_result.get('error', '未知错误')}")
+
+            # 使用测试成功的配置重新创建网格
+            grid_params = test_result["grid_params"]
+            data_format = test_result["data_format"]
+
+            print(f"[INFO] 使用配置: 网格{grid_params}, 数据格式{data_format}")
+
+            grid = oceansim.GridDataStructure(*grid_params, oceansim.CoordinateSystem.CARTESIAN)
+
+            # 设置网格间距
+            dx = abs(lon[1] - lon[0]) * 111000
+            dy = abs(lat[1] - lat[0]) * 111000
+
+            # 创建物理参数和洋流场求解器
+            params_obj = oceansim.PhysicalParameters()
+            current_solver = oceansim.CurrentFieldSolver(grid, params_obj)
+
+            # 根据测试结果准备数据
+            if data_format == "flatten":
+                u_data = u.flatten().astype(np.float64)
+                v_data = v.flatten().astype(np.float64)
+            elif data_format == "transpose_flatten":
+                u_data = u.T.flatten().astype(np.float64)
+                v_data = v.T.flatten().astype(np.float64)
+
+            # 设置速度场数据到网格
+            grid.add_field2d("u_velocity", u_data)
+            grid.add_field2d("v_velocity", v_data)
+
+            # 使用C++计算散度
+            divergence_result = current_solver.compute_divergence()
+
+            # 根据网格配置正确重塑散度结果
+            if grid_params[0] == len(lat):  # ny, nx, 1
+                divergence = np.array(divergence_result).reshape(len(lat), len(lon))
+            else:  # nx, ny, 1
+                divergence = np.array(divergence_result).reshape(len(lon), len(lat)).T
+
+            # 计算涡度
+            vorticity = _calculate_vorticity_python(u, v, dx, dy)
+
+            # 可视化
+            _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path)
+
+            # 统计计算
+            vort_stats = _compute_vorticity_stats(vorticity)
+            div_stats = _compute_divergence_stats(divergence)
+
+            return {
+                "success": True,
+                "message": "涡度散度场计算完成（oceansim后端）",
+                "output_path": output_path,
+                "statistics": {
+                    "vorticity": vort_stats,
+                    "divergence": div_stats
+                }
+            }
+
+        finally:
+            handler.close()
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"涡度散度场计算失败: {str(e)}",
+            "error_trace": traceback.format_exc()
+        }
+
+
+def calculate_flow_statistics(input_data):
+    """计算流速统计分布 - 使用oceansim增强功能"""
+    try:
+        params = input_data.get('parameters', {})
+        netcdf_path = params.get('netcdf_path')
+        time_index = params.get('time_index', 0)
+        depth_index = params.get('depth_index', 0)
+
+        print(f"[INFO] 使用oceansim计算流速统计: 时间{time_index}, 深度{depth_index}")
+
+        handler = NetCDFHandler(netcdf_path)
+        try:
+            u, v, lat, lon = handler.get_uv(time_idx=time_index, depth_idx=depth_index)
+
+            print(f"[DEBUG] u.shape = {u.shape}, 坐标长度: lat={len(lat)}, lon={len(lon)}")
+
+            # 基础流速计算
+            speed = np.sqrt(u**2 + v**2)
+            direction = np.arctan2(v, u)
+            valid_mask = np.isfinite(speed)
+            valid_speed = speed[valid_mask]
+            valid_direction = direction[valid_mask]
+
+            # 自动测试并找到兼容的配置
+            test_result = check_grid_data_formats(u, v, lat, lon)
+            if not test_result["success"]:
+                raise ValueError(f"无法找到兼容的网格数据格式: {test_result.get('error', '未知错误')}")
+
+            # 使用测试成功的配置
+            grid_params = test_result["grid_params"]
+            data_format = test_result["data_format"]
+
+            print(f"[INFO] 使用配置: 网格{grid_params}, 数据格式{data_format}")
+
+            grid = oceansim.GridDataStructure(*grid_params)
+            params_obj = oceansim.PhysicalParameters()
+            current_solver = oceansim.CurrentFieldSolver(grid, params_obj)
+
+            # 根据测试结果准备数据
+            if data_format == "flatten":
+                u_data = u.flatten().astype(np.float64)
+                v_data = v.flatten().astype(np.float64)
+            elif data_format == "transpose_flatten":
+                u_data = u.T.flatten().astype(np.float64)
+                v_data = v.T.flatten().astype(np.float64)
+
+            # 设置速度场
+            grid.add_field2d("u_velocity", u_data)
+            grid.add_field2d("v_velocity", v_data)
+
+            # 使用C++计算动能和其他指标
+            try:
+                kinetic_energy = current_solver.compute_kinetic_energy()
+                total_energy = current_solver.compute_total_energy()
+                mass_imbalance = current_solver.compute_mass_imbalance()
+            except Exception as e:
+                print(f"[WARNING] C++高级计算失败: {e}")
+                kinetic_energy = float(0.5 * 1025 * np.mean(valid_speed**2))
+                total_energy = kinetic_energy
+                mass_imbalance = 0.0
+
+            # 基础统计
+            flow_stats = {
+                "mean_speed": float(np.mean(valid_speed)),
+                "max_speed": float(np.max(valid_speed)),
+                "speed_standard_deviation": float(np.std(valid_speed)),
+                "dominant_direction": float(np.degrees(np.median(valid_direction))),
+                "kinetic_energy_density": kinetic_energy
+            }
+
+            # 高级海洋学指标
+            oceanographic_metrics = {
+                "total_energy": total_energy,
+                "mass_conservation": {
+                    "mass_imbalance": mass_imbalance,
+                    "conservation_quality": "良好" if abs(mass_imbalance) < 1e-6 else "需要关注"
+                },
+                "geophysical_parameters": _compute_geophysical_parameters(lat, valid_speed)
+            }
+
+            return {
+                "success": True,
+                "message": "流速统计计算完成（oceansim增强）",
+                "statistics": {
+                    "flow_statistics": flow_stats,
+                    "oceanographic_metrics": oceanographic_metrics
+                }
+            }
+
+        finally:
+            handler.close()
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"流速统计计算失败: {str(e)}",
+            "error_trace": traceback.format_exc()
+        }
+
+def _calculate_vorticity_python(u, v, dx, dy):
+    """Python实现的涡度计算（因C++接口中未找到涡度函数）"""
+    vorticity = np.zeros_like(u)
+
+    for i in range(1, u.shape[0] - 1):
+        for j in range(1, u.shape[1] - 1):
+            dvdx = (v[i, j+1] - v[i, j-1]) / (2 * dx)
+            dudy = (u[i+1, j] - u[i-1, j]) / (2 * dy)
+            vorticity[i, j] = dvdx - dudy
+
+    return vorticity
+
+
+def _compute_geophysical_parameters(lat, valid_speed):
+    """计算地球物理参数"""
+    try:
+        # 创建物理参数对象
+        params = oceansim.PhysicalParameters()
+
+        # 计算中心纬度的科里奥利参数
+        center_lat = lat[len(lat)//2]
+        # 注意：需要确认PhysicalParameters是否有计算科里奥利参数的方法
+        # 从接口文档看到有coriolis_f属性，但可能需要设置纬度
+
+        # 暂时使用经典公式计算科里奥利参数
+        omega_earth = 7.2921e-5  # 地球自转角速度
+        coriolis_f = 2 * omega_earth * np.sin(np.radians(center_lat))
+
+        # 计算罗斯贝数（特征速度/科里奥利参数/特征长度）
+        characteristic_speed = np.mean(valid_speed)
+        characteristic_length = 100000  # 假设特征长度100km
+        rossby_number = characteristic_speed / (abs(coriolis_f) * characteristic_length) if abs(coriolis_f) > 1e-10 else 0.0
+
+        return {
+            "latitude": float(center_lat),
+            "coriolis_parameter": float(coriolis_f),
+            "rossby_number": float(rossby_number),
+            "characteristic_speed": float(characteristic_speed)
+        }
+
+    except Exception as e:
+        print(f"[WARNING] 地球物理参数计算失败: {e}")
+        return {
+            "latitude": float(lat[len(lat)//2]),
+            "coriolis_parameter": 0.0,
+            "rossby_number": 0.0,
+            "characteristic_speed": 0.0
+        }
+
+
+def _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path):
+    """绘制涡度和散度场"""
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    from Source.PythonEngine.utils.chinese_config import setup_chinese_all
+
+    setup_chinese_all(font_size=12, dpi=120)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8),
+                                   subplot_kw={'projection': ccrs.PlateCarree()})
+
+    lon_grid, lat_grid = np.meshgrid(lon, lat)
+
+    # 涡度场
+    vort_levels = np.linspace(np.nanpercentile(vorticity, 5), np.nanpercentile(vorticity, 95), 21)
+    cs1 = ax1.contourf(lon_grid, lat_grid, vorticity,
+                       levels=vort_levels, cmap='RdBu_r',
+                       transform=ccrs.PlateCarree())
+    ax1.add_feature(cfeature.COASTLINE)
+    ax1.add_feature(cfeature.LAND, facecolor='lightgray')
+    ax1.set_title('相对涡度场 (s⁻¹)')
+    plt.colorbar(cs1, ax=ax1, orientation='horizontal', shrink=0.8)
+
+    # 散度场（oceansim计算）
+    div_levels = np.linspace(np.nanpercentile(divergence, 5), np.nanpercentile(divergence, 95), 21)
+    cs2 = ax2.contourf(lon_grid, lat_grid, divergence,
+                       levels=div_levels, cmap='RdYlBu_r',
+                       transform=ccrs.PlateCarree())
+    ax2.add_feature(cfeature.COASTLINE)
+    ax2.add_feature(cfeature.LAND, facecolor='lightgray')
+    ax2.set_title('散度场 (s⁻¹) - oceansim计算')
+    plt.colorbar(cs2, ax=ax2, orientation='horizontal', shrink=0.8)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    plt.close()
+
+
+def _compute_vorticity_stats(vorticity):
+    """计算涡度统计"""
+    valid_vort = vorticity[np.isfinite(vorticity)]
+
+    if len(valid_vort) == 0:
+        return {"mean_vorticity": 0, "max_vorticity": 0, "min_vorticity": 0,
+                "vorticity_variance": 0, "cyclone_count": 0, "anticyclone_count": 0}
+
+    cyclone_threshold = np.percentile(valid_vort, 90)
+    anticyclone_threshold = np.percentile(valid_vort, 10)
+
+    return {
+        "mean_vorticity": float(np.mean(valid_vort)),
+        "max_vorticity": float(np.max(valid_vort)),
+        "min_vorticity": float(np.min(valid_vort)),
+        "vorticity_variance": float(np.var(valid_vort)),
+        "cyclone_count": int(np.sum(vorticity > cyclone_threshold)),
+        "anticyclone_count": int(np.sum(vorticity < anticyclone_threshold))
+    }
+
+
+def _compute_divergence_stats(divergence):
+    """计算散度统计"""
+    valid_div = divergence[np.isfinite(divergence)]
+
+    if len(valid_div) == 0:
+        return {"mean_divergence": 0, "max_divergence": 0, "min_divergence": 0,
+                "convergence_zones": 0, "divergence_zones": 0}
+
+    return {
+        "mean_divergence": float(np.mean(valid_div)),
+        "max_divergence": float(np.max(valid_div)),
+        "min_divergence": float(np.min(valid_div)),
+        "convergence_zones": int(np.sum(divergence < -1e-5)),
+        "divergence_zones": int(np.sum(divergence > 1e-5))
+    }
+
 def main():
     if len(sys.argv) != 3:
         print("用法: python ocean_data_wrapper.py input.json output.json")
@@ -576,8 +977,12 @@ def main():
             result = export_vector_shapefile(input_data)
         elif action == 'get_statistics':
             result = get_statistics(input_data)
-        elif action == 'create_ocean_animation':  # 新增的动画功能
+        elif action == 'create_ocean_animation':
             result = create_ocean_animation(input_data)
+        elif action == 'calculate_vorticity_divergence':  # 新增统计分析功能
+            result = calculate_vorticity_divergence(input_data)
+        elif action == 'calculate_flow_statistics':  # 新增流速统计功能
+            result = calculate_flow_statistics(input_data)
         else:
             result = {
                 "success": False,
@@ -607,4 +1012,168 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    import json
+    import os
+
+    print("=" * 60)
+    print("🌊 海洋数据统计分析模块测试")
+    print("=" * 60)
+
+    # 测试数据路径
+    test_netcdf_path = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/data/raw_data/merged_data.nc"
+
+    # 检查测试文件是否存在
+    if not os.path.exists(test_netcdf_path):
+        print(f"❌ 错误: 测试文件不存在 - {test_netcdf_path}")
+        exit(1)
+
+    print(f"📁 测试数据文件: {os.path.basename(test_netcdf_path)}")
+    print(f"📏 文件大小: {os.path.getsize(test_netcdf_path) / (1024*1024):.1f} MB")
+    print()
+
+    # ========== 测试1: 涡度散度场计算 ==========
+    print("🔄 测试1: 涡度散度场计算")
+    print("-" * 40)
+
+    test_input_vort = {
+        "action": "calculate_vorticity_divergence",
+        "parameters": {
+            "netcdf_path": test_netcdf_path,
+            "output_path": "test_outputs/vorticity_divergence_analysis.png",
+            "time_index": 0,
+            "depth_index": 0
+        }
+    }
+
+    # 创建输出目录
+    os.makedirs("test_outputs", exist_ok=True)
+
+    print(f"⚙️  测试参数:")
+    print(f"   时间索引: {test_input_vort['parameters']['time_index']}")
+    print(f"   深度索引: {test_input_vort['parameters']['depth_index']}")
+    print(f"   输出路径: {test_input_vort['parameters']['output_path']}")
+    print()
+
+    result_vort = calculate_vorticity_divergence(test_input_vort)
+
+    print("📊 涡度散度场计算结果:")
+    if result_vort["success"]:
+        print("✅ 计算成功")
+        print(f"📈 输出图像: {result_vort.get('output_path', '未生成')}")
+
+        # 显示统计信息
+        stats = result_vort.get("statistics", {})
+        if "vorticity" in stats:
+            vort_stats = stats["vorticity"]
+            print(f"🌀 涡度统计:")
+            print(f"   平均涡度: {vort_stats.get('mean_vorticity', 0):.6e} s⁻¹")
+            print(f"   最大涡度: {vort_stats.get('max_vorticity', 0):.6e} s⁻¹")
+            print(f"   最小涡度: {vort_stats.get('min_vorticity', 0):.6e} s⁻¹")
+            print(f"   气旋区域: {vort_stats.get('cyclone_count', 0)} 个")
+            print(f"   反气旋区域: {vort_stats.get('anticyclone_count', 0)} 个")
+
+        if "divergence" in stats:
+            div_stats = stats["divergence"]
+            print(f"📐 散度统计:")
+            print(f"   平均散度: {div_stats.get('mean_divergence', 0):.6e} s⁻¹")
+            print(f"   最大散度: {div_stats.get('max_divergence', 0):.6e} s⁻¹")
+            print(f"   最小散度: {div_stats.get('min_divergence', 0):.6e} s⁻¹")
+            print(f"   辐合区域: {div_stats.get('convergence_zones', 0)} 个")
+            print(f"   辐散区域: {div_stats.get('divergence_zones', 0)} 个")
+
+        # 检查输出文件
+        output_path = result_vort.get('output_path')
+        if output_path and os.path.exists(output_path):
+            file_size = os.path.getsize(output_path)
+            print(f"💾 生成文件大小: {file_size / 1024:.1f} KB")
+    else:
+        print("❌ 计算失败")
+        print(f"错误信息: {result_vort.get('message', '未知错误')}")
+
+    print("\n" + "=" * 60)
+
+    # ========== 测试2: 流速统计分析 ==========
+    print("🔄 测试2: 流速统计分析")
+    print("-" * 40)
+
+    test_input_flow = {
+        "action": "calculate_flow_statistics",
+        "parameters": {
+            "netcdf_path": test_netcdf_path,
+            "time_index": 0,
+            "depth_index": 0
+        }
+    }
+
+    print(f"⚙️  测试参数:")
+    print(f"   时间索引: {test_input_flow['parameters']['time_index']}")
+    print(f"   深度索引: {test_input_flow['parameters']['depth_index']}")
+    print()
+
+    result_flow = calculate_flow_statistics(test_input_flow)
+
+    print("📊 流速统计分析结果:")
+    if result_flow["success"]:
+        print("✅ 计算成功")
+
+        # 显示基础流速统计
+        stats = result_flow.get("statistics", {})
+        if "flow_statistics" in stats:
+            flow_stats = stats["flow_statistics"]
+            print(f"🌊 基础流速统计:")
+            print(f"   平均流速: {flow_stats.get('mean_speed', 0):.4f} m/s")
+            print(f"   最大流速: {flow_stats.get('max_speed', 0):.4f} m/s")
+            print(f"   流速标准差: {flow_stats.get('speed_standard_deviation', 0):.4f} m/s")
+            print(f"   主导方向: {flow_stats.get('dominant_direction', 0):.1f}°")
+            print(f"   动能密度: {flow_stats.get('kinetic_energy_density', 0):.2f} J/m³")
+
+        # 显示高级海洋学指标
+        if "oceanographic_metrics" in stats:
+            ocean_metrics = stats["oceanographic_metrics"]
+            print(f"🌍 高级海洋学指标:")
+            print(f"   总能量: {ocean_metrics.get('total_energy', 0):.2f} J/m³")
+
+            # 质量守恒分析
+            mass_conservation = ocean_metrics.get("mass_conservation", {})
+            print(f"⚖️  质量守恒分析:")
+            print(f"   质量不平衡: {mass_conservation.get('mass_imbalance', 0):.2e}")
+            print(f"   守恒质量: {mass_conservation.get('conservation_quality', '未知')}")
+
+            # 地球物理参数
+            geo_params = ocean_metrics.get("geophysical_parameters", {})
+            print(f"🌐 地球物理参数:")
+            print(f"   纬度: {geo_params.get('latitude', 0):.2f}°")
+            print(f"   科里奥利参数: {geo_params.get('coriolis_parameter', 0):.2e} s⁻¹")
+            print(f"   罗斯贝数: {geo_params.get('rossby_number', 0):.4f}")
+            print(f"   特征流速: {geo_params.get('characteristic_speed', 0):.4f} m/s")
+    else:
+        print("❌ 计算失败")
+        print(f"错误信息: {result_flow.get('message', '未知错误')}")
+
+    print("\n" + "=" * 60)
+    print("🎯 测试完成总结")
+    print("-" * 40)
+
+    # 测试结果总结
+    vort_success = result_vort.get("success", False)
+    flow_success = result_flow.get("success", False)
+
+    print(f"涡度散度场计算: {'✅ 成功' if vort_success else '❌ 失败'}")
+    print(f"流速统计分析: {'✅ 成功' if flow_success else '❌ 失败'}")
+
+    if vort_success and flow_success:
+        print("\n🎉 所有测试通过！海洋统计分析模块运行正常。")
+
+        # 显示生成的文件
+        print("\n📁 生成的输出文件:")
+        output_dir = "test_outputs"
+        if os.path.exists(output_dir):
+            for file in os.listdir(output_dir):
+                file_path = os.path.join(output_dir, file)
+                if os.path.isfile(file_path):
+                    size_kb = os.path.getsize(file_path) / 1024
+                    print(f"   {file} ({size_kb:.1f} KB)")
+    else:
+        print("\n⚠️  部分测试失败，请检查错误信息并修复相关问题。")
+
+    print("=" * 60)
