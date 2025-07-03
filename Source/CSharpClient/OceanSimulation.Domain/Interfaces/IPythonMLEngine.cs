@@ -1,7 +1,6 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
 using OceanSimulation.Domain.ValueObjects;
-using OceanSimulation.Domain.Entities;
+
 
 namespace OceanSimulation.Domain.Interfaces
 {

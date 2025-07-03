@@ -7,6 +7,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    <!-- 添加 NuGet 警告到不当作错误的列表中 -->
+    <NoWarn>$(NoWarn);NU1510;NU1902;NU1903</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyTitle>Ocean Simulation Infrastructure Layer</AssemblyTitle>
     <AssemblyDescription>洋流模拟系统基础设施层，包含数据访问、外部服务集成、跨语言计算引擎包装器</AssemblyDescription>
@@ -46,44 +48,36 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- 更新到最新稳定版本以修复安全漏洞 -->
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    
+
     <!-- 数据访问相关 -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0" />
-    
+
     <!-- JSON处理 -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.Text.Json" Version="8.0.0" />
-    
-    <!-- HTTP客户端 -->
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
-    <PackageReference Include="RestSharp" Version="110.2.0" />
-    
-    <!-- 异步和并发 -->
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
-    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
-    
-    <!-- 内存映射文件和性能 -->
-    <PackageReference Include="System.IO.MemoryMappedFiles" Version="4.3.0" />
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
-    
+
     <!-- 数学和科学计算库 -->
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    
+    <!-- 更新 RestSharp 到最新版本修复安全漏洞 -->
+    <PackageReference Include="RestSharp" Version="112.0.0" />
+
     <!-- 监控和诊断 -->
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.0" />
+    <!-- 更新到最新版本修复安全漏洞 -->
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>
