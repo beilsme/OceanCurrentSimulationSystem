@@ -19,8 +19,7 @@
 #include <chrono>
 #include <unordered_map>
 
-using namespace OceanSim::Prediction;
-using namespace OceanSim::Data;
+
 
 // ==============================================================================
 // 内部数据结构和工具函数
@@ -30,9 +29,9 @@ using namespace OceanSim::Data;
  * @brief EnKF系统包装器结构
  */
 struct EnKFWrapper {
-    std::unique_ptr<EnsembleKalmanFilter> filter;
-    std::shared_ptr<GridDataStructure> grid;
-    EnKFConfiguration config;
+    std::unique_ptr<OceanSim::Prediction::EnsembleKalmanFilter> filter;
+    std::shared_ptr<OceanSim::Data::GridDataStructure> grid;
+    OceanSim::Prediction::EnKFConfiguration config;
     std::string last_error;
     bool is_initialized;
 
@@ -49,9 +48,9 @@ struct EnKFWrapper {
  * @brief 观测算子包装器结构
  */
 struct ObservationOperatorWrapper {
-    std::unique_ptr<ObservationOperator> operator_;
+    std::unique_ptr<OceanSim::Prediction::ObservationOperator> operator_;
     ObservationType type;
-    std::shared_ptr<GridDataStructure> grid;
+    std::shared_ptr<OceanSim::Data::GridDataStructure> grid;
 };
 
 // 全局错误状态管理
@@ -88,8 +87,8 @@ namespace {
     /**
      * @brief 转换C配置到C++配置
      */
-    EnKFConfiguration ConvertConfig(const EnKFConfig* c_config) {
-        EnKFConfiguration cpp_config;
+    OceanSim::Prediction::EnKFConfiguration ConvertConfig(const EnKFConfig* c_config) {
+        OceanSim::Prediction::EnKFConfiguration cpp_config;
         cpp_config.ensemble_size = c_config->ensemble_size;
         cpp_config.localization_radius = c_config->localization_radius;
         cpp_config.inflation_factor = c_config->inflation_factor;
@@ -104,7 +103,7 @@ namespace {
     /**
      * @brief 转换C++状态向量到C状态向量
      */
-    void ConvertStateVector(const OceanStateVector& cpp_state, OceanState* c_state) {
+    void ConvertStateVector(const OceanSim::Prediction::OceanStateVector& cpp_state, OceanState* c_state) {
         c_state->temperature = cpp_state.temperature;
         c_state->salinity = cpp_state.salinity;
         c_state->velocity_u = cpp_state.velocity[0];
@@ -118,8 +117,8 @@ namespace {
     /**
      * @brief 转换C状态向量到C++状态向量
      */
-    OceanStateVector ConvertStateVector(const OceanState* c_state) {
-        OceanStateVector cpp_state;
+    OceanSim::Prediction::OceanStateVector ConvertStateVector(const OceanState* c_state) {
+        OceanSim::Prediction::OceanStateVector cpp_state;
         cpp_state.temperature = c_state->temperature;
         cpp_state.salinity = c_state->salinity;
         cpp_state.velocity = Eigen::Vector3d(c_state->velocity_u,
@@ -134,8 +133,8 @@ namespace {
     /**
      * @brief 创建网格结构
      */
-    std::shared_ptr<GridDataStructure> CreateGrid(const GridParameters* params) {
-        auto grid = std::make_shared<GridDataStructure>();
+    std::shared_ptr<OceanSim::Data::GridDataStructure> CreateGrid(const GridParameters* params) {
+        auto grid = std::make_shared<OceanSim::Data::GridDataStructure>();
 
         // 设置网格参数
         std::vector<int> dimensions = {params->nx, params->ny, params->nz};
@@ -173,7 +172,7 @@ OCEANSIM_API EnKFHandle EnKF_Create(const EnKFConfig* config, const GridParamete
         wrapper->grid = CreateGrid(grid_params);
 
         // 创建EnKF滤波器
-        wrapper->filter = std::make_unique<EnsembleKalmanFilter>(wrapper->config, wrapper->grid);
+        wrapper->filter = std::make_unique<OceanSim::Prediction::EnsembleKalmanFilter>(wrapper->config, wrapper->grid);
 
         return wrapper.release();
 
@@ -203,7 +202,7 @@ OCEANSIM_API bool EnKF_Initialize(EnKFHandle handle,
         auto wrapper = static_cast<EnKFWrapper*>(handle);
 
         // 转换初始状态
-        std::vector<OceanStateVector> cpp_initial_state(state_size);
+        std::vector<OceanSim::Prediction::OceanStateVector> cpp_initial_state(state_size);
         for (int i = 0; i < state_size; ++i) {
             cpp_initial_state[i] = ConvertStateVector(&initial_state[i]);
         }
@@ -321,7 +320,7 @@ OCEANSIM_API int EnKF_GetEnsembleMember(EnKFHandle handle,
         }
 
         const auto& ensemble = wrapper->filter->getCurrentEnsemble();
-        const OceanStateVector* member = ensemble.getMember(member_index);
+        const OceanSim::Prediction::OceanStateVector* member = ensemble.getMember(member_index);
 
         if (ensemble.getStateSize() != static_cast<size_t>(state_size)) {
             SetError(handle, "状态大小不匹配");
@@ -386,24 +385,24 @@ OCEANSIM_API int EnKF_GetEnsembleStatistics(EnKFHandle handle,
 OCEANSIM_API ObservationOperatorHandle ObsOp_Create(ObservationType obs_type,
                                                     GridHandle grid_handle) {
     try {
-        auto grid = static_cast<GridDataStructure*>(grid_handle);
+        auto grid = static_cast<OceanSim::Data::GridDataStructure*>(grid_handle);
         if (!grid) {
             return nullptr;
         }
 
         auto wrapper = std::make_unique<ObservationOperatorWrapper>();
         wrapper->type = obs_type;
-        wrapper->grid = std::shared_ptr<GridDataStructure>(grid, [](GridDataStructure*){});
+        wrapper->grid = std::shared_ptr<OceanSim::Data::GridDataStructure>(grid, [](OceanSim::Data::GridDataStructure*){});
 
         switch (obs_type) {
             case OBS_SEA_LEVEL_ANOMALY:
-                wrapper->operator_ = std::make_unique<SeaLevelAnomalyOperator>(wrapper->grid);
+                wrapper->operator_ = std::make_unique<OceanSim::Prediction::SeaLevelAnomalyOperator>(wrapper->grid);
                 break;
             case OBS_SEA_SURFACE_TEMPERATURE:
-                wrapper->operator_ = std::make_unique<SeaSurfaceTemperatureOperator>(wrapper->grid);
+                wrapper->operator_ = std::make_unique<OceanSim::Prediction::SeaSurfaceTemperatureOperator>(wrapper->grid);
                 break;
             case OBS_SEA_ICE_CONCENTRATION:
-                wrapper->operator_ = std::make_unique<SeaIceConcentrationOperator>(wrapper->grid);
+                wrapper->operator_ = std::make_unique<OceanSim::Prediction::SeaIceConcentrationOperator>(wrapper->grid);
                 break;
             default:
                 SetError(wrapper.get(), "不支持的观测类型");
@@ -439,7 +438,7 @@ OCEANSIM_API int ObsOp_Apply(ObservationOperatorHandle handle,
         auto wrapper = static_cast<ObservationOperatorWrapper*>(handle);
 
         // 转换模式状态
-        std::vector<OceanStateVector> cpp_state(state_size);
+        std::vector<OceanSim::Prediction::OceanStateVector> cpp_state(state_size);
         for (int i = 0; i < state_size; ++i) {
             cpp_state[i] = ConvertStateVector(&model_state[i]);
         }
@@ -662,7 +661,7 @@ OCEANSIM_API bool EnKF_CheckFilterDivergence(EnKFHandle handle,
         }
 
         const auto& ensemble = wrapper->filter->getCurrentEnsemble();
-        return EnKFValidator::checkFilterDivergence(ensemble);
+        return OceanSim::Prediction::EnKFValidator::checkFilterDivergence(ensemble);
 
     } catch (const std::exception&) {
         return true;
@@ -706,7 +705,7 @@ OCEANSIM_API bool EnKF_ValidateLinearGaussian(EnKFHandle handle) {
             return false;
         }
 
-        return EnKFValidator::validateLinearGaussianCase(*wrapper->filter);
+        return OceanSim::Prediction::EnKFValidator::validateLinearGaussianCase(*wrapper->filter);
 
     } catch (const std::exception&) {
         return false;
@@ -725,7 +724,7 @@ OCEANSIM_API bool EnKF_ValidateLorenz96(EnKFHandle handle) {
             return false;
         }
 
-        return EnKFValidator::validateLorenz96System(*wrapper->filter);
+        return OceanSim::Prediction::EnKFValidator::validateLorenz96System(*wrapper->filter);
 
     } catch (const std::exception&) {
         return false;
@@ -1137,7 +1136,7 @@ OCEANSIM_API int EnKF_ExecuteAnalysis(EnKFHandle handle,
         }
 
         // 创建默认的海表温度观测算子（简化实现）
-        cpp_obs.operator_ = std::make_shared<SeaSurfaceTemperatureOperator>(wrapper->grid);
+        cpp_obs.operator_ = std::make_shared<OceanSim::Prediction::SeaSurfaceTemperatureOperator>(wrapper->grid);
 
         // 设置时间戳
         cpp_obs.timestamp = std::chrono::system_clock::from_time_t(observations->timestamp);

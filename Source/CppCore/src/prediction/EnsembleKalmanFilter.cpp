@@ -227,7 +227,18 @@ namespace OceanSim {
                 future.get();
             }
         }
-
+        static std::unique_ptr<EnsembleCollection> cloneEnsembleCollection(const EnsembleCollection& src) {
+            auto clone = std::make_unique<EnsembleCollection>(src.getStateSize());
+            for (int i = 0; i < EnsembleCollection::TOPAZ_ENSEMBLE_SIZE; ++i) {
+                const OceanStateVector* src_member = src.getMember(i);
+                OceanStateVector* dst_member = clone->getMember(i);
+                for (size_t j = 0; j < src.getStateSize(); ++j) {
+                    dst_member[j] = src_member[j];
+                }
+            }
+            return clone;
+        }
+        
 // ==============================================================================
 // 观测算子实现
 // ==============================================================================
@@ -557,11 +568,20 @@ namespace OceanSim {
             inflation_ = std::make_unique<InflationAlgorithm>(InflationAlgorithm::InflationType::Multiplicative,
                                                               config_.inflation_factor);
             rk_solver_ = std::make_unique<Algorithms::RungeKuttaSolver>();
-            parallel_engine_ = std::make_unique<OceanSimulation::Core::ParallelComputeEngine>();
-            vector_ops_ = std::make_unique<OceanSimulation::Core::VectorizedOperations>();
+            
+            OceanSimulation::Core::ParallelComputeEngine::Config engine_config;
+            parallel_engine_ =
+                    std::make_unique<OceanSimulation::Core::ParallelComputeEngine>(
+                            engine_config);
+            OceanSimulation::Core::VectorizedOperations::Config vec_config;
+            vector_ops_ =
+                    std::make_unique<OceanSimulation::Core::VectorizedOperations>(
+                            vec_config);
 
             // 初始化日志记录器
-            logger_ = std::make_shared<Utils::Logger>("EnKF");
+            Utils::Logger::initialize("EnKF");
+            logger_ = std::shared_ptr<Utils::Logger>(&Utils::Logger::getInstance(),
+                                                     [](Utils::Logger*) {});
 
             // 初始化性能指标
             performance_metrics_ = {};
@@ -582,12 +602,14 @@ namespace OceanSim {
                 current_mean_ = current_ensemble_->computeEnsembleMean();
                 current_covariance_ = current_ensemble_->computeSampleCovariance();
 
-                logger_->info("EnKF系统初始化成功，集合大小: {}, 状态维度: {}",
-                              config_.ensemble_size, initial_state.size());
+                logger_->info("EnKF系统初始化成功，集合大小: " +
+                              std::to_string(config_.ensemble_size) +
+                              ", 状态维度: " +
+                              std::to_string(initial_state.size()));
 
                 return true;
             } catch (const std::exception& e) {
-                logger_->error("EnKF初始化失败: {}", e.what());
+                logger_->error(std::string("EnKF初始化失败: ") + e.what());
                 return false;
             }
         }
@@ -672,10 +694,11 @@ namespace OceanSim {
                 // 更新性能指标
                 updatePerformanceMetrics(computation_time);
 
-                logger_->info("预报步骤完成，耗时: {} ms", computation_time.count());
+                logger_->info("预报步骤完成，耗时: " +
+                              std::to_string(computation_time.count()) + " ms");
 
                 ForecastResult result;
-                result.forecast_ensemble = std::make_unique<EnsembleCollection>(*current_ensemble_);
+                result.forecast_ensemble = cloneEnsembleCollection(*current_ensemble_);
                 result.ensemble_mean = forecast_mean;
                 result.forecast_covariance = forecast_covariance;
                 result.computation_time = computation_time;
@@ -684,7 +707,7 @@ namespace OceanSim {
                 return result;
 
             } catch (const std::exception& e) {
-                logger_->error("预报步骤失败: {}", e.what());
+                logger_->error(std::string("预报步骤失败: ") + e.what());
 
                 ForecastResult result;
                 result.success = false;
@@ -846,11 +869,13 @@ namespace OceanSim {
                 current_mean_ = analysis_mean;
                 current_covariance_ = analysis_covariance;
 
-                logger_->info("分析步骤完成，耗时: {} ms，创新方差: {}",
-                              computation_time.count(), innovation_variance);
+                logger_->info("分析步骤完成，耗时: " +
+                              std::to_string(computation_time.count()) +
+                              " ms，创新方差: " +
+                              std::to_string(innovation_variance));
 
                 AnalysisResult result;
-                result.analysis_ensemble = std::make_unique<EnsembleCollection>(*current_ensemble_);
+                result.analysis_ensemble = cloneEnsembleCollection(*current_ensemble_);
                 result.analysis_mean = analysis_mean;
                 result.analysis_covariance = analysis_covariance;
                 result.kalman_gain = kalman_gain;
@@ -861,7 +886,7 @@ namespace OceanSim {
                 return result;
 
             } catch (const std::exception& e) {
-                logger_->error("分析步骤失败: {}", e.what());
+                logger_->error(std::string("分析步骤失败: ") + e.what());
 
                 AnalysisResult result;
                 result.success = false;
@@ -1032,10 +1057,13 @@ namespace OceanSim {
 
         void EnsembleKalmanFilter::logAssimilationCycle(const AssimilationResult& result) {
             if (result.cycle_success) {
-                logger_->info("同化循环成功完成 - 预报: {}ms, 分析: {}ms, 创新方差: {:.6f}",
-                              result.forecast.computation_time.count(),
-                              result.analysis.computation_time.count(),
-                              result.analysis.innovation_variance);
+                logger_->info(
+                        "同化循环成功完成 - 预报: " +
+                        std::to_string(result.forecast.computation_time.count()) +
+                        "ms, 分析: " +
+                        std::to_string(result.analysis.computation_time.count()) +
+                        "ms, 创新方差: " +
+                        std::to_string(result.analysis.innovation_variance));
             } else {
                 logger_->error("同化循环失败");
             }
@@ -1085,8 +1113,9 @@ namespace OceanSim {
             return true;
         }
 
-        double EnKFValidator::computeAnalysisAccuracy(const AnalysisResult& result,
-                                                      const std::vector<OceanStateVector>& truth) {
+        double EnKFValidator::computeAnalysisAccuracy(
+                const EnsembleKalmanFilter::AnalysisResult& result,
+                const std::vector<OceanStateVector>& truth) {
             if (!result.success || result.analysis_mean.size() != truth.size()) {
                 return -1.0; // 无效输入
             }
