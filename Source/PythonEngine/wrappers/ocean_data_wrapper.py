@@ -49,8 +49,8 @@ def load_netcdf_data(input_data):
         netcdf_path = params.get('netcdf_path')
         if not netcdf_path:
             raise ValueError("netcdf_path 未提供，无法加载 NetCDF")
-        
-        
+
+
         print(f"[INFO] 正在加载NetCDF文件: {netcdf_path}")
 
         # 检查文件是否存在
@@ -161,7 +161,7 @@ def plot_vector_field(input_data):
         time_value = handler.get_time(index=selected_time_idx)
         if not time_value:
             time_value = "未知"
-        
+
         # 读取深度信息
         selected_depth_idx = params.get('depth_idx', 0)
         depth_value = handler.get_depth(index=selected_depth_idx)
@@ -169,7 +169,7 @@ def plot_vector_field(input_data):
             depth_value = 0.0
 
 
-    # 创建数据处理器
+        # 创建数据处理器
         processor = DataProcessor(
             u=u,
             v=v,
@@ -395,7 +395,7 @@ def create_ocean_animation(input_data):
             total_time_steps = ds.dims['time']
             frame_stride = params.get("frame_stride", 1)
             time_indices = list(range(0, total_time_steps, max(1, frame_stride)))
-            
+
             print(f"[INFO] NetCDF文件包含 {total_time_steps} 个时间步")
             print(f"[INFO] 使用帧步长 frame_stride={frame_stride}")
             print(f"[INFO] 将生成 {len(time_indices)} 帧动画")
@@ -563,44 +563,47 @@ def check_grid_data_formats(u, v, lat, lon):
     nx, ny = len(lon), len(lat)
 
     # 测试不同的网格构造参数和数据格式组合
-    test_configs = [
-        ("ny_nx_1", (ny, nx, 1), "flatten"),
-        ("nx_ny_1", (nx, ny, 1), "flatten"),
-        ("ny_nx_1", (ny, nx, 1), "transpose_flatten"),
-        ("nx_ny_1", (nx, ny, 1), "transpose_flatten"),
+    # 首先尝试与坐标维度一致的常规布局
+    try_configs = [
+        {
+            "name": "lon_lat",
+            "grid": (len(lon), len(lat), 1),
+            "u": u,
+            "v": v,
+        },
+        {
+            "name": "lat_lon",
+            "grid": (len(lat), len(lon), 1),
+            "u": u.T,
+            "v": v.T,
+        },
     ]
 
-    for config_name, grid_params, data_format in test_configs:
+    for cfg in try_configs:
+        config_name = cfg["name"]
+        grid_params = cfg["grid"]
         try:
-            print(f"[TEST] 测试配置: 网格{grid_params}, 数据格式{data_format}")
+            print(f"[TEST] 测试配置: 网格{grid_params}, 数据格式matrix")
 
-            # 创建测试网格
             grid = oceansim.GridDataStructure(*grid_params, oceansim.CoordinateSystem.CARTESIAN)
             grid_dims = grid.get_dimensions()
             print(f"[TEST] 网格维度: {grid_dims}")
 
-            # 准备测试数据
-            if data_format == "flatten":
-                u_data = u.flatten().astype(np.float64)
-                v_data = v.flatten().astype(np.float64)
-            elif data_format == "transpose_flatten":
-                u_data = u.T.flatten().astype(np.float64)
-                v_data = v.T.flatten().astype(np.float64)
+            u_data = cfg["u"].astype(np.float64)
+            v_data = cfg["v"].astype(np.float64)
 
-            print(f"[TEST] 数据长度: {len(u_data)}")
-
-            # 尝试添加数据
             grid.add_field2d("test_u", u_data)
             grid.add_field2d("test_v", v_data)
 
-            print(f"[TEST] ✅ 成功找到兼容配置: {config_name}, {data_format}")
+            print(f"[TEST] ✅ 成功找到兼容配置: {config_name}")
             return {
                 "success": True,
                 "grid_params": grid_params,
-                "data_format": data_format,
-                "grid": grid
+                "data_format": config_name,
+                "grid": grid,
+                "u_data": u_data,
+                "v_data": v_data,
             }
-
         except Exception as e:
             print(f"[TEST] ❌ 配置失败: {str(e)}")
             continue
@@ -677,12 +680,11 @@ def calculate_vorticity_divergence(input_data):
             current_solver = oceansim.CurrentFieldSolver(grid, params_obj)
 
             # 根据测试结果准备数据
-            if data_format == "flatten":
-                u_data = u.flatten().astype(np.float64)
-                v_data = v.flatten().astype(np.float64)
-            elif data_format == "transpose_flatten":
-                u_data = u.T.flatten().astype(np.float64)
-                v_data = v.T.flatten().astype(np.float64)
+            u_data = test_result.get("u_data")
+            v_data = test_result.get("v_data")
+            if u_data is None or v_data is None:
+                u_data = u.astype(np.float64)
+                v_data = v.astype(np.float64)
 
             # 设置速度场数据到网格
             grid.add_field2d("u_velocity", u_data)
@@ -767,12 +769,11 @@ def calculate_flow_statistics(input_data):
             current_solver = oceansim.CurrentFieldSolver(grid, params_obj)
 
             # 根据测试结果准备数据
-            if data_format == "flatten":
-                u_data = u.flatten().astype(np.float64)
-                v_data = v.flatten().astype(np.float64)
-            elif data_format == "transpose_flatten":
-                u_data = u.T.flatten().astype(np.float64)
-                v_data = v.T.flatten().astype(np.float64)
+            u_data = test_result.get("u_data")
+            v_data = test_result.get("v_data")
+            if u_data is None or v_data is None:
+                u_data = u.astype(np.float64)
+                v_data = v.astype(np.float64)
 
             # 设置速度场
             grid.add_field2d("u_velocity", u_data)
