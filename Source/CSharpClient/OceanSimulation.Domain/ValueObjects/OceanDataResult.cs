@@ -7,12 +7,12 @@ namespace OceanSimulation.Domain.ValueObjects
     /// </summary>
     public class OceanDataResult
     {
-        public double[,] U { get; set; }
-        public double[,] V { get; set; }
-        public double[] Latitude { get; set; }
-        public double[] Longitude { get; set; }
+        public double[,] U { get; set; } = new double[0, 0];
+        public double[,] V { get; set; } = new double[0, 0];
+        public double[] Latitude { get; set; } = Array.Empty<double>();
+        public double[] Longitude { get; set; } = Array.Empty<double>();
         public bool Success { get; set; }
-        public string Message { get; set; }
-        public Dictionary<string, object> Metadata { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public Dictionary<string, object> Metadata { get; set; } = new();
     }
 }

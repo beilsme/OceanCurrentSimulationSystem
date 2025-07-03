@@ -7,9 +7,9 @@ namespace OceanSimulation.Domain.ValueObjects
     /// </summary>
     public class VisualizationResult
     {
-        public string ImagePath { get; set; }
+        public string ImagePath { get; set; } = string.Empty;
         public bool Success { get; set; }
-        public string Message { get; set; }
-        public Dictionary<string, object> Metadata { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public Dictionary<string, object> Metadata { get; set; } = new();
     }
 }

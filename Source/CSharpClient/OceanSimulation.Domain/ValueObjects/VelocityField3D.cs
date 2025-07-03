@@ -5,9 +5,9 @@ namespace OceanSimulation.Domain.ValueObjects
     /// </summary>
     public class VelocityField3D
     {
-        public double[,,] U { get; set; }
-        public double[,,] V { get; set; }
-        public double[,,] W { get; set; }
+        public double[,,] U { get; set; } = new double[0, 0, 0];
+        public double[,,] V { get; set; } = new double[0, 0, 0];
+        public double[,,] W { get; set; } = new double[0, 0, 0];
         public int NX { get; set; }
         public int NY { get; set; }
         public int NZ { get; set; }
