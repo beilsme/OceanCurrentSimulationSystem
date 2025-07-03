@@ -134,14 +134,16 @@ namespace {
      * @brief 创建网格结构
      */
     std::shared_ptr<OceanSim::Data::GridDataStructure> CreateGrid(const GridParameters* params) {
-        auto grid = std::make_shared<OceanSim::Data::GridDataStructure>();
+        // GridDataStructure 没有默认构造函数，因此需要在创建时指定网格维度
+        auto grid = std::make_shared<OceanSim::Data::GridDataStructure>(
+                params->nx, params->ny, params->nz);
 
-        // 设置网格参数
-        std::vector<int> dimensions = {params->nx, params->ny, params->nz};
-        std::vector<double> spacing = {params->dx, params->dy, params->dz};
-        std::vector<double> origin = {params->x_min, params->y_min, params->z_min};
+        // 设置网格间距和原点/边界信息
+        std::vector<double> dz(params->nz, params->dz);
+        grid->setSpacing(params->dx, params->dy, dz);
+        grid->setBounds(Eigen::Vector3d(params->x_min, params->y_min, params->z_min),
+                        Eigen::Vector3d(params->x_max, params->y_max, params->z_max));
 
-        grid->initialize(dimensions, spacing, origin);
 
         return grid;
     }
@@ -243,7 +245,7 @@ OCEANSIM_API int EnKF_GetSystemInfo(EnKFHandle handle, char* info_buffer, int bu
         info += "局地化半径: " + std::to_string(wrapper->config.localization_radius) + " m\n";
         info += "充气因子: " + std::to_string(wrapper->config.inflation_factor) + "\n";
         info += "线程数: " + std::to_string(wrapper->config.num_threads) + "\n";
-        info += "初始化状态: " + (wrapper->is_initialized ? "已初始化" : "未初始化") + "\n";
+        info += std::string("初始化状态: ") + (wrapper->is_initialized ? "已初始化" : "未初始化") + "\n";
         info += "同化循环次数: " + std::to_string(wrapper->cycle_count) + "\n";
 
         if (info.length() >= static_cast<size_t>(buffer_size)) {
