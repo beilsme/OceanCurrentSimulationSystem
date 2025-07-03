@@ -1,0 +1,71 @@
+# TOPAZ系统海洋数据下载配置文件
+# 配置文件名: config.yaml
+
+# 时间范围设置 (测试配置)
+time_range:
+  start_date: "2008-04-01"
+  end_date: "2008-04-07"
+
+# 空间范围设置 (挪威海测试区域)
+spatial_range:
+  lat_min: 65.0
+  lat_max: 75.0
+  lon_min: 0.0
+  lon_max: 20.0
+
+# 输出目录配置
+output:
+  base_directory: "./ocean_data"
+  create_subdirectories: true
+  preserve_structure: true
+
+# 数据源控制开关
+data_sources:
+  sea_level_anomaly: true    # AVISO海平面高度异常
+  sea_surface_temperature: true  # Reynolds海表温度
+  sea_ice_concentration: true    # NSIDC海冰浓度
+  argo_profiles: true           # Argo温盐剖面
+  atmospheric_forcing: true     # ERA-Interim大气强迫
+  bathymetry: true             # GEBCO海底地形
+
+# 下载参数配置
+download_settings:
+  max_retries: 3
+  retry_delay_seconds: 5
+  timeout_seconds: 300
+  chunk_size_bytes: 8192
+  parallel_downloads: false
+  verify_checksums: true
+
+# 数据服务器认证配置
+authentication:
+  # AVISO认证 (需要在my.aviso.altimetry.fr注册)
+  aviso:
+    use_netrc: true
+    netrc_machine: "my.aviso.altimetry.fr"
+    # 或使用环境变量: AVISO_USERNAME, AVISO_PASSWORD
+  
+  # NASA EarthData认证 (需要在urs.earthdata.nasa.gov注册)
+  earthdata:
+    use_netrc: true
+    netrc_machine: "urs.earthdata.nasa.gov"
+    # 或使用环境变量: EARTHDATA_USERNAME, EARTHDATA_PASSWORD
+  
+  # ECMWF API认证 (需要在cds.climate.copernicus.eu注册)
+  ecmwf:
+    api_key_file: "~/.cdsapirc"
+    # 或使用环境变量: CDSAPI_URL, CDSAPI_KEY
+
+# 数据质量控制
+quality_control:
+  check_file_size: true
+  minimum_file_size_kb: 1
+  verify_netcdf_format: true
+  remove_corrupted_files: true
+
+# 日志配置
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  save_to_file: true
+  log_directory: "logs"
+  max_log_files: 10
