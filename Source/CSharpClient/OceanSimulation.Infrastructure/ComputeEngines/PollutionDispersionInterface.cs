@@ -7,6 +7,7 @@ using OceanSimulation.Domain.ValueObjects;
 using System.Diagnostics;
 using System.Text.Json;
 using OceanSimulation.Infrastructure.Utils;
+using System.Collections.Generic;
 
 namespace OceanSimulation.Infrastructure.ComputeEngines
 {
@@ -19,6 +20,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         private readonly string _pythonExecutablePath;
         private readonly string _pythonEngineRootPath;
         private readonly string _workingDirectory;
+        private readonly string? _defaultNetcdfPath;
         private bool _isInitialized = false;
 
         public PollutionDispersionInterface(ILogger<PollutionDispersionInterface> logger,
@@ -27,10 +29,22 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             _logger = logger;
             var config = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            _pythonExecutablePath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/.venv/bin/python";
-            _pythonEngineRootPath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine";
+            _pythonEngineRootPath = config.TryGetValue("python_engine_root", out var rootObj) && rootObj is string root
+                ? root
+                : PythonPathResolver.LocatePythonEngineRoot();
 
-            _workingDirectory = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/Temp";
+
+            _pythonExecutablePath = config.TryGetValue("python_executable_path", out var exeObj) && exeObj is string exe
+                ? exe
+                : PythonPathResolver.LocatePythonExecutable(_pythonEngineRootPath);
+
+            _workingDirectory = config.TryGetValue("working_directory", out var workObj) && workObj is string work
+                ? work
+                : PythonPathResolver.GetWorkingDirectory(_pythonEngineRootPath);
+
+            _defaultNetcdfPath = config.TryGetValue("netcdf_path", out var netcdfObj) && netcdfObj is string netcdf
+                ? netcdf
+                : null;
 
             Directory.CreateDirectory(_workingDirectory);
         }
@@ -71,7 +85,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         /// <summary>
         /// 运行默认的污染物扩散模拟
         /// </summary>
-        public async Task<PollutionDispersionResult?> RunSimpleSimulationAsync(string? outputPath = null)
+        public async Task<PollutionDispersionResult?> RunSimpleSimulationAsync(string? outputPath = null, string? netcdfPath = null)
         {
             if (!_isInitialized)
                 throw new InvalidOperationException("尚未初始化，请先调用InitializeAsync()");
@@ -80,10 +94,20 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             {
                 outputPath ??= Path.Combine(_workingDirectory, $"pollution_{DateTime.Now:yyyyMMdd_HHmmss}.png");
 
+                netcdfPath ??= _defaultNetcdfPath;
+
+                var parameters = new Dictionary<string, object?>
+                {
+                    ["output_path"] = outputPath
+                };
+                if (!string.IsNullOrEmpty(netcdfPath))
+                    parameters["netcdf_path"] = netcdfPath;
+
+
                 var inputData = new
                 {
                     action = "run_pollution_dispersion",
-                    parameters = new { output_path = outputPath }
+                    parameters
                 };
 
                 var inputFile = await SaveJsonAsync(inputData, "pollution_input");

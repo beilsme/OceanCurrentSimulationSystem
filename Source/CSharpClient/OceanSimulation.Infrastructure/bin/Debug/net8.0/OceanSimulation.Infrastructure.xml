@@ -165,7 +165,7 @@
             初始化Python环境
             </summary>
         </member>
-        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.PollutionDispersionInterface.RunSimpleSimulationAsync(System.String)">
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.PollutionDispersionInterface.RunSimpleSimulationAsync(System.String,System.String)">
             <summary>
             运行默认的污染物扩散模拟
             </summary>
