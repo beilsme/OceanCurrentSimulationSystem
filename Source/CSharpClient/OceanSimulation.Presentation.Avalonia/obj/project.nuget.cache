@@ -133,15 +133,5 @@
     "/Users/beilsmindex/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.3/microsoft.aspnetcore.app.ref.9.0.3.nupkg.sha512",
     "/Users/beilsmindex/.nuget/packages/microsoft.netcore.app.host.osx-arm64/9.0.3/microsoft.netcore.app.host.osx-arm64.9.0.3.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1900",
-      "level": "Warning",
-      "message": "获取包漏洞数据时出错: The SSL connection could not be established, see inner exception.",
-      "projectPath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/OceanSimulation.Presentation.Avalonia.csproj",
-      "warningLevel": 1,
-      "filePath": "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/OceanSimulation.Presentation.Avalonia.csproj",
-      "targetGraphs": []
-    }
-  ]
+  "logs": []
 }
