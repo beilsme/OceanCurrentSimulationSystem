@@ -5,6 +5,8 @@
 
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System.Diagnostics;
+
 
 namespace OceanSimulation.Infrastructure.ComputeEngines
 {
