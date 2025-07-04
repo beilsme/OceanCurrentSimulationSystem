@@ -135,7 +135,7 @@
             初始化Python环境
             </summary>
         </member>
-        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanDataInterface.GenerateVisualizationFromFileAsync(System.String,System.String)">
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.OceanDataInterface.GenerateVisualizationFromFileAsync(System.String,System.Int32,System.Int32,System.String)">
             <summary>
             从NetCDF文件生成可视化图像 - 核心功能
             </summary>
