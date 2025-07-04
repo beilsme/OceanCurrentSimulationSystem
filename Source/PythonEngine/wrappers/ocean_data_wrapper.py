@@ -15,6 +15,7 @@ import os
 import math
 import oceansim
 import matplotlib.ticker as ticker
+import json
 
 
 
@@ -1084,13 +1085,17 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    import json
-    import os
+    if len(sys.argv) == 3:
+        # 当从C#调用时，使用命令行参数模式
+        main()
+    else:
+        import json
+        import os
 
-    print("=" * 60)
+        print("=" * 60)
 
 
-    print("🌊 海洋数据统计分析模块测试")
+        print("🌊 海洋数据统计分析模块测试")
     print("=" * 60)
 
     # 测试数据路径
@@ -1236,5 +1241,7 @@ if __name__ == "__main__":
         print(f"错误信息: {result_flow.get('message', '未知错误')}")
 
     print("\n" + "=" * 60)
+    
+    
 
    
