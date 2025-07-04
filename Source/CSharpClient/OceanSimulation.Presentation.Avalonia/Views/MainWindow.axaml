@@ -1,20 +1,30 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:OceanSimulation.Presentation.Avalonia.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="OceanSimulation.Presentation.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        Width="800" Height="600"
         Icon="/Assets/avalonia-logo.ico"
-        Title="OceanSimulation.Presentation.Avalonia">
-
+        Title="Ocean Simulation Test UI">
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
+    <StackPanel Margin="10" Spacing="5">
+        <TextBlock Text="NetCDF File:"/>
+        <StackPanel Orientation="Horizontal" Spacing="5">
+            <TextBox Width="400" Text="{Binding NetcdfPath, UpdateSourceTrigger=PropertyChanged}"/>
+            <Button Content="Browse" Click="BrowseFile_Click"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,5">
+            <Button Content="Visualize" Command="{Binding VisualizeCommand}"/>
+            <Button Content="Vorticity/Divergence" Command="{Binding VorticityCommand}"/>
+            <Button Content="Particle Tracking" Command="{Binding ParticleCommand}"/>
+            <Button Content="Pollution" Command="{Binding PollutionCommand}"/>
+            <Button Content="EnKF" Command="{Binding EnkfCommand}"/>
+        </StackPanel>
+        <TextBlock Text="{Binding Status}" Margin="0,5"/>
+        <ScrollViewer Height="400">
+            <Image Source="{Binding ResultImage}" Stretch="Uniform"/>
+        </ScrollViewer>
+    </StackPanel>
 </Window>
