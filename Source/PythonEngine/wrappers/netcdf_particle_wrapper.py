@@ -23,6 +23,19 @@ import os
 import sys
 
 
+# matplotlib 中文设置
+import matplotlib.pyplot as plt
+
+
+# 设置中文字体
+plt.rcParams['font.sans-serif'] = [
+    'PingFang SC', 'Hiragino Sans GB', 'STHeiti',  # Mac字体
+    'SimHei', 'Microsoft YaHei',  # Windows字体
+    'WenQuanYi Micro Hei', 'Noto Sans CJK SC',  # Linux字体
+    'Arial Unicode MS', 'DejaVu Sans'  # 备用字体
+]
+plt.rcParams['axes.unicode_minus'] = False
+
 class NetCDFParticleTracker:
     """NetCDF粒子追踪器 - 完整的C#友好接口"""
 

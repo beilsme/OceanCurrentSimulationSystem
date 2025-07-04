@@ -127,7 +127,10 @@ public partial class MainWindowViewModel : ViewModelBase
         await EnsureInitializedAsync();
         Status = "Running particle tracking...";
         var cfg = new ParticleTrackingConfig();
-        var result = await _particleInterface!.TrackSingleParticleAsync(NetcdfPath, (0,0), cfg);
+        var startLat = 24.5;
+        var startLon = 120.0;
+        var result = await _particleInterface!.TrackSingleParticleAsync(
+            NetcdfPath, (startLat, startLon), cfg);
         if (result?.Success == true)
         {
             var viz = await _particleInterface.CreateTrajectoryVisualizationAsync(NetcdfPath, new[] { result.Trajectory });            if (viz?.Success == true && File.Exists(viz.OutputPath))
