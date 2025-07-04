@@ -220,11 +220,14 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             };
 
             process.Start();
-            var error = await process.StandardError.ReadToEndAsync();
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync();
+            var stdout = await stdoutTask;
+            var stderr = await stderrTask;
 
             if (process.ExitCode != 0)
-                throw new InvalidOperationException($"Python脚本执行失败: {error}");
+                throw new InvalidOperationException($"Python脚本执行失败:\nSTDOUT: {stdout}\nSTDERR: {stderr}");
 
             return outputFile;
         }
