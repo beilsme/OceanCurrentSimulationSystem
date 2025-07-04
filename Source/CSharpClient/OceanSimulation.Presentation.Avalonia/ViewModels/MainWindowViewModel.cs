@@ -28,6 +28,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private OceanStatisticalAnalysis? _analysis;
     private NetCDFParticleInterface? _particleInterface;
     private OceanAnimationInterface? _animationInterface;
+    private PollutionDispersionInterface? _pollutionInterface;
 
     public MainWindowViewModel()
     {
@@ -66,6 +67,8 @@ public partial class MainWindowViewModel : ViewModelBase
         await _particleInterface.InitializeAsync();
         _animationInterface = new OceanAnimationInterface(_loggerFactory.CreateLogger<OceanAnimationInterface>(), config);
         await _animationInterface.InitializeAsync();
+        _pollutionInterface = new PollutionDispersionInterface(_loggerFactory.CreateLogger<PollutionDispersionInterface>(), config);
+        await _pollutionInterface.InitializeAsync();
     }
 
     public async Task GenerateVisualizationAsync(int timeIndex, int depthIndex)
@@ -160,10 +163,20 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private Task RunPollutionAsync()
+    private async Task RunPollutionAsync()
     {
-        Status = "Pollution diffusion not implemented";
-        return Task.CompletedTask;
+        await EnsureInitializedAsync();
+        Status = "Running pollution diffusion...";
+        var result = await _pollutionInterface!.RunSimpleSimulationAsync();
+        if (result?.Success == true && File.Exists(result.OutputPath))
+        {
+            ResultImage = new Bitmap(result.OutputPath);
+            Status = "Pollution diffusion complete";
+        }
+        else
+        {
+            Status = "Pollution diffusion failed";
+        }
     }
 
     private Task RunEnkfAsync()

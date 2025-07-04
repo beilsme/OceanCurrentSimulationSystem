@@ -26,8 +26,8 @@
             </StackPanel>
         </StackPanel>
         <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Left" Text="{Binding Status}" Margin="0,5"/>
-        <ScrollViewer Height="500">
-            <Image Source="{Binding ResultImage}" Stretch="Uniform"/>
-        </ScrollViewer>
+        <Viewbox Stretch="Uniform">
+            <Image Source="{Binding ResultImage}"/>
+        </Viewbox>
     </DockPanel>
 </Window>
