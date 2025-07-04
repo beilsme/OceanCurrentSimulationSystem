@@ -28,7 +28,6 @@ build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
 [/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/Views/IndexSelectionWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
-build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
 [/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/Views/MainWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
