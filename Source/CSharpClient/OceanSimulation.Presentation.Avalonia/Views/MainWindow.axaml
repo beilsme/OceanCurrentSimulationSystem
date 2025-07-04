@@ -22,7 +22,7 @@
                 <Button Content="Vorticity/Divergence" Click="Vorticity_Click"/>
                 <Button Content="Particle Tracking" Command="{Binding ParticleCommand}"/>
                 <Button Content="Pollution" Command="{Binding PollutionCommand}"/>
-                <Button Content="EnKF" Command="{Binding EnkfCommand}"/>
+                <Button Content="EnKF" Click="Enkf_Click"/>
             </StackPanel>
         </StackPanel>
         <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Left" Text="{Binding Status}" Margin="0,5"/>

@@ -20,6 +20,7 @@ import traceback
 from pathlib import Path
 from datetime import datetime, timedelta
 import os
+import sys
 
 
 class NetCDFParticleTracker:
@@ -598,7 +599,29 @@ def handle_netcdf_particle_request(input_data: Dict[str, Any]) -> Dict[str, Any]
         }
 
 
+def main() -> None:
+    """命令行入口: python netcdf_particle_wrapper.py input.json output.json"""
+    if len(sys.argv) != 3:
+        print("Usage: python netcdf_particle_wrapper.py <input.json> <output.json>")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+
+    with open(input_file, "r", encoding="utf-8") as f:
+        input_data = json.load(f)
+
+    result = handle_netcdf_particle_request(input_data)
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        main()
+        sys.exit(0)
+        
     # 测试NetCDF粒子追踪包装器
     import logging
 

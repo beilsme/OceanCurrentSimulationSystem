@@ -65,4 +65,20 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void Enkf_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+
+        var dlg = new EnKFConfigWindow
+        {
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        var result = await dlg.ShowDialog<bool>(this);
+        if (result)
+        {
+            await vm.RunEnkfAsync(dlg.Config);
+        }
+    }
+
 }

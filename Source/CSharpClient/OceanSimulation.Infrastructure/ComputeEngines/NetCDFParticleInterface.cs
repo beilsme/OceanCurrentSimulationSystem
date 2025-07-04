@@ -235,6 +235,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
 
             try
             {
+
                 outputPath ??= Path.Combine(_workingDirectory,
                     $"particle_visualization_{DateTime.Now:yyyyMMdd_HHmmss}.png");
 

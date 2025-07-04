@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:OceanSimulation.Presentation.Avalonia.ViewModels"
+        x:Class="OceanSimulation.Presentation.Avalonia.Views.EnKFConfigWindow"
+        x:DataType="vm:EnKFConfigViewModel"
+        Width="300" Height="400"
+        WindowStartupLocation="CenterOwner"
+        Title="EnKF Parameters">
+    <Design.DataContext>
+        <vm:EnKFConfigViewModel/>
+    </Design.DataContext>
+    <StackPanel Margin="10" Spacing="5">
+        <TextBlock Text="Ensemble Size"/>
+        <TextBox Text="{Binding EnsembleSize}"/>
+        <TextBlock Text="Localization Radius (m)" Margin="0,5,0,0"/>
+        <TextBox Text="{Binding LocalizationRadius}"/>
+        <TextBlock Text="Inflation Factor" Margin="0,5,0,0"/>
+        <TextBox Text="{Binding InflationFactor}"/>
+        <TextBlock Text="Regularization Threshold" Margin="0,5,0,0"/>
+        <TextBox Text="{Binding RegularizationThreshold}"/>
+        <CheckBox Content="Use Localization" IsChecked="{Binding UseLocalization}" Margin="0,5,0,0"/>
+        <CheckBox Content="Use Inflation" IsChecked="{Binding UseInflation}"/>
+        <TextBlock Text="Num Threads" Margin="0,5,0,0"/>
+        <TextBox Text="{Binding NumThreads}"/>
+        <CheckBox Content="Enable Vectorization" IsChecked="{Binding EnableVectorization}" Margin="0,5,0,0"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" Spacing="5">
+            <Button Content="OK" IsDefault="True" Click="Ok_Click"/>
+            <Button Content="Cancel" IsCancel="True"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

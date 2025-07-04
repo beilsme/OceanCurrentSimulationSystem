@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using OceanSimulation.Infrastructure.ComputeEngines;
+using OceanSimulation.Infrastructure.Interop;
 
 namespace OceanSimulation.Presentation.Avalonia.ViewModels;
 
@@ -90,6 +91,11 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
 
+    public Task RunEnkfAsync(EnKFConfig config)
+    {
+        Status = $"EnKF parameters received: ensemble={config.EnsembleSize}";
+        return Task.CompletedTask;
+    }
 
 
     public async Task GenerateVorticityAsync(int timeIndex, int depthIndex)
@@ -124,8 +130,7 @@ public partial class MainWindowViewModel : ViewModelBase
         var result = await _particleInterface!.TrackSingleParticleAsync(NetcdfPath, (0,0), cfg);
         if (result?.Success == true)
         {
-            var viz = await _particleInterface.CreateTrajectoryVisualizationAsync(NetcdfPath, result.Trajectory);
-            if (viz?.Success == true && File.Exists(viz.OutputPath))
+            var viz = await _particleInterface.CreateTrajectoryVisualizationAsync(NetcdfPath, new[] { result.Trajectory });            if (viz?.Success == true && File.Exists(viz.OutputPath))
             {
                 ResultImage = new Bitmap(viz.OutputPath);
                 Status = "Particle tracking complete";
