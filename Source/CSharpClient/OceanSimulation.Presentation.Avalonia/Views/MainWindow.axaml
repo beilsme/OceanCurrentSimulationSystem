@@ -17,6 +17,7 @@
         </StackPanel>
         <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,5">
             <Button Content="Visualize" Command="{Binding VisualizeCommand}"/>
+            <Button Content="Animation" Command="{Binding AnimationCommand}"/>
             <Button Content="Vorticity/Divergence" Command="{Binding VorticityCommand}"/>
             <Button Content="Particle Tracking" Command="{Binding ParticleCommand}"/>
             <Button Content="Pollution" Command="{Binding PollutionCommand}"/>

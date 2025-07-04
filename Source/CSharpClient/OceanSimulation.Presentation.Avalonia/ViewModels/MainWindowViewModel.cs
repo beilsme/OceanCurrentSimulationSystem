@@ -26,11 +26,13 @@ public partial class MainWindowViewModel : ViewModelBase
     private OceanDataInterface? _dataInterface;
     private OceanStatisticalAnalysis? _analysis;
     private NetCDFParticleInterface? _particleInterface;
+    private OceanAnimationInterface? _animationInterface;
 
     public MainWindowViewModel()
     {
         _loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         VisualizeCommand = new AsyncRelayCommand(GenerateVisualizationAsync);
+        AnimationCommand = new AsyncRelayCommand(GenerateAnimationAsync);
         VorticityCommand = new AsyncRelayCommand(GenerateVorticityAsync);
         ParticleCommand = new AsyncRelayCommand(RunParticleAsync);
         PollutionCommand = new AsyncRelayCommand(RunPollutionAsync);
@@ -38,6 +40,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     public IAsyncRelayCommand VisualizeCommand { get; }
+    public IAsyncRelayCommand AnimationCommand { get; }
     public IAsyncRelayCommand VorticityCommand { get; }
     public IAsyncRelayCommand ParticleCommand { get; }
     public IAsyncRelayCommand PollutionCommand { get; }
@@ -60,6 +63,8 @@ public partial class MainWindowViewModel : ViewModelBase
         await _analysis.InitializeAsync();
         _particleInterface = new NetCDFParticleInterface(_loggerFactory.CreateLogger<NetCDFParticleInterface>(), config);
         await _particleInterface.InitializeAsync();
+        _animationInterface = new OceanAnimationInterface(_loggerFactory.CreateLogger<OceanAnimationInterface>(), config);
+        await _animationInterface.InitializeAsync();
     }
 
     private async Task GenerateVisualizationAsync()
@@ -114,6 +119,23 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
         Status = "Particle tracking failed";
+    }
+
+    private async Task GenerateAnimationAsync()
+    {
+        if (string.IsNullOrEmpty(NetcdfPath)) return;
+        await EnsureInitializedAsync();
+        Status = "Generating animation...";
+        var path = await _animationInterface!.GenerateOceanAnimationAsync(NetcdfPath);
+        if (!string.IsNullOrEmpty(path) && File.Exists(path))
+        {
+            ResultImage = new Bitmap(path);
+            Status = "Animation complete";
+        }
+        else
+        {
+            Status = "Animation failed";
+        }
     }
 
     private Task RunPollutionAsync()

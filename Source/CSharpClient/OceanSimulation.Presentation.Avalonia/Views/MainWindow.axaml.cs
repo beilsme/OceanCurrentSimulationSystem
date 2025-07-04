@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using OceanSimulation.Presentation.Avalonia.ViewModels;
@@ -18,9 +19,11 @@ public partial class MainWindow : Window
         var dialog = new OpenFileDialog
         {
             AllowMultiple = false,
+            Directory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             Filters = new List<FileDialogFilter>
             {
-                new FileDialogFilter { Name = "NetCDF", Extensions = { "nc" } }
+                new FileDialogFilter { Name = "NetCDF", Extensions = { "nc" } },
+                new FileDialogFilter { Name = "All Files", Extensions = { "*" } }
             }
         };
 
