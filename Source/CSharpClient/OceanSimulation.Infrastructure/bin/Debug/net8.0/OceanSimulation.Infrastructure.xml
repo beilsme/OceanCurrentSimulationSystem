@@ -155,6 +155,21 @@
             计算流速统计分布
             </summary>
         </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.PollutionDispersionInterface">
+            <summary>
+            污染物扩散模拟接口
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.PollutionDispersionInterface.InitializeAsync">
+            <summary>
+            初始化Python环境
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.PollutionDispersionInterface.RunSimpleSimulationAsync(System.String)">
+            <summary>
+            运行默认的污染物扩散模拟
+            </summary>
+        </member>
         <member name="T:OceanSimulation.Infrastructure.Interop.OceanState">
             <summary>
             海洋状态向量结构

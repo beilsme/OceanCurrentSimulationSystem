@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using OceanSimulation.Presentation.Avalonia.ViewModels;
+using Avalonia.Input;
 
 namespace OceanSimulation.Presentation.Avalonia.Views;
 
