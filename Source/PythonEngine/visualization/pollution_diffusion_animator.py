@@ -1,34 +1,38 @@
 # ==============================================================================
-# visualization/pollution_diffusion_animator.py
+# visualization/adaptive_pollution_animator.py
 # ==============================================================================
 """
-纯Python污染物扩散模拟动画系统
-基于对流-扩散方程的数值求解，包含多种污染源类型和可视化效果
+自适应污染扩散动画生成器
+自动读取NetCDF文件的地理范围，实现：
+- 自动适配数据的地理边界
+- 地图打底显示
+- 污染物从点逐渐扩散成面
+- 根据浓度不同显示不同颜色
+- 流畅的动画效果
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.colors import ListedColormap, BoundaryNorm
-import matplotlib.patches as patches
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from netCDF4 import Dataset
 from scipy.interpolate import RegularGridInterpolator
 from scipy.ndimage import gaussian_filter
-from typing import Dict, Any, List, Tuple, Optional, Union
+from typing import Dict, Any, List, Tuple, Optional
 import logging
-from pathlib import Path
-from datetime import datetime, timedelta
-import json
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+from datetime import datetime
+import os
 
 
-class PollutionDiffusionSimulator:
-    """污染物扩散模拟器"""
+class AdaptivePollutionAnimator:
+    """自适应污染扩散动画生成器 - 自动适配NetCDF数据范围"""
 
     def __init__(self, netcdf_path: str, grid_resolution: float = 0.01):
         """
-        初始化污染物扩散模拟器
+        初始化自适应污染动画生成器
         
         Args:
             netcdf_path: NetCDF数据文件路径
@@ -37,78 +41,144 @@ class PollutionDiffusionSimulator:
         self.netcdf_path = netcdf_path
         self.grid_resolution = grid_resolution
 
+        # 数据范围（将从NetCDF文件自动读取）
+        self.lon_range = None
+        self.lat_range = None
+        self.data_shape = None
+
         # 海洋数据
-        self.nc_data = None
-        self.lat = None
-        self.lon = None
         self.water_u = None
         self.water_v = None
-        self.time_readable = None
+        self.lat = None
+        self.lon = None
 
         # 模拟网格
-        self.sim_lat = None
         self.sim_lon = None
+        self.sim_lat = None
         self.sim_u = None
         self.sim_v = None
+
+        # 污染物浓度场
         self.concentration = None
+        self.concentration_history = []
 
         # 物理参数
-        self.diffusion_coeff = 100.0  # 扩散系数 (m²/s)
-        self.decay_rate = 0.0         # 衰减率 (1/s)
-        self.settling_velocity = 0.0  # 沉降速度 (m/s)
-
-        # 污染源
-        self.pollution_sources = []
+        self.diffusion_coeff = 120.0  # 扩散系数 m²/s
+        self.decay_rate = 0.0002      # 衰减率 1/s
 
         self.is_initialized = False
 
-    def initialize(self,
-                   lon_range: Tuple[float, float] = (118, 124),
-                   lat_range: Tuple[float, float] = (21, 26.5),
-                   time_index: int = 0) -> Dict[str, Any]:
+    def analyze_netcdf_data(self) -> Dict[str, Any]:
         """
-        初始化模拟环境
+        分析NetCDF数据，获取地理范围和基本信息
         
-        Args:
-            lon_range: 经度范围
-            lat_range: 纬度范围
-            time_index: 时间索引
-            
         Returns:
-            初始化结果
+            数据分析结果
         """
         try:
-            logging.info("初始化污染物扩散模拟环境")
+            with Dataset(self.netcdf_path, 'r') as nc_data:
+                # 获取维度和变量信息
+                dims = dict(nc_data.dimensions)
+                variables = list(nc_data.variables.keys())
+
+                # 获取坐标信息
+                lat = nc_data.variables['lat'][:]
+                lon = nc_data.variables['lon'][:]
+
+                # 获取地理范围
+                self.lat_range = (float(lat.min()), float(lat.max()))
+                self.lon_range = (float(lon.min()), float(lon.max()))
+
+                # 获取数据形状
+                if 'water_u' in nc_data.variables:
+                    u_shape = nc_data.variables['water_u'].shape
+                    self.data_shape = u_shape
+
+                # 获取时间信息
+                time_steps = len(nc_data.variables['time'][:]) if 'time' in nc_data.variables else 1
+
+                # 计算地理范围（公里）
+                lat_span_km = (self.lat_range[1] - self.lat_range[0]) * 111.32
+                lon_span_km = (self.lon_range[1] - self.lon_range[0]) * 111.32 * np.cos(np.radians(np.mean(self.lat_range)))
+
+                analysis_result = {
+                    "success": True,
+                    "geographic_info": {
+                        "lat_range": self.lat_range,
+                        "lon_range": self.lon_range,
+                        "lat_span_km": lat_span_km,
+                        "lon_span_km": lon_span_km,
+                        "center_lat": np.mean(self.lat_range),
+                        "center_lon": np.mean(self.lon_range)
+                    },
+                    "data_info": {
+                        "dimensions": dims,
+                        "variables": variables,
+                        "data_shape": self.data_shape,
+                        "time_steps": time_steps,
+                        "lat_points": len(lat),
+                        "lon_points": len(lon)
+                    }
+                }
+
+                logging.info("NetCDF数据分析完成:")
+                logging.info(f"  地理范围: {self.lat_range[0]:.2f}°-{self.lat_range[1]:.2f}°N, {self.lon_range[0]:.2f}°-{self.lon_range[1]:.2f}°E")
+                logging.info(f"  空间跨度: {lat_span_km:.1f} x {lon_span_km:.1f} km")
+                logging.info(f"  数据网格: {len(lat)} x {len(lon)}")
+
+                return analysis_result
+
+        except Exception as e:
+            logging.error(f"NetCDF数据分析失败: {e}")
+            return {
+                "success": False,
+                "message": f"数据分析失败: {str(e)}"
+            }
+
+    def initialize(self, time_index: int = 0, depth_index: int = 0) -> bool:
+        """
+        初始化环境，自动适配NetCDF数据范围
+        
+        Args:
+            time_index: 时间索引
+            depth_index: 深度索引
+            
+        Returns:
+            是否初始化成功
+        """
+        try:
+            logging.info("初始化自适应污染扩散环境")
+
+            # 先分析数据
+            analysis = self.analyze_netcdf_data()
+            if not analysis["success"]:
+                return False
 
             # 加载NetCDF数据
-            self.nc_data = Dataset(self.netcdf_path, mode='r')
+            with Dataset(self.netcdf_path, 'r') as nc_data:
+                # 获取原始数据
+                self.lat = nc_data.variables['lat'][:]
+                self.lon = nc_data.variables['lon'][:]
 
-            # 提取基础数据
-            self.lat = self.nc_data.variables['lat'][:]
-            self.lon = self.nc_data.variables['lon'][:]
-            self.water_u = self.nc_data.variables['water_u'][time_index, 0, :, :]  # 表层
-            self.water_v = self.nc_data.variables['water_v'][time_index, 0, :, :]
+                # 获取速度场数据
+                if len(nc_data.variables['water_u'].shape) == 4:  # (time, depth, lat, lon)
+                    self.water_u = nc_data.variables['water_u'][time_index, depth_index, :, :]
+                    self.water_v = nc_data.variables['water_v'][time_index, depth_index, :, :]
+                elif len(nc_data.variables['water_u'].shape) == 3:  # (time, lat, lon)
+                    self.water_u = nc_data.variables['water_u'][time_index, :, :]
+                    self.water_v = nc_data.variables['water_v'][time_index, :, :]
+                else:  # (lat, lon)
+                    self.water_u = nc_data.variables['water_u'][:, :]
+                    self.water_v = nc_data.variables['water_v'][:, :]
 
-            # 处理掩码数组
-            if isinstance(self.water_u, np.ma.MaskedArray):
-                self.water_u = self.water_u.filled(0)
-            if isinstance(self.water_v, np.ma.MaskedArray):
-                self.water_v = self.water_v.filled(0)
-
-            # 应用地理范围过滤
-            lon_min, lon_max = lon_range
-            lat_min, lat_max = lat_range
-
-            lon_mask = (self.lon >= lon_min) & (self.lon <= lon_max)
-            lat_mask = (self.lat >= lat_min) & (self.lat <= lat_max)
-
-            self.lon = self.lon[lon_mask]
-            self.lat = self.lat[lat_mask]
-            self.water_u = self.water_u[np.ix_(lat_mask, lon_mask)]
-            self.water_v = self.water_v[np.ix_(lat_mask, lon_mask)]
+                # 处理掩码数组
+                if isinstance(self.water_u, np.ma.MaskedArray):
+                    self.water_u = self.water_u.filled(0)
+                if isinstance(self.water_v, np.ma.MaskedArray):
+                    self.water_v = self.water_v.filled(0)
 
             # 创建模拟网格
-            self._create_simulation_grid(lon_range, lat_range)
+            self._create_simulation_grid()
 
             # 插值速度场到模拟网格
             self._interpolate_velocity_field()
@@ -117,39 +187,21 @@ class PollutionDiffusionSimulator:
             self._initialize_concentration_field()
 
             self.is_initialized = True
+            logging.info(f"环境初始化成功，模拟网格: {len(self.sim_lat)} x {len(self.sim_lon)}")
 
-            logging.info("污染物扩散模拟环境初始化成功")
-
-            return {
-                "success": True,
-                "message": "初始化成功",
-                "grid_info": {
-                    "sim_grid_size": (len(self.sim_lat), len(self.sim_lon)),
-                    "grid_resolution": self.grid_resolution,
-                    "domain_size_km": (
-                        (lon_range[1] - lon_range[0]) * 111.32,
-                        (lat_range[1] - lat_range[0]) * 111.32
-                    )
-                }
-            }
+            return True
 
         except Exception as e:
             logging.error(f"初始化失败: {e}")
-            return {
-                "success": False,
-                "message": f"初始化失败: {str(e)}"
-            }
+            return False
 
-    def _create_simulation_grid(self, lon_range: Tuple[float, float], lat_range: Tuple[float, float]):
-        """创建高分辨率模拟网格"""
-        lon_min, lon_max = lon_range
-        lat_min, lat_max = lat_range
+    def _create_simulation_grid(self):
+        """创建模拟网格"""
+        # 基于数据范围创建网格
+        self.sim_lon = np.arange(self.lon_range[0], self.lon_range[1] + self.grid_resolution, self.grid_resolution)
+        self.sim_lat = np.arange(self.lat_range[0], self.lat_range[1] + self.grid_resolution, self.grid_resolution)
 
-        # 创建等间距网格
-        self.sim_lon = np.arange(lon_min, lon_max + self.grid_resolution, self.grid_resolution)
-        self.sim_lat = np.arange(lat_min, lat_max + self.grid_resolution, self.grid_resolution)
-
-        logging.info(f"创建模拟网格: {len(self.sim_lat)} x {len(self.sim_lon)}")
+        logging.info(f"创建模拟网格: {len(self.sim_lat)} x {len(self.sim_lon)} (分辨率: {self.grid_resolution}°)")
 
     def _interpolate_velocity_field(self):
         """插值速度场到模拟网格"""
@@ -163,248 +215,102 @@ class PollutionDiffusionSimulator:
             bounds_error=False, fill_value=0, method='linear'
         )
 
-        # 创建模拟网格的坐标网格
+        # 创建模拟网格坐标
         sim_lon_grid, sim_lat_grid = np.meshgrid(self.sim_lon, self.sim_lat, indexing='xy')
 
-        # 插值速度场
+        # 插值
         points = np.column_stack([sim_lat_grid.ravel(), sim_lon_grid.ravel()])
         self.sim_u = u_interp(points).reshape(sim_lat_grid.shape)
         self.sim_v = v_interp(points).reshape(sim_lat_grid.shape)
 
-        logging.info("速度场插值完成")
+        logging.info("海流速度场插值完成")
 
     def _initialize_concentration_field(self):
         """初始化浓度场"""
         self.concentration = np.zeros((len(self.sim_lat), len(self.sim_lon)))
-        logging.info("浓度场初始化完成")
+        self.concentration_history = []
 
     def add_pollution_source(self,
-                             source_type: str,
                              location: Tuple[float, float],
                              intensity: float,
-                             duration: float = None,
-                             radius: float = 0.01,
-                             **kwargs) -> int:
+                             radius: float = None) -> bool:
         """
-        添加污染源
+        添加点污染源
         
         Args:
-            source_type: 污染源类型 ('point', 'continuous', 'area', 'moving')
-            location: 位置 (lat, lon)
-            intensity: 强度 (kg/s)
-            duration: 持续时间 (小时)
-            radius: 影响半径 (度)
-            **kwargs: 其他参数
+            location: 污染源位置 (lat, lon)
+            intensity: 污染强度
+            radius: 影响半径（如果为None则自动计算）
             
         Returns:
-            污染源ID
+            是否添加成功
         """
-        source = {
-            'id': len(self.pollution_sources),
-            'type': source_type,
-            'location': location,
-            'intensity': intensity,
-            'duration': duration,
-            'radius': radius,
-            'start_time': kwargs.get('start_time', 0),
-            'active': True,
-            **kwargs
-        }
+        try:
+            lat_src, lon_src = location
 
-        self.pollution_sources.append(source)
+            # 检查位置是否在数据范围内
+            if not (self.lat_range[0] <= lat_src <= self.lat_range[1] and
+                    self.lon_range[0] <= lon_src <= self.lon_range[1]):
+                logging.warning(f"污染源位置 ({lat_src}, {lon_src}) 超出数据范围")
+                return False
 
-        logging.info(f"添加污染源 {source['id']}: {source_type} at {location}")
+            # 自动计算合适的影响半径
+            if radius is None:
+                # 基于数据范围自动设定半径
+                lat_span = self.lat_range[1] - self.lat_range[0]
+                lon_span = self.lon_range[1] - self.lon_range[0]
+                radius = min(lat_span, lon_span) * 0.02  # 数据范围的2%
 
-        return source['id']
+            # 转换为网格索引
+            lat_idx = np.argmin(np.abs(self.sim_lat - lat_src))
+            lon_idx = np.argmin(np.abs(self.sim_lon - lon_src))
 
-    def add_oil_spill(self, location: Tuple[float, float], volume: float,
-                      spill_duration: float = 1.0) -> int:
+            # 计算影响范围
+            radius_grid = int(radius / self.grid_resolution)
+
+            # 高斯分布投放污染物
+            y_indices, x_indices = np.ogrid[-lat_idx:len(self.sim_lat)-lat_idx,
+                                   -lon_idx:len(self.sim_lon)-lon_idx]
+
+            # 创建高斯核
+            sigma = max(1, radius_grid / 3)  # 3σ原则
+            gaussian_kernel = np.exp(-(x_indices**2 + y_indices**2) / (2 * sigma**2))
+
+            # 归一化并应用强度
+            gaussian_kernel = gaussian_kernel / np.sum(gaussian_kernel) * intensity
+
+            # 添加到浓度场
+            self.concentration += gaussian_kernel
+
+            logging.info(f"添加污染源 at ({lat_src:.3f}, {lon_src:.3f}), 强度: {intensity}, 半径: {radius:.4f}°")
+            return True
+
+        except Exception as e:
+            logging.error(f"添加污染源失败: {e}")
+            return False
+
+    def simulate_diffusion_step(self, dt: float = 600.0):
         """
-        添加石油泄漏源
+        执行一个扩散时间步
         
         Args:
-            location: 泄漏位置 (lat, lon)
-            volume: 泄漏总量 (m³)
-            spill_duration: 泄漏持续时间 (小时)
-            
-        Returns:
-            污染源ID
+            dt: 时间步长（秒）
         """
-        # 石油密度约0.85 kg/L = 850 kg/m³
-        oil_density = 850.0
-        total_mass = volume * oil_density
-        intensity = total_mass / (spill_duration * 3600)  # kg/s
-
-        return self.add_pollution_source(
-            source_type='oil_spill',
-            location=location,
-            intensity=intensity,
-            duration=spill_duration,
-            radius=0.005,
-            volume=volume,
-            density=oil_density,
-            weathering_rate=0.1  # 风化率
-        )
-
-    def add_industrial_discharge(self, location: Tuple[float, float],
-                                 discharge_rate: float, pollutant_type: str = 'chemical') -> int:
-        """
-        添加工业排放源
-        
-        Args:
-            location: 排放位置 (lat, lon)
-            discharge_rate: 排放率 (kg/s)
-            pollutant_type: 污染物类型
-            
-        Returns:
-            污染源ID
-        """
-        return self.add_pollution_source(
-            source_type='industrial',
-            location=location,
-            intensity=discharge_rate,
-            duration=None,  # 连续排放
-            radius=0.002,
-            pollutant_type=pollutant_type,
-            decay_rate=0.001  # 生物降解率
-        )
-
-    def simulate_diffusion(self,
-                           simulation_hours: float = 24.0,
-                           time_step_minutes: float = 10.0,
-                           **physics_params) -> Dict[str, Any]:
-        """
-        执行污染物扩散模拟
-        
-        Args:
-            simulation_hours: 模拟时长 (小时)
-            time_step_minutes: 时间步长 (分钟)
-            **physics_params: 物理参数
-            
-        Returns:
-            模拟结果
-        """
-        if not self.is_initialized:
-            raise ValueError("模拟器未初始化")
-
-        # 更新物理参数
-        self.diffusion_coeff = physics_params.get('diffusion_coeff', 100.0)
-        self.decay_rate = physics_params.get('decay_rate', 0.0)
-        self.settling_velocity = physics_params.get('settling_velocity', 0.0)
-
-        # 时间参数
-        dt = time_step_minutes * 60  # 转换为秒
-        n_steps = int(simulation_hours * 3600 / dt)
-
-        # 空间参数
-        dx = self.grid_resolution * 111320  # 转换为米
-        dy = self.grid_resolution * 111320
-
-        # 存储结果
-        concentration_history = []
-        time_history = []
-
-        logging.info(f"开始扩散模拟: {simulation_hours}小时, {n_steps}步")
-
-        for step in range(n_steps):
-            current_time = step * dt / 3600  # 小时
-
-            # 添加污染源
-            self._apply_pollution_sources(current_time, dt)
-
-            # 对流-扩散方程求解
-            self._solve_advection_diffusion(dt, dx, dy)
-
-            # 记录结果 (每隔一定步数记录一次以节省内存)
-            if step % max(1, n_steps // 100) == 0:
-                concentration_history.append(self.concentration.copy())
-                time_history.append(current_time)
-
-            if step % (n_steps // 10) == 0:
-                logging.info(f"模拟进度: {step/n_steps*100:.1f}%")
-
-        # 添加最终状态
-        concentration_history.append(self.concentration.copy())
-        time_history.append(simulation_hours)
-
-        logging.info("扩散模拟完成")
-
-        return {
-            "success": True,
-            "concentration_history": concentration_history,
-            "time_history": time_history,
-            "simulation_params": {
-                "simulation_hours": simulation_hours,
-                "time_step_minutes": time_step_minutes,
-                "n_steps": n_steps,
-                "diffusion_coeff": self.diffusion_coeff,
-                "decay_rate": self.decay_rate
-            },
-            "grid_params": {
-                "lat": self.sim_lat,
-                "lon": self.sim_lon,
-                "resolution": self.grid_resolution
-            },
-            "pollution_sources": self.pollution_sources
-        }
-
-    def _apply_pollution_sources(self, current_time: float, dt: float):
-        """应用污染源"""
-        for source in self.pollution_sources:
-            if not source['active']:
-                continue
-
-            # 检查时间范围
-            start_time = source.get('start_time', 0)
-            duration = source.get('duration')
-
-            if current_time < start_time:
-                continue
-            if duration and current_time > start_time + duration:
-                source['active'] = False
-                continue
-
-            # 计算源位置在网格中的索引
-            lat_idx = np.argmin(np.abs(self.sim_lat - source['location'][0]))
-            lon_idx = np.argmin(np.abs(self.sim_lon - source['location'][1]))
-
-            # 应用源强度
-            if source['type'] == 'point':
-                self.concentration[lat_idx, lon_idx] += source['intensity'] * dt / (111320 * self.grid_resolution)**2
-
-            elif source['type'] == 'area' or source['type'] == 'oil_spill':
-                # 面源：在半径范围内分布
-                radius_grid = int(source['radius'] / self.grid_resolution)
-
-                for di in range(-radius_grid, radius_grid + 1):
-                    for dj in range(-radius_grid, radius_grid + 1):
-                        ni, nj = lat_idx + di, lon_idx + dj
-                        if 0 <= ni < len(self.sim_lat) and 0 <= nj < len(self.sim_lon):
-                            distance = np.sqrt(di**2 + dj**2) * self.grid_resolution
-                            if distance <= source['radius']:
-                                # 高斯分布
-                                weight = np.exp(-distance**2 / (2 * (source['radius']/3)**2))
-                                self.concentration[ni, nj] += (source['intensity'] * dt * weight /
-                                                               (111320 * self.grid_resolution)**2)
-
-            elif source['type'] == 'industrial':
-                # 连续点源
-                self.concentration[lat_idx, lon_idx] += source['intensity'] * dt / (111320 * self.grid_resolution)**2
-
-    def _solve_advection_diffusion(self, dt: float, dx: float, dy: float):
-        """求解对流-扩散方程"""
         # 保存当前浓度
         c_old = self.concentration.copy()
 
-        # 计算梯度
-        dc_dx = np.gradient(c_old, dx, axis=1)
-        dc_dy = np.gradient(c_old, dy, axis=0)
+        # 空间步长（米）
+        dx = self.grid_resolution * 111320
+        dy = self.grid_resolution * 111320
 
-        # 对流项 (负号表示浓度被流场输运)
+        # 计算梯度
+        dc_dy, dc_dx = np.gradient(c_old, dy, dx)
+
+        # 对流项（负号表示被海流输运）
         advection_x = -self.sim_u * dc_dx
         advection_y = -self.sim_v * dc_dy
 
-        # 扩散项
+        # 扩散项（拉普拉斯算子）
         d2c_dx2 = np.gradient(np.gradient(c_old, dx, axis=1), dx, axis=1)
         d2c_dy2 = np.gradient(np.gradient(c_old, dy, axis=0), dy, axis=0)
         diffusion = self.diffusion_coeff * (d2c_dx2 + d2c_dy2)
@@ -412,603 +318,663 @@ class PollutionDiffusionSimulator:
         # 衰减项
         decay = -self.decay_rate * c_old
 
-        # 时间积分 (前向欧拉法)
+        # 时间积分（前向欧拉）
         dc_dt = advection_x + advection_y + diffusion + decay
         self.concentration = c_old + dt * dc_dt
 
         # 确保浓度非负
         self.concentration = np.maximum(0, self.concentration)
 
-        # 边界条件：开边界
+        # 边界条件（开边界）
         self.concentration[0, :] = 0
         self.concentration[-1, :] = 0
         self.concentration[:, 0] = 0
         self.concentration[:, -1] = 0
 
-    def create_diffusion_animation(self,
-                                   simulation_result: Dict[str, Any],
+        # 平滑处理（减少数值噪声）
+        self.concentration = gaussian_filter(self.concentration, sigma=0.5)
+
+    def create_pollution_animation(self,
+                                   pollution_sources: List[Dict[str, Any]],
+                                   simulation_hours: float = 48.0,
+                                   time_step_minutes: float = 10.0,
                                    output_path: str = "pollution_diffusion.gif",
-                                   title: str = "污染物扩散模拟",
-                                   fps: int = 10,
-                                   show_sources: bool = True,
+                                   title: str = "海洋污染扩散模拟",
+                                   colormap: str = "custom_pollution",
                                    show_velocity: bool = False,
-                                   colormap: str = 'Reds') -> Dict[str, Any]:
+                                   fps: int = 15) -> Dict[str, Any]:
         """
-        创建污染物扩散动画
+        创建污染扩散动画
         
         Args:
-            simulation_result: 模拟结果
+            pollution_sources: 污染源列表
+            simulation_hours: 模拟时长（小时）
+            time_step_minutes: 时间步长（分钟）
             output_path: 输出路径
             title: 动画标题
-            fps: 帧率
-            show_sources: 是否显示污染源
-            show_velocity: 是否显示速度场
             colormap: 颜色映射
+            show_velocity: 是否显示速度场
+            fps: 帧率
             
         Returns:
             动画创建结果
         """
+        if not self.is_initialized:
+            raise ValueError("环境未初始化")
+
         try:
-            logging.info("开始创建污染物扩散动画")
+            logging.info("开始创建污染扩散动画")
 
-            concentration_history = simulation_result['concentration_history']
-            time_history = simulation_result['time_history']
-            lat = simulation_result['grid_params']['lat']
-            lon = simulation_result['grid_params']['lon']
+            # 添加污染源
+            for source in pollution_sources:
+                self.add_pollution_source(
+                    location=tuple(source['location']),
+                    intensity=source['intensity'],
+                    radius=source.get('radius')  # 如果没有指定则自动计算
+                )
 
-            # 计算浓度范围
-            max_concentration = np.max([np.max(c) for c in concentration_history])
-            if max_concentration == 0:
-                max_concentration = 1e-6
+            # 模拟参数
+            dt = time_step_minutes * 60  # 转换为秒
+            n_steps = int(simulation_hours * 3600 / dt)
+            save_interval = max(1, n_steps // 150)  # 最多保存150帧
 
-            # 创建图形
-            fig = plt.figure(figsize=(14, 10))
-            ax = plt.axes(projection=ccrs.PlateCarree())
+            # 执行模拟并保存历史
+            logging.info(f"执行扩散模拟: {n_steps} 步，每 {save_interval} 步保存一帧")
 
-            # 设置地理范围
-            extent = [lon.min(), lon.max(), lat.min(), lat.max()]
-            ax.set_extent(extent, crs=ccrs.PlateCarree())
+            for step in range(n_steps):
+                self.simulate_diffusion_step(dt)
 
-            # 添加地理要素
-            ax.add_feature(cfeature.COASTLINE, linewidth=1.2, color='black')
-            ax.add_feature(cfeature.LAND, facecolor='lightgray', alpha=0.7)
-            ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.3)
+                # 保存历史
+                if step % save_interval == 0:
+                    self.concentration_history.append(self.concentration.copy())
 
-            # 网格线
-            gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
-                              linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
-            gl.xlabel_style = {'size': 10}
-            gl.ylabel_style = {'size': 10}
+                if step % (n_steps // 10) == 0:
+                    logging.info(f"模拟进度: {step/n_steps*100:.1f}%")
 
-            # 创建颜色映射
-            if colormap == 'Reds':
-                colors = ['white', 'yellow', 'orange', 'red', 'darkred']
-            elif colormap == 'Blues':
-                colors = ['white', 'lightblue', 'blue', 'darkblue', 'navy']
-            else:
-                colors = plt.cm.get_cmap(colormap)(np.linspace(0, 1, 5))
-
-            cmap = ListedColormap(colors)
-            norm = plt.Normalize(0, max_concentration)
-
-            # 初始化图像
-            LON, LAT = np.meshgrid(lon, lat)
-            im = ax.contourf(LON, LAT, concentration_history[0],
-                             levels=20, cmap=cmap, norm=norm,
-                             transform=ccrs.PlateCarree(), alpha=0.8)
-
-            # 颜色条
-            cbar = plt.colorbar(im, ax=ax, shrink=0.8, pad=0.05)
-            cbar.set_label('浓度 (kg/m³)', fontsize=12)
-
-            # 显示污染源
-            source_patches = []
-            if show_sources:
-                for source in self.pollution_sources:
-                    lat_src, lon_src = source['location']
-
-                    if source['type'] == 'oil_spill':
-                        marker = ax.plot(lon_src, lat_src, 'ko', markersize=12,
-                                         markerfacecolor='red', markeredgecolor='black',
-                                         transform=ccrs.PlateCarree(), label='石油泄漏')[0]
-                    elif source['type'] == 'industrial':
-                        marker = ax.plot(lon_src, lat_src, 's', markersize=10,
-                                         markerfacecolor='purple', markeredgecolor='black',
-                                         transform=ccrs.PlateCarree(), label='工业排放')[0]
-                    else:
-                        marker = ax.plot(lon_src, lat_src, '^', markersize=10,
-                                         markerfacecolor='orange', markeredgecolor='black',
-                                         transform=ccrs.PlateCarree(), label='污染源')[0]
-
-                    source_patches.append(marker)
-
-            # 显示速度场
-            velocity_arrows = None
-            if show_velocity:
-                # 降采样速度场
-                skip = max(1, len(lon) // 20)
-                velocity_arrows = ax.quiver(LON[::skip, ::skip], LAT[::skip, ::skip],
-                                            self.sim_u[::skip, ::skip], self.sim_v[::skip, ::skip],
-                                            scale=50, alpha=0.6, color='gray',
-                                            transform=ccrs.PlateCarree())
-
-            # 信息文本
-            info_text = ax.text(0.02, 0.98, '', transform=ax.transAxes,
-                                verticalalignment='top', fontsize=12,
-                                bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.9))
-
-            # 标题
-            ax.set_title(title, fontsize=16, pad=20)
-
-            # 图例
-            if show_sources:
-                ax.legend(loc='upper right', bbox_to_anchor=(0.98, 0.95))
-
-            def animate(frame):
-                """动画更新函数"""
-                # 清除之前的等值线
-                for coll in ax.collections:
-                    if hasattr(coll, 'set_array'):
-                        coll.remove()
-
-                # 更新浓度场
-                current_concentration = concentration_history[frame]
-                current_time = time_history[frame]
-
-                # 绘制新的等值线
-                cs = ax.contourf(LON, LAT, current_concentration,
-                                 levels=20, cmap=cmap, norm=norm,
-                                 transform=ccrs.PlateCarree(), alpha=0.8)
-
-                # 计算统计信息
-                total_mass = np.sum(current_concentration) * (111320 * self.grid_resolution)**2
-                max_conc = np.max(current_concentration)
-                affected_area = np.sum(current_concentration > max_conc * 0.01) * (self.grid_resolution * 111.32)**2
-
-                # 更新信息文本
-                if current_time < 24:
-                    time_str = f"{current_time:.1f} 小时"
-                else:
-                    days = int(current_time // 24)
-                    hours = current_time % 24
-                    time_str = f"{days} 天 {hours:.1f} 小时"
-
-                info_str = f'模拟时间: {time_str}\n'
-                info_str += f'最大浓度: {max_conc:.2e} kg/m³\n'
-                info_str += f'总质量: {total_mass:.1e} kg\n'
-                info_str += f'影响面积: {affected_area:.1f} km²'
-
-                info_text.set_text(info_str)
-
-                return [info_text]
+            # 确保保存最终状态
+            self.concentration_history.append(self.concentration.copy())
 
             # 创建动画
-            anim = animation.FuncAnimation(fig, animate, frames=len(concentration_history),
-                                           interval=1000//fps, blit=False, repeat=True)
+            anim_result = self._create_geographic_animation(
+                title=title,
+                output_path=output_path,
+                fps=fps,
+                pollution_sources=pollution_sources,
+                time_step_minutes=time_step_minutes * save_interval,
+                colormap=colormap,
+                show_velocity=show_velocity
+            )
 
-            # 保存动画
-            plt.tight_layout()
+            return anim_result
 
+        except Exception as e:
+            logging.error(f"创建动画失败: {e}")
+            return {
+                "success": False,
+                "message": f"创建动画失败: {str(e)}"
+            }
+
+    def _create_geographic_animation(self,
+                                     title: str,
+                                     output_path: str,
+                                     fps: int,
+                                     pollution_sources: List[Dict],
+                                     time_step_minutes: float,
+                                     colormap: str,
+                                     show_velocity: bool) -> Dict[str, Any]:
+        """创建地理动画"""
+
+        # 创建自定义颜色映射
+        if colormap == "custom_pollution":
+            colors = ['white', 'lightblue', 'yellow', 'orange', 'red', 'darkred', 'maroon']
+            cmap = LinearSegmentedColormap.from_list('pollution', colors, N=256)
+        else:
+            cmap = plt.get_cmap(colormap)
+
+        # 计算浓度范围
+        max_concentration = np.max([np.max(c) for c in self.concentration_history])
+        if max_concentration == 0:
+            max_concentration = 1e-6
+
+        # 创建图形
+        fig = plt.figure(figsize=(16, 12))
+        ax = plt.axes(projection=ccrs.PlateCarree())
+
+        # 设置地理范围（自动适配数据范围）
+        extent = list(self.lon_range) + list(self.lat_range)
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+
+        # 添加地理要素
+        ax.add_feature(cfeature.COASTLINE, linewidth=1.5, color='black', zorder=10)
+        ax.add_feature(cfeature.LAND, facecolor='lightgray', alpha=0.8, zorder=5)
+        ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.3, zorder=1)
+        ax.add_feature(cfeature.BORDERS, linewidth=1.0, color='darkgray', zorder=10)
+
+        # 网格线
+        gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                          linewidth=0.8, color='gray', alpha=0.6, linestyle='--')
+        gl.xlabel_style = {'size': 12, 'color': 'black'}
+        gl.ylabel_style = {'size': 12, 'color': 'black'}
+        gl.xformatter = LongitudeFormatter()
+        gl.yformatter = LatitudeFormatter()
+
+        # 创建网格坐标
+        LON, LAT = np.meshgrid(self.sim_lon, self.sim_lat)
+
+        # 初始化污染物显示（使用pcolormesh实现平滑的扩散效果）
+        norm = Normalize(vmin=0, vmax=max_concentration)
+        im = ax.pcolormesh(LON, LAT, self.concentration_history[0],
+                           cmap=cmap, norm=norm, alpha=0.85,
+                           transform=ccrs.PlateCarree(), zorder=3,
+                           shading='auto')
+
+        # 颜色条
+        cbar = plt.colorbar(im, ax=ax, shrink=0.8, pad=0.02, aspect=30)
+        cbar.set_label('污染物浓度 (kg/m³)', fontsize=14, fontweight='bold')
+        cbar.ax.tick_params(labelsize=12)
+
+        # 显示速度场（可选）
+        velocity_arrows = None
+        if show_velocity:
+            skip = max(1, len(self.sim_lon) // 25)  # 适当降采样
+            velocity_arrows = ax.quiver(
+                LON[::skip, ::skip], LAT[::skip, ::skip],
+                self.sim_u[::skip, ::skip], self.sim_v[::skip, ::skip],
+                scale=50, alpha=0.6, color='gray', width=0.002,
+                transform=ccrs.PlateCarree(), zorder=4
+            )
+
+        # 标记污染源
+        for i, source in enumerate(pollution_sources):
+            lat_src, lon_src = source['location']
+            ax.plot(lon_src, lat_src, marker='o', markersize=15,
+                    markerfacecolor='red', markeredgecolor='black',
+                    markeredgewidth=2, transform=ccrs.PlateCarree(),
+                    zorder=15, label=f'污染源 {i+1}' if i < 5 else "")
+
+        # 信息文本框
+        info_text = ax.text(0.02, 0.98, '', transform=ax.transAxes,
+                            verticalalignment='top', fontsize=14, fontweight='bold',
+                            bbox=dict(boxstyle='round,pad=0.8',
+                                      facecolor='white', alpha=0.95, edgecolor='black'),
+                            zorder=20)
+
+        # 标题
+        ax.set_title(title, fontsize=18, fontweight='bold', pad=25)
+
+        # 图例
+        if pollution_sources:
+            ax.legend(loc='upper right', bbox_to_anchor=(0.98, 0.92),
+                      fontsize=12, framealpha=0.9)
+
+        def animate(frame):
+            """动画更新函数 - 实现从点扩散到面的效果"""
+            current_concentration = self.concentration_history[frame]
+            current_time = frame * time_step_minutes / 60  # 转换为小时
+
+            # 更新污染物浓度显示（关键：实现平滑扩散效果）
+            im.set_array(current_concentration.ravel())
+
+            # 计算统计信息
+            grid_area = (111320 * self.grid_resolution)**2  # 单个网格面积 m²
+            total_mass = np.sum(current_concentration) * grid_area
+            max_conc = np.max(current_concentration)
+
+            # 计算污染影响面积
+            threshold = max_conc * 0.01 if max_conc > 0 else 0
+            affected_cells = np.sum(current_concentration > threshold)
+            affected_area = affected_cells * grid_area / 1e6  # 转换为km²
+
+            # 更新信息文本
+            if current_time < 24:
+                time_str = f"{current_time:.1f} 小时"
+            else:
+                days = int(current_time // 24)
+                hours = current_time % 24
+                time_str = f"{days} 天 {hours:.1f} 小时"
+
+            # 获取数据区域描述
+            center_lat = np.mean(self.lat_range)
+            center_lon = np.mean(self.lon_range)
+            region_desc = f"({center_lat:.1f}°N, {center_lon:.1f}°E)"
+
+            info_str = f'🕐 模拟时间: {time_str}\n'
+            info_str += f'🔴 最高浓度: {max_conc:.2e} kg/m³\n'
+            info_str += f'⚖️ 总质量: {total_mass:.1e} kg\n'
+            info_str += f'📍 影响面积: {affected_area:.1f} km²\n'
+            info_str += f'🌊 海域范围: {region_desc}'
+
+            info_text.set_text(info_str)
+
+            return [im, info_text]
+
+        # 创建动画
+        anim = animation.FuncAnimation(
+            fig, animate, frames=len(self.concentration_history),
+            interval=1000//fps, blit=False, repeat=True
+        )
+
+        # 保存动画
+        plt.tight_layout()
+
+        try:
             if output_path.endswith('.gif'):
-                anim.save(output_path, writer='pillow', fps=fps, dpi=100)
+                anim.save(output_path, writer='pillow', fps=fps, dpi=120)
             elif output_path.endswith('.mp4'):
-                anim.save(output_path, writer='ffmpeg', fps=fps, dpi=100)
+                anim.save(output_path, writer='ffmpeg', fps=fps, dpi=120)
             else:
                 output_path += '.gif'
-                anim.save(output_path, writer='pillow', fps=fps, dpi=100)
+                anim.save(output_path, writer='pillow', fps=fps, dpi=120)
 
             plt.close(fig)
 
-            # 保存模拟数据
-            self._save_simulation_data(simulation_result, output_path)
-
-            logging.info(f"污染物扩散动画创建成功: {output_path}")
+            logging.info(f"污染扩散动画保存成功: {output_path}")
 
             return {
                 "success": True,
                 "output_path": output_path,
                 "animation_stats": {
-                    "n_frames": len(concentration_history),
+                    "frames": len(self.concentration_history),
                     "max_concentration": max_concentration,
-                    "simulation_hours": time_history[-1],
-                    "n_sources": len(self.pollution_sources)
+                    "simulation_hours": len(self.concentration_history) * time_step_minutes / 60,
+                    "pollution_sources": len(pollution_sources),
+                    "geographic_range": {
+                        "lat_range": self.lat_range,
+                        "lon_range": self.lon_range
+                    }
                 }
             }
 
         except Exception as e:
-            logging.error(f"创建污染物扩散动画失败: {e}")
+            plt.close(fig)
             return {
                 "success": False,
-                "message": f"动画创建失败: {str(e)}"
+                "message": f"保存动画失败: {str(e)}"
             }
 
-    def _save_simulation_data(self, simulation_result: Dict, output_path: str):
-        """保存模拟数据"""
-        try:
-            data_path = output_path.replace('.gif', '_data.json').replace('.mp4', '_data.json')
 
-            # 准备保存的数据 (不包含大数组)
-            save_data = {
-                "metadata": {
-                    "creation_time": datetime.now().isoformat(),
-                    "simulation_type": "pollution_diffusion",
-                    "grid_resolution": self.grid_resolution
-                },
-                "simulation_params": simulation_result["simulation_params"],
-                "pollution_sources": simulation_result["pollution_sources"],
-                "statistics": {
-                    "max_concentration": float(np.max([np.max(c) for c in simulation_result['concentration_history']])),
-                    "final_total_mass": float(np.sum(simulation_result['concentration_history'][-1])),
-                    "simulation_domain_km2": float((len(self.sim_lat) * len(self.sim_lon)) * (self.grid_resolution * 111.32)**2)
-                }
-            }
-
-            with open(data_path, 'w', encoding='utf-8') as f:
-                json.dump(save_data, f, indent=2, ensure_ascii=False)
-
-            logging.info(f"模拟数据保存至: {data_path}")
-
-        except Exception as e:
-            logging.warning(f"保存模拟数据失败: {e}")
-
-    def close(self):
-        """关闭资源"""
-        if self.nc_data:
-            self.nc_data.close()
-
-
-def create_pollution_diffusion_animation(
+def create_adaptive_pollution_animation(
         netcdf_path: str,
-        pollution_config: Dict[str, Any],
-        simulation_config: Dict[str, Any],
-        output_path: str = "pollution_diffusion.gif",
-        title: str = "污染物扩散模拟") -> Dict[str, Any]:
+        pollution_sources: List[Dict[str, Any]],
+        simulation_hours: float = 48.0,
+        time_step_minutes: float = 10.0,
+        output_path: str = "adaptive_pollution_diffusion.gif",
+        title: str = "海洋污染扩散模拟",
+        grid_resolution: float = 0.008,
+        show_velocity: bool = True,
+        colormap: str = "custom_pollution") -> Dict[str, Any]:
     """
-    创建污染物扩散动画的便捷函数
+    创建自适应污染扩散动画的便捷函数
     
     Args:
         netcdf_path: NetCDF数据文件路径
-        pollution_config: 污染配置
-        simulation_config: 模拟配置
+        pollution_sources: 污染源列表，格式: [{"location": [lat, lon], "intensity": float}, ...]
+        simulation_hours: 模拟时长（小时）
+        time_step_minutes: 时间步长（分钟）
         output_path: 输出路径
         title: 动画标题
+        grid_resolution: 网格分辨率（度）
+        show_velocity: 是否显示海流矢量场
+        colormap: 颜色映射
         
     Returns:
-        创建结果
+        动画创建结果
     """
-    simulator = None
-
     try:
-        # 初始化模拟器
-        simulator = PollutionDiffusionSimulator(
-            netcdf_path,
-            grid_resolution=simulation_config.get('grid_resolution', 0.01)
-        )
+        # 创建自适应动画生成器
+        animator = AdaptivePollutionAnimator(netcdf_path, grid_resolution)
 
-        # 初始化环境
-        init_result = simulator.initialize(
-            lon_range=simulation_config.get('lon_range', (118, 124)),
-            lat_range=simulation_config.get('lat_range', (21, 26.5)),
-            time_index=simulation_config.get('time_index', 0)
-        )
-
-        if not init_result["success"]:
-            return init_result
-
-        # 添加污染源
-        for source_config in pollution_config.get('sources', []):
-            source_type = source_config.get('type')
-
-            if source_type == 'oil_spill':
-                simulator.add_oil_spill(
-                    location=tuple(source_config['location']),
-                    volume=source_config['volume'],
-                    spill_duration=source_config.get('duration', 1.0)
-                )
-            elif source_type == 'industrial':
-                simulator.add_industrial_discharge(
-                    location=tuple(source_config['location']),
-                    discharge_rate=source_config['intensity'],
-                    pollutant_type=source_config.get('pollutant_type', 'chemical')
-                )
-            else:
-                simulator.add_pollution_source(
-                    source_type=source_type,
-                    location=tuple(source_config['location']),
-                    intensity=source_config['intensity'],
-                    duration=source_config.get('duration'),
-                    radius=source_config.get('radius', 0.01)
-                )
-
-        # 执行模拟
-        simulation_result = simulator.simulate_diffusion(
-            simulation_hours=simulation_config.get('simulation_hours', 24.0),
-            time_step_minutes=simulation_config.get('time_step_minutes', 10.0),
-            diffusion_coeff=simulation_config.get('diffusion_coeff', 100.0),
-            decay_rate=simulation_config.get('decay_rate', 0.0)
-        )
-
-        if not simulation_result["success"]:
-            return simulation_result
+        # 初始化
+        if not animator.initialize():
+            return {"success": False, "message": "初始化失败"}
 
         # 创建动画
-        animation_result = simulator.create_diffusion_animation(
-            simulation_result=simulation_result,
+        result = animator.create_pollution_animation(
+            pollution_sources=pollution_sources,
+            simulation_hours=simulation_hours,
+            time_step_minutes=time_step_minutes,
             output_path=output_path,
             title=title,
-            fps=simulation_config.get('fps', 10),
-            show_sources=simulation_config.get('show_sources', True),
-            show_velocity=simulation_config.get('show_velocity', False),
-            colormap=simulation_config.get('colormap', 'Reds')
+            colormap=colormap,
+            show_velocity=show_velocity,
+            fps=12
         )
 
-        return animation_result
+        return result
 
     except Exception as e:
-        logging.error(f"创建污染物扩散动画失败: {e}")
+        logging.error(f"创建自适应污染扩散动画失败: {e}")
         return {
             "success": False,
             "message": f"动画创建失败: {str(e)}"
         }
 
-    finally:
-        if simulator:
-            simulator.close()
-
 
 if __name__ == "__main__":
-    # 测试污染物扩散动画系统
-    import os
+    """主测试函数 - 演示自适应污染扩散动画生成器的使用"""
 
-    logging.basicConfig(level=logging.INFO)
-
-    print("🏭 测试污染物扩散模拟动画系统")
-    print("-" * 60)
-
-    # 测试数据路径
-    test_netcdf_path = "../data/raw_data/merged_data.nc"
-
-    if not os.path.exists(test_netcdf_path):
-        print(f"❌ 测试文件不存在: {test_netcdf_path}")
-        print("请确保NetCDF文件路径正确")
-        exit(1)
-
-    # 创建输出目录
-    os.makedirs("test_outputs", exist_ok=True)
-
-    # 测试1: 石油泄漏事故模拟
-    print("🛢️ 测试1: 石油泄漏事故模拟")
-
-    oil_spill_config = {
-        "sources": [
-            {
-                "type": "oil_spill",
-                "location": [22.5, 119.5],  # 台湾海峡中部
-                "volume": 1000,  # 1000立方米石油
-                "duration": 2.0  # 2小时泄漏
-            }
-        ]
-    }
-
-    oil_simulation_config = {
-        "lon_range": [118.5, 120.5],
-        "lat_range": [21.5, 23.5],
-        "grid_resolution": 0.008,
-        "simulation_hours": 48.0,
-        "time_step_minutes": 15.0,
-        "diffusion_coeff": 150.0,  # 石油扩散系数
-        "decay_rate": 0.0001,      # 风化率
-        "fps": 12,
-        "show_sources": True,
-        "show_velocity": False,
-        "colormap": "Reds"
-    }
-
-    result_1 = create_pollution_diffusion_animation(
-        netcdf_path=test_netcdf_path,
-        pollution_config=oil_spill_config,
-        simulation_config=oil_simulation_config,
-        output_path="test_outputs/oil_spill_diffusion.gif",
-        title="台湾海峡石油泄漏扩散模拟"
+    # 设置日志
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s'
     )
 
-    print(f"结果: {'✅ 成功' if result_1['success'] else '❌ 失败'}")
-    if result_1['success']:
-        stats = result_1['animation_stats']
-        print(f"   输出文件: {result_1['output_path']}")
-        print(f"   动画帧数: {stats['n_frames']}")
-        print(f"   最大浓度: {stats['max_concentration']:.2e} kg/m³")
-        print(f"   模拟时长: {stats['simulation_hours']} 小时")
-    else:
-        print(f"   错误: {result_1['message']}")
+    print("=" * 80)
+    print("🌊 自适应海洋污染扩散动画生成器测试")
+    print("=" * 80)
 
-    # 测试2: 工业排放连续污染
-    print("\n🏭 测试2: 工业排放连续污染")
+    # 测试数据文件路径（请替换为实际的NetCDF文件路径）
+    netcdf_path = "../data/raw_data/merged_data.nc"  
 
-    industrial_config = {
-        "sources": [
+
+    try:
+        print(f"\n📂 加载NetCDF数据: {netcdf_path}")
+
+        # 1. 数据分析测试
+        print("\n" + "─" * 60)
+        print("🔍 步骤1: 分析NetCDF数据结构")
+        print("─" * 60)
+
+        animator = AdaptivePollutionAnimator(netcdf_path, grid_resolution=0.01)
+        analysis = animator.analyze_netcdf_data()
+
+        if analysis["success"]:
+            geo_info = analysis["geographic_info"]
+            data_info = analysis["data_info"]
+
+            print(f"✅ 数据分析成功!")
+            print(f"📍 地理范围: {geo_info['lat_range'][0]:.2f}°-{geo_info['lat_range'][1]:.2f}°N")
+            print(f"📍 经度范围: {geo_info['lon_range'][0]:.2f}°-{geo_info['lon_range'][1]:.2f}°E")
+            print(f"📏 空间跨度: {geo_info['lat_span_km']:.1f} x {geo_info['lon_span_km']:.1f} km")
+            print(f"🗂️  数据网格: {data_info['lat_points']} x {data_info['lon_points']}")
+            print(f"⏰ 时间步数: {data_info['time_steps']}")
+            print(f"🌊 中心位置: ({geo_info['center_lat']:.2f}°N, {geo_info['center_lon']:.2f}°E)")
+        else:
+            print(f"❌ 数据分析失败: {analysis['message']}")
+          
+
+        # 2. 环境初始化测试
+        print("\n" + "─" * 60)
+        print("⚙️  步骤2: 初始化模拟环境")
+        print("─" * 60)
+
+        success = animator.initialize()
+        if success:
+            print(f"✅ 环境初始化成功!")
+            print(f"🔢 模拟网格: {len(animator.sim_lat)} x {len(animator.sim_lon)}")
+            print(f"📐 网格分辨率: {animator.grid_resolution}°")
+            print(f"🌀 速度场形状: {animator.sim_u.shape}")
+        else:
+            print("❌ 环境初始化失败")
+        
+
+        # 3. 污染源设置测试
+        print("\n" + "─" * 60)
+        print("☢️  步骤3: 设置污染源")
+        print("─" * 60)
+
+        # 根据数据范围自动设置污染源位置
+        center_lat = geo_info['center_lat']
+        center_lon = geo_info['center_lon']
+        lat_span = geo_info['lat_range'][1] - geo_info['lat_range'][0]
+        lon_span = geo_info['lon_range'][1] - geo_info['lon_range'][0]
+
+        pollution_sources = [
             {
-                "type": "industrial",
-                "location": [23.0, 119.2],  # 福建沿海
-                "intensity": 0.5,  # 0.5 kg/s 连续排放
-                "pollutant_type": "heavy_metals"
-            }
-        ]
-    }
-
-    industrial_simulation_config = {
-        "lon_range": [118.8, 119.8],
-        "lat_range": [22.5, 23.5],
-        "grid_resolution": 0.005,
-        "simulation_hours": 72.0,  # 3天
-        "time_step_minutes": 20.0,
-        "diffusion_coeff": 80.0,
-        "decay_rate": 0.0005,  # 生物降解
-        "fps": 10,
-        "show_sources": True,
-        "show_velocity": True,
-        "colormap": "Blues"
-    }
-
-    result_2 = create_pollution_diffusion_animation(
-        netcdf_path=test_netcdf_path,
-        pollution_config=industrial_config,
-        simulation_config=industrial_simulation_config,
-        output_path="test_outputs/industrial_pollution.gif",
-        title="工业重金属排放扩散模拟"
-    )
-
-    print(f"结果: {'✅ 成功' if result_2['success'] else '❌ 失败'}")
-    if result_2['success']:
-        stats = result_2['animation_stats']
-        print(f"   输出文件: {result_2['output_path']}")
-        print(f"   污染源数: {stats['n_sources']}")
-        print(f"   模拟时长: {stats['simulation_hours']} 小时")
-    else:
-        print(f"   错误: {result_2['message']}")
-
-    # 测试3: 多点污染源综合场景
-    print("\n🌊 测试3: 多点污染源综合场景")
-
-    multi_source_config = {
-        "sources": [
-            {
-                "type": "oil_spill",
-                "location": [22.3, 119.3],
-                "volume": 500,
-                "duration": 1.0
+                "location": [center_lat, center_lon],
+                "intensity": 2000.0,
+                "name": "主要污染源"
             },
             {
-                "type": "industrial",
-                "location": [22.8, 119.7],
-                "intensity": 0.3,
-                "pollutant_type": "chemical"
+                "location": [center_lat + lat_span*0.2, center_lon - lon_span*0.2],
+                "intensity": 1000.0,
+                "name": "次要污染源"
             },
             {
-                "type": "area",
-                "location": [23.1, 119.1],
-                "intensity": 2.0,
-                "duration": 6.0,
-                "radius": 0.02
+                "location": [center_lat - lat_span*0.15, center_lon + lon_span*0.25],
+                "intensity": 800.0,
+                "name": "小型污染源"
             }
         ]
-    }
 
-    multi_simulation_config = {
-        "lon_range": [119.0, 120.0],
-        "lat_range": [22.0, 23.5],
-        "grid_resolution": 0.006,
-        "simulation_hours": 96.0,  # 4天
-        "time_step_minutes": 12.0,
-        "diffusion_coeff": 120.0,
-        "decay_rate": 0.0002,
-        "fps": 15,
-        "show_sources": True,
-        "show_velocity": False,
-        "colormap": "plasma"
-    }
+        for i, source in enumerate(pollution_sources):
+            success = animator.add_pollution_source(
+                location=tuple(source['location']),
+                intensity=source['intensity']
+            )
+            if success:
+                print(f"✅ {source['name']}: ({source['location'][0]:.3f}°N, {source['location'][1]:.3f}°E), 强度: {source['intensity']}")
+            else:
+                print(f"❌ 添加污染源失败: {source['name']}")
 
-    result_3 = create_pollution_diffusion_animation(
-        netcdf_path=test_netcdf_path,
-        pollution_config=multi_source_config,
-        simulation_config=multi_simulation_config,
-        output_path="test_outputs/multi_source_pollution.gif",
-        title="多源污染综合扩散模拟"
-    )
+        print(f"🎯 总计设置 {len(pollution_sources)} 个污染源")
 
-    print(f"结果: {'✅ 成功' if result_3['success'] else '❌ 失败'}")
-    if result_3['success']:
-        stats = result_3['animation_stats']
-        print(f"   输出文件: {result_3['output_path']}")
-        print(f"   污染源数: {stats['n_sources']}")
-        print(f"   最大浓度: {stats['max_concentration']:.2e} kg/m³")
-    else:
-        print(f"   错误: {result_3['message']}")
+        # 4. 扩散模拟测试
+        print("\n" + "─" * 60)
+        print("🧪 步骤4: 扩散过程模拟测试")
+        print("─" * 60)
 
-    # 测试4: 高分辨率近海污染详细模拟
-    print("\n🔬 测试4: 高分辨率近海污染详细模拟")
+        print("执行短期扩散模拟...")
+        initial_max = np.max(animator.concentration)
+        initial_sum = np.sum(animator.concentration)
 
-    detailed_config = {
-        "sources": [
+        # 执行10个时间步
+        for step in range(10):
+            animator.simulate_diffusion_step(dt=600.0)
+            if step % 3 == 0:
+                current_max = np.max(animator.concentration)
+                current_sum = np.sum(animator.concentration)
+                print(f"  步骤 {step+1}: 最高浓度 {current_max:.2e}, 总质量 {current_sum:.2e}")
+
+        final_max = np.max(animator.concentration)
+        final_sum = np.sum(animator.concentration)
+
+        print(f"📊 模拟结果:")
+        print(f"  初始最高浓度: {initial_max:.2e} → 最终: {final_max:.2e}")
+        print(f"  总质量变化: {initial_sum:.2e} → {final_sum:.2e} (衰减: {(1-final_sum/initial_sum)*100:.1f}%)")
+
+        # 5. 动画生成测试
+        print("\n" + "─" * 60)
+        print("🎬 步骤5: 生成污染扩散动画")
+        print("─" * 60)
+
+        # 重新初始化以获得干净的环境
+        animator.initialize()
+
+        # 测试多种动画配置
+        test_configs = [
             {
-                "type": "point",
-                "location": [22.6, 119.4],
-                "intensity": 5.0,
-                "duration": 0.5,  # 30分钟突发事故
-                "radius": 0.002
+                "name": "快速预览版",
+                "hours": 6.0,
+                "time_step": 20.0,
+                "filename": "quick_preview.gif",
+                "show_velocity": False
+            },
+            {
+                "name": "标准版本",
+                "hours": 24.0,
+                "time_step": 15.0,
+                "filename": "standard_simulation.gif",
+                "show_velocity": True
+            },
+            {
+                "name": "长期观察版",
+                "hours": 48.0,
+                "time_step": 30.0,
+                "filename": "long_term_simulation.gif",
+                "show_velocity": True
             }
         ]
-    }
 
-    detailed_simulation_config = {
-        "lon_range": [119.2, 119.6],
-        "lat_range": [22.4, 22.8],
-        "grid_resolution": 0.002,  # 高分辨率
-        "simulation_hours": 24.0,
-        "time_step_minutes": 5.0,  # 高时间分辨率
-        "diffusion_coeff": 200.0,
-        "decay_rate": 0.001,
-        "fps": 20,
-        "show_sources": True,
-        "show_velocity": True,
-        "colormap": "YlOrRd"
-    }
+        for config in test_configs:
+            print(f"\n🎯 生成{config['name']}...")
+            print(f"   模拟时长: {config['hours']} 小时")
+            print(f"   时间步长: {config['time_step']} 分钟")
+            print(f"   显示流场: {'是' if config['show_velocity'] else '否'}")
 
-    result_4 = create_pollution_diffusion_animation(
-        netcdf_path=test_netcdf_path,
-        pollution_config=detailed_config,
-        simulation_config=detailed_simulation_config,
-        output_path="test_outputs/detailed_pollution.gif",
-        title="高分辨率近海污染扩散详细模拟"
-    )
+            result = animator.create_pollution_animation(
+                pollution_sources=pollution_sources,
+                simulation_hours=config['hours'],
+                time_step_minutes=config['time_step'],
+                output_path=config['filename'],
+                title=f"海洋污染扩散模拟 - {config['name']}",
+                show_velocity=config['show_velocity'],
+                colormap="custom_pollution"
+            )
 
-    print(f"结果: {'✅ 成功' if result_4['success'] else '❌ 失败'}")
-    if result_4['success']:
-        stats = result_4['animation_stats']
-        print(f"   输出文件: {result_4['output_path']}")
-        print(f"   动画帧数: {stats['n_frames']}")
-    else:
-        print(f"   错误: {result_4['message']}")
+            if result["success"]:
+                stats = result["animation_stats"]
+                print(f"   ✅ 动画生成成功: {config['filename']}")
+                print(f"   📹 动画帧数: {stats['frames']}")
+                print(f"   📊 最高浓度: {stats['max_concentration']:.2e}")
+                print(f"   📂 文件大小: {os.path.getsize(config['filename'])/1024/1024:.1f} MB")
+            else:
+                print(f"   ❌ 动画生成失败: {result['message']}")
 
-    # 总结测试结果
-    print("\n" + "=" * 60)
-    print("🎯 污染物扩散模拟测试总结")
-    print("-" * 40)
+            # 重新初始化环境以确保每个动画都是独立的
+            animator.initialize()
 
-    results = [result_1, result_2, result_3, result_4]
-    test_names = ["石油泄漏", "工业排放", "多源污染", "高分辨率"]
+        # 6. 便捷函数测试
+        print("\n" + "─" * 60)
+        print("🛠️  步骤6: 测试便捷函数")
+        print("─" * 60)
 
-    success_count = sum(1 for r in results if r['success'])
+        print("使用便捷函数生成动画...")
 
-    for i, (name, result) in enumerate(zip(test_names, results)):
-        status = "✅ 成功" if result['success'] else "❌ 失败"
-        print(f"{i+1}. {name}: {status}")
+        convenience_result = create_adaptive_pollution_animation(
+            netcdf_path=netcdf_path,
+            pollution_sources=pollution_sources[:2],  # 只使用前两个污染源
+            simulation_hours=12.0,
+            time_step_minutes=25.0,
+            output_path="convenience_function_test.gif",
+            title="便捷函数测试 - 海洋污染扩散",
+            grid_resolution=0.015,
+            show_velocity=True,
+            colormap="custom_pollution"
+        )
 
-    print(f"\n总计: {success_count}/{len(results)} 个测试成功")
+        if convenience_result["success"]:
+            print("✅ 便捷函数测试成功!")
+            print(f"📁 输出文件: convenience_function_test.gif")
+        else:
+            print(f"❌ 便捷函数测试失败: {convenience_result['message']}")
 
-    if success_count == len(results):
-        print("🎉 所有测试通过！污染物扩散模拟系统运行正常。")
-        print("\n📁 生成的动画文件:")
-        output_files = [
-            "oil_spill_diffusion.gif",
-            "industrial_pollution.gif",
-            "multi_source_pollution.gif",
-            "detailed_pollution.gif"
-        ]
+        # 7. 结果总结
+        print("\n" + "=" * 80)
+        print("📋 测试结果总结")
+        print("=" * 80)
 
-        for filename in output_files:
-            filepath = f"test_outputs/{filename}"
-            if os.path.exists(filepath):
-                size_mb = os.path.getsize(filepath) / (1024 * 1024)
-                print(f"   {filename} ({size_mb:.1f} MB)")
-    else:
-        print(f"⚠️  {len(results) - success_count} 个测试失败，请检查错误信息。")
+        generated_files = []
+        for config in test_configs:
+            if os.path.exists(config['filename']):
+                generated_files.append(config['filename'])
 
-    print("\n💡 使用说明:")
-    print("1. 调整 grid_resolution 控制模拟精度")
-    print("2. 修改 diffusion_coeff 调整扩散速度")
-    print("3. 设置 decay_rate 模拟污染物降解")
-    print("4. 使用不同 colormap 突出显示效果")
-    print("5. 启用 show_velocity 显示海流影响")
+        if os.path.exists("convenience_function_test.gif"):
+            generated_files.append("convenience_function_test.gif")
 
-    print("=" * 60)
+        print(f"✅ 成功生成 {len(generated_files)} 个动画文件:")
+        for file in generated_files:
+            size_mb = os.path.getsize(file) / 1024 / 1024
+            print(f"   📹 {file} ({size_mb:.1f} MB)")
+
+        print(f"\n🎯 测试完成! 所有功能正常运行。")
+        print(f"📍 数据覆盖区域: {geo_info['lat_range'][0]:.2f}°-{geo_info['lat_range'][1]:.2f}°N, {geo_info['lon_range'][0]:.2f}°-{geo_info['lon_range'][1]:.2f}°E")
+        print(f"💾 输出文件保存在当前目录")
+
+    except Exception as e:
+        print(f"\n❌ 测试过程中发生错误: {e}")
+        logging.error(f"测试失败: {e}", exc_info=True)
+
+    finally:
+        print(f"\n🧹 清理临时文件...")
+        # 可选择是否删除演示数据
+        # if os.path.exists("demo_ocean_data.nc"):
+        #     os.remove("demo_ocean_data.nc")
+        #     print("演示数据已清理")
+
+
+def create_demo_netcdf_data(output_path: str):
+    """创建演示用的NetCDF海洋数据"""
+    print("正在创建演示用海洋流场数据...")
+
+    # 创建台湾海峡区域的演示数据
+    lat_range = np.linspace(23.0, 25.5, 60)
+    lon_range = np.linspace(119.5, 122.0, 80)
+    time_range = np.arange(0, 72, 3)  # 72小时，每3小时一个数据点
+    depth_range = np.array([0, 5, 10, 20])
+
+    with Dataset(output_path, 'w', format='NETCDF4') as nc:
+        # 创建维度
+        nc.createDimension('lat', len(lat_range))
+        nc.createDimension('lon', len(lon_range))
+        nc.createDimension('time', len(time_range))
+        nc.createDimension('depth', len(depth_range))
+
+        # 创建坐标变量
+        lat_var = nc.createVariable('lat', 'f4', ('lat',))
+        lon_var = nc.createVariable('lon', 'f4', ('lon',))
+        time_var = nc.createVariable('time', 'f4', ('time',))
+        depth_var = nc.createVariable('depth', 'f4', ('depth',))
+
+        # 创建数据变量
+        u_var = nc.createVariable('water_u', 'f4', ('time', 'depth', 'lat', 'lon'))
+        v_var = nc.createVariable('water_v', 'f4', ('time', 'depth', 'lat', 'lon'))
+
+        # 填充坐标
+        lat_var[:] = lat_range
+        lon_var[:] = lon_range
+        time_var[:] = time_range
+        depth_var[:] = depth_range
+
+        # 创建复杂的海流场
+        LAT, LON = np.meshgrid(lat_range, lon_range, indexing='ij')
+
+        for t, time_val in enumerate(time_range):
+            for d, depth_val in enumerate(depth_range):
+                # 基础环流
+                center_lat, center_lon = 24.2, 120.7
+                dx = (LON - center_lon) * 111320
+                dy = (LAT - center_lat) * 111320
+                r = np.sqrt(dx**2 + dy**2)
+
+                # 旋转流场（台湾海峡环流）
+                omega = 2e-5 * np.exp(-r/80000) * (1 + 0.3*np.sin(2*np.pi*time_val/24))
+                u_rotation = -omega * dy
+                v_rotation = omega * dx
+
+                # 潮汐流
+                tidal_phase_m2 = 2 * np.pi * time_val / 12.42  # M2 潮汐
+                tidal_phase_s2 = 2 * np.pi * time_val / 12.00  # S2 潮汐
+
+                u_tidal = (0.4 * np.sin(tidal_phase_m2) + 0.2 * np.sin(tidal_phase_s2)) * \
+                          np.cos(LAT * np.pi / 180) * np.exp(-depth_val/10)
+                v_tidal = (0.3 * np.cos(tidal_phase_m2) + 0.15 * np.cos(tidal_phase_s2)) * \
+                          np.sin(LON * np.pi / 180) * np.exp(-depth_val/10)
+
+                # 季风影响
+                monsoon_strength = 0.3 * np.sin(2 * np.pi * time_val / (24*30))  # 月周期
+                u_monsoon = monsoon_strength * np.exp(-depth_val/15)
+                v_monsoon = monsoon_strength * 0.7 * np.exp(-depth_val/15)
+
+                # 合成流场
+                u_total = u_rotation + u_tidal + u_monsoon
+                v_total = v_rotation + v_tidal + v_monsoon
+
+                # 添加噪声
+                noise_scale = 0.05 * np.exp(-depth_val/5)
+                u_noise = noise_scale * np.random.randn(*u_total.shape)
+                v_noise = noise_scale * np.random.randn(*v_total.shape)
+
+                u_var[t, d, :, :] = u_total + u_noise
+                v_var[t, d, :, :] = v_total + v_noise
+
+        # 添加全局属性
+        nc.title = "Demo Ocean Current Data for Taiwan Strait"
+        nc.description = "Synthetic ocean current data for pollution diffusion simulation testing"
+        nc.source = "Generated by AdaptivePollutionAnimator demo"
+        nc.creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    print(f"✅ 演示数据创建完成: {output_path}")
+    print(f"   覆盖区域: 台湾海峡 ({lat_range[0]:.1f}°-{lat_range[-1]:.1f}°N)")
+    print(f"   时间跨度: {len(time_range)} 个时间点 ({time_range[-1]} 小时)")
+    print(f"   深度层次: {len(depth_range)} 层 (0-{depth_range[-1]} 米)")
