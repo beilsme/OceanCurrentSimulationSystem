@@ -68,6 +68,8 @@ try:
 except ImportError as e:
     logger.error(f"可视化模块导入失败: {e}")
     sys.exit(1)
+import matplotlib.pyplot as plt
+
 
 
 def nan_to_none(obj):
@@ -84,7 +86,10 @@ def nan_to_none(obj):
 def setup_chinese_font():
     """设置中文字体显示"""
     try:
-        plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans', 'Liberation Sans']
+        plt.rcParams['font.sans-serif'] = ['PingFang SC', 'Hiragino Sans GB', 'STHeiti',  # Mac字体
+                                           'SimHei', 'Microsoft YaHei',  # Windows字体
+                                           'WenQuanYi Micro Hei', 'Noto Sans CJK SC',  # Linux字体
+                                           'Arial Unicode MS', 'DejaVu Sans']
         plt.rcParams['axes.unicode_minus'] = False
         return True
     except:
@@ -592,19 +597,25 @@ def run_pollution_dispersion(input_data: Dict[str, Any]) -> Dict[str, Any]:
         if success and os.path.exists(output_path):
             file_size = os.path.getsize(output_path) / 1024 / 1024  # MB
 
+            max_conc = np.max(simulator.concentration)
+            mean_conc = np.mean(simulator.concentration)
+            total_mass = np.sum(simulator.concentration) * (111320 * grid_resolution)**2
+
+            statistics = {
+                "max_concentration": float(max_conc) if max_conc is not None and not np.isnan(max_conc) else 0.0,
+                "mean_concentration": float(mean_conc) if mean_conc is not None and not np.isnan(mean_conc) else 0.0,
+                "total_mass": float(total_mass) if total_mass is not None and not np.isnan(total_mass) else 0.0,
+                "simulation_frames": 1,
+                "simulation_hours": 1.0,
+                "file_size_mb": file_size,
+                "pollution_sources_count": len(pollution_sources)
+            }
+
             return {
                 "success": True,
                 "message": "污染物扩散模拟成功完成",
                 "output_path": output_path,
-                "statistics": {
-                    "max_concentration": float(np.max(simulator.concentration)),
-                    "mean_concentration": float(np.mean(simulator.concentration)),
-                    "total_mass": float(np.sum(simulator.concentration)) * (111320 * grid_resolution)**2,
-                    "simulation_frames": 1,
-                    "simulation_hours": 1.0,  # 表示短期模拟
-                    "file_size_mb": file_size,
-                    "pollution_sources_count": len(pollution_sources)
-                },
+                "statistics": statistics,
                 "metadata": {
                     "created_at": datetime.now().isoformat(),
                     "simulation_type": "集成静态模拟",
@@ -823,4 +834,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 3:
+        # 当从C#调用时，使用命令行参数模式
+        main()
+    else:
+        import json
+        import os

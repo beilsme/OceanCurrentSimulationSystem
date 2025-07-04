@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 using OceanSimulation.Domain.ValueObjects;
 using System.Diagnostics;
 using System.Text.Json;
-using OceanSimulation.Infrastructure.Utils;
+
 
 namespace OceanSimulation.Infrastructure.ComputeEngines
 {
@@ -26,27 +26,23 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
     public class PollutionDispersionInterface : IDisposable
     {
         private readonly ILogger<PollutionDispersionInterface> _logger;
-
-        // 绝对路径
-        private readonly string _pythonExecutablePath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/.venv/bin/python";
-        private readonly string _pythonEngineRootPath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine";
-        private readonly string _workingDirectory = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/Temp";
-
+        private readonly string _pythonExecutablePath;
+        private readonly string _pythonEngineRootPath;
+        private readonly string _workingDirectory;
         private bool _isInitialized = false;
 
         public PollutionDispersionInterface(ILogger<PollutionDispersionInterface> logger,
             Dictionary<string, object> configuration)
         {
             _logger = logger;
+            var config = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            // 显式使用绝对路径
+            _pythonExecutablePath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/.venv/bin/python";
+            _pythonEngineRootPath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine";
+
+            _workingDirectory = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/Temp";
+
             Directory.CreateDirectory(_workingDirectory);
-            _logger.LogInformation($@"
-污染物扩散接口启动:
-  PythonEngineRootPath: {_pythonEngineRootPath}
-  WorkingDirectory: {_workingDirectory}
-  PythonExecutable: {_pythonExecutablePath}
-");
         }
 
         /// <summary>
@@ -96,8 +92,12 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
 
                 var parameters = new Dictionary<string, object?>
                 {
-                    ["output_path"] = outputPath
+                    ["output_path"] = outputPath,
+                    ["netcdf_path"] = string.IsNullOrEmpty(netcdfPath)
+                        ? "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/Data/NetCDF/merged_data.nc"
+                        : netcdfPath
                 };
+
                 if (!string.IsNullOrEmpty(netcdfPath))
                     parameters["netcdf_path"] = netcdfPath;
 
@@ -191,14 +191,6 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             var scriptPath = Path.Combine(_pythonEngineRootPath, "wrappers", "pollution_dispersion_wrapper.py");
             var outputFile = Path.Combine(_workingDirectory, $"output_{Guid.NewGuid():N}.json");
 
-            _logger.LogInformation($@"
-即将执行Python脚本:
-  ScriptPath: {scriptPath}
-  InputFile: {inputFile}
-  OutputFile: {outputFile}
-  WorkingDirectory: {_workingDirectory}
-");
-
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -213,10 +205,12 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 }
             };
 
+            process.StartInfo.Environment["PYTHONPATH"] = _pythonEngineRootPath;
+
             process.Start();
             var output = await process.StandardOutput.ReadToEndAsync();
             var error = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            await process.WaitForExitAsync();;
 
             if (process.ExitCode != 0)
             {
@@ -251,6 +245,14 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             File.Delete(outputFile);
             return result;
         }
+
+        private T GetConfigValue<T>(Dictionary<string, object> config, string key, T defaultValue)
+        {
+            return config.TryGetValue(key, out var value) && value is T typedValue
+                ? typedValue
+                : defaultValue;
+        }
+
         #endregion
     }
 }
