@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using OceanSimulation.Domain.ValueObjects;
 using System.Diagnostics;
 using System.Text.Json;
+using OceanSimulation.Infrastructure.Utils;
 
 namespace OceanSimulation.Infrastructure.ComputeEngines
 {
@@ -26,8 +27,8 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             _logger = logger;
             var config = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            _pythonExecutablePath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/.venv/bin/python";
-            _pythonEngineRootPath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine";
+            _pythonEngineRootPath = Utils.PythonPathResolver.LocatePythonEngineRoot();
+            _pythonExecutablePath = Utils.PythonPathResolver.LocatePythonExecutable(_pythonEngineRootPath);
 
             _workingDirectory = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/Temp";
 

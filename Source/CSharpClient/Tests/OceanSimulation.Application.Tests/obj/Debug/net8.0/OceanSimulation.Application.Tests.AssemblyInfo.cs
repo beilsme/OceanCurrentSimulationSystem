@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright © 2025 OceanSim Research Group")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e2385519c7fa17d376525687f34e39b9a1c33150")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+221da2af768849527949f5e72a80a75551e66e89")]
 [assembly: System.Reflection.AssemblyProductAttribute("Ocean Current Simulation System")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Ocean Simulation Application Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

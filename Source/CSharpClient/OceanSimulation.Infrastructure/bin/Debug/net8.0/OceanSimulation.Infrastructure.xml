@@ -250,5 +250,26 @@
             EnKF预测模块的P/Invoke接口声明
             </summary>
         </member>
+        <member name="T:OceanSimulation.Infrastructure.Utils.PythonPathResolver">
+            <summary>
+            Helper for resolving the Python engine locations at runtime.
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.Utils.PythonPathResolver.LocatePythonEngineRoot">
+            <summary>
+            Locate the Python engine root directory by searching parent directories
+            for the 'Source/PythonEngine' folder.
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.Utils.PythonPathResolver.LocatePythonExecutable(System.String)">
+            <summary>
+            Locate the Python executable within the Python engine's virtual environment.
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.Utils.PythonPathResolver.GetWorkingDirectory(System.String)">
+            <summary>
+            Get path for temporary working directory.
+            </summary>
+        </member>
     </members>
 </doc>

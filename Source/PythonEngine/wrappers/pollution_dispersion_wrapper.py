@@ -12,8 +12,11 @@ import json
 import traceback
 from pathlib import Path
 
-import numpy as np
-import matplotlib.pyplot as plt
+from PythonEngine.simulation import PollutionDispersionSimulator
+
+np = None
+plt = None
+
 
 # 确保PythonEngine在路径中
 current_dir = Path(__file__).parent
@@ -21,7 +24,6 @@ python_engine_root = current_dir.parent.parent
 if str(python_engine_root) not in sys.path:
     sys.path.insert(0, str(python_engine_root))
 
-from PythonEngine.simulation.pollution_dispersion import PollutionDispersionSimulator
 
 
 def run_pollution_dispersion(input_data: dict) -> dict:
@@ -101,6 +103,26 @@ def main():
     output_file = Path(sys.argv[2])
 
     try:
+        import numpy as _np
+        import matplotlib.pyplot as _plt
+        from PythonEngine.simulation.pollution_dispersion import (
+            PollutionDispersionSimulator as _Sim,
+        )
+    except Exception as e:
+        err = {
+            "success": False,
+            "message": f"依赖加载失败: {e}",
+            "error_trace": traceback.format_exc(),
+        }
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(err, f, ensure_ascii=False, indent=2)
+        sys.exit(1)
+    
+    globals()["np"] = _np
+    globals()["plt"] = _plt
+    globals()["PollutionDispersionSimulator"] = _Sim
+
+    try:
         with open(input_file, "r", encoding="utf-8") as f:
             input_data = json.load(f)
         result = run_pollution_dispersion(input_data)
@@ -113,11 +135,8 @@ def main():
             "message": str(e),
             "error_trace": traceback.format_exc(),
         }
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(err, f, ensure_ascii=False, indent=2)
-        finally:
-            pass
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(err, f, ensure_ascii=False, indent=2)
         sys.exit(1)
 
 
