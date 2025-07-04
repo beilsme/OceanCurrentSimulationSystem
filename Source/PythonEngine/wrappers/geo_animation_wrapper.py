@@ -17,7 +17,8 @@ from pathlib import Path
 import sys
 
 # 导入相关模块
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # ensure 'Source' on path
+
 from PythonEngine.visualization.geo_particle_animator import GeoParticleAnimator, create_simple_particle_animation
 from PythonEngine.wrappers.lagrangian_particle_wrapper import simulate_particle_tracking
 from PythonEngine.wrappers.ocean_data_wrapper import NetCDFHandler

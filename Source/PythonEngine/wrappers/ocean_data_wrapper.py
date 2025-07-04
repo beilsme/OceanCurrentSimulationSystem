@@ -20,7 +20,8 @@ import matplotlib.ticker as ticker
 
 # 动态补
 this_dir = Path(__file__).parent
-python_engine_root = this_dir.parent
+python_engine_root = this_dir.parent.parent  # points to Source directory
+
 if str(python_engine_root) not in sys.path:
     sys.path.insert(0, str(python_engine_root))
 
@@ -32,7 +33,8 @@ print("[DEBUG] PYTHONPATH from env =", os.environ.get("PYTHONPATH"))
 
 # 添加Python引擎路径到sys.path
 current_dir = Path(__file__).parent
-python_engine_root = current_dir.parent
+python_engine_root = current_dir.parent.parent  # points to Source directory
+
 sys.path.insert(0, str(python_engine_root))
 
 
