@@ -26,9 +26,11 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
             _logger = logger;
             var config = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            _pythonExecutablePath = GetConfigValue(config, "PythonExecutablePath", "python3");
-            _pythonEngineRootPath = GetConfigValue(config, "PythonEngineRootPath", "../../../PythonEngine");
-            _workingDirectory = Path.Combine(_pythonEngineRootPath, "Temp");
+            _pythonExecutablePath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/.venv/bin/python";
+            _pythonEngineRootPath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine";
+
+            _workingDirectory = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/Temp";
+
 
             Directory.CreateDirectory(_workingDirectory);
         }
