@@ -67,12 +67,12 @@ public partial class MainWindowViewModel : ViewModelBase
         await _animationInterface.InitializeAsync();
     }
 
-    private async Task GenerateVisualizationAsync()
+    public async Task GenerateVisualizationAsync(int timeIndex, int depthIndex)
     {
         if (string.IsNullOrEmpty(NetcdfPath)) return;
         await EnsureInitializedAsync();
         Status = "Generating visualization...";
-        var path = await _dataInterface!.GenerateVisualizationFromFileAsync(NetcdfPath);
+        var path = await _dataInterface!.GenerateVisualizationFromFileAsync(NetcdfPath, timeIndex, depthIndex);
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
             ResultImage = new Bitmap(path);
@@ -83,6 +83,12 @@ public partial class MainWindowViewModel : ViewModelBase
             Status = "Visualization failed";
         }
     }
+
+    private Task GenerateVisualizationAsync()
+    {
+        return GenerateVisualizationAsync(0, 0);
+    }
+
 
     private async Task GenerateVorticityAsync()
     {

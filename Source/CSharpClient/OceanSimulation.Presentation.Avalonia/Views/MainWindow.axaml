@@ -9,23 +9,25 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-    <StackPanel Margin="10" Spacing="5">
-        <TextBlock Text="NetCDF File:"/>
-        <StackPanel Orientation="Horizontal" Spacing="5">
-            <TextBox Width="400" Text="{Binding NetcdfPath, UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Content="Browse" Click="BrowseFile_Click"/>
+    <DockPanel Margin="10">
+        <StackPanel DockPanel.Dock="Top" Spacing="5">
+            <TextBlock Text="NetCDF File:"/>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <TextBox Width="400" Text="{Binding NetcdfPath, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Content="Browse" Click="BrowseFile_Click"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,5">
+                <Button Content="Visualize" Click="Visualize_Click"/>
+                <Button Content="Animation" Command="{Binding AnimationCommand}"/>
+                <Button Content="Vorticity/Divergence" Command="{Binding VorticityCommand}"/>
+                <Button Content="Particle Tracking" Command="{Binding ParticleCommand}"/>
+                <Button Content="Pollution" Command="{Binding PollutionCommand}"/>
+                <Button Content="EnKF" Command="{Binding EnkfCommand}"/>
+            </StackPanel>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Spacing="5" Margin="0,5">
-            <Button Content="Visualize" Command="{Binding VisualizeCommand}"/>
-            <Button Content="Animation" Command="{Binding AnimationCommand}"/>
-            <Button Content="Vorticity/Divergence" Command="{Binding VorticityCommand}"/>
-            <Button Content="Particle Tracking" Command="{Binding ParticleCommand}"/>
-            <Button Content="Pollution" Command="{Binding PollutionCommand}"/>
-            <Button Content="EnKF" Command="{Binding EnkfCommand}"/>
-        </StackPanel>
-        <TextBlock Text="{Binding Status}" Margin="0,5"/>
-        <ScrollViewer Height="400">
+        <TextBlock DockPanel.Dock="Bottom" HorizontalAlignment="Left" Text="{Binding Status}" Margin="0,5"/>
+        <ScrollViewer Height="500">
             <Image Source="{Binding ResultImage}" Stretch="Uniform"/>
         </ScrollViewer>
-    </StackPanel>
+    </DockPanel>
 </Window>

@@ -75,7 +75,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         /// <summary>
         /// 从NetCDF文件生成可视化图像 - 核心功能
         /// </summary>
-        public async Task<string> GenerateVisualizationFromFileAsync(string netcdfPath, string outputPath = "")
+        public async Task<string> GenerateVisualizationFromFileAsync(string netcdfPath, int timeIndex = 0, int depthIndex = 0, string outputPath = "")
         {
             if (!_isInitialized)
                 throw new InvalidOperationException("尚未初始化，请先调用InitializeAsync()");
@@ -98,7 +98,9 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                     parameters = new
                     {
                         netcdf_path = Path.GetFullPath(netcdfPath),
-                        save_path = outputPath
+                        save_path = outputPath,
+                        time_idx = timeIndex,
+                        depth_idx = depthIndex
                     }
                 };
 

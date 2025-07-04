@@ -33,4 +33,19 @@ public partial class MainWindow : Window
             vm.NetcdfPath = result[0];
         }
     }
+    private async void Visualize_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+
+        var dlg = new IndexSelectionWindow
+        {
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        var result = await dlg.ShowDialog<bool>(this);
+        if (result)
+        {
+            await vm.GenerateVisualizationAsync(dlg.TimeIndex, dlg.DepthIndex);
+        }
+    }
 }
