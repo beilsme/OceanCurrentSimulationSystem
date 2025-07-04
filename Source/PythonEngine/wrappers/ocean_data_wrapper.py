@@ -925,7 +925,7 @@ def _plot_vorticity_divergence(lon, lat, vorticity, divergence, output_path):
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
     import cartopy.feature as cfeature
-    from Source.PythonEngine.utils.chinese_config import setup_chinese_all
+    from PythonEngine.utils.chinese_config import setup_chinese_all
 
     setup_chinese_all(font_size=12, dpi=120)
 
