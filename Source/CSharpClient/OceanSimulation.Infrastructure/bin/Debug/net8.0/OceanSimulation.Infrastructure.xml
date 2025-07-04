@@ -4,6 +4,107 @@
         <name>OceanSimulation.Infrastructure</name>
     </assembly>
     <members>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.NetCDFParticleInterface">
+            <summary>
+            NetCDF粒子追踪接口 - 基于您提供的台湾海峡案例
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.NetCDFParticleInterface.InitializeAsync">
+            <summary>
+            初始化NetCDF粒子追踪环境
+            </summary>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.NetCDFParticleInterface.TrackSingleParticleAsync(System.String,System.ValueTuple{System.Double,System.Double},OceanSimulation.Infrastructure.ComputeEngines.ParticleTrackingConfig)">
+            <summary>
+            追踪单个粒子轨迹
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="startPosition">起始位置（纬度，经度）</param>
+            <param name="config">追踪配置</param>
+            <returns>单粒子追踪结果</returns>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.NetCDFParticleInterface.TrackMultipleParticlesAsync(System.String,System.Collections.Generic.List{System.ValueTuple{System.Double,System.Double}},OceanSimulation.Infrastructure.ComputeEngines.ParticleTrackingConfig)">
+            <summary>
+            追踪多个粒子轨迹
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="startPositions">起始位置列表</param>
+            <param name="config">追踪配置</param>
+            <returns>多粒子追踪结果</returns>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.NetCDFParticleInterface.CreateTrajectoryVisualizationAsync(System.String,System.Object,System.String,System.String)">
+            <summary>
+            创建轨迹可视化图像
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="trajectories">轨迹数据</param>
+            <param name="outputPath">输出图像路径</param>
+            <param name="title">图像标题</param>
+            <returns>可视化创建结果</returns>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.NetCDFParticleInterface.ExecuteTaiwanStraitScenarioAsync(System.String,System.Nullable{System.ValueTuple{System.Double,System.Double}},System.Int32)">
+            <summary>
+            执行台湾海峡粒子漂移预设场景
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="startPosition">起始位置（可选，默认台湾海峡中部）</param>
+            <param name="simulationDays">模拟天数</param>
+            <returns>台湾海峡漂移结果</returns>
+        </member>
+        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.NetCDFParticleInterface.ExecuteBatchTaiwanStraitScenariosAsync(System.String,System.Collections.Generic.List{System.ValueTuple{System.Double,System.Double}},System.Int32)">
+            <summary>
+            批量执行多个起始点的台湾海峡场景
+            </summary>
+            <param name="netcdfPath">NetCDF文件路径</param>
+            <param name="startPositions">起始位置列表</param>
+            <param name="simulationDays">模拟天数</param>
+            <returns>批量台湾海峡结果</returns>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.ParticleTrackingConfig">
+            <summary>
+            粒子追踪配置
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.SingleParticleResult">
+            <summary>
+            单粒子追踪结果
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.MultipleParticleResult">
+            <summary>
+            多粒子追踪结果
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.ParticleTrajectory">
+            <summary>
+            粒子轨迹数据
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.ParticleStatistics">
+            <summary>
+            粒子统计信息
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.GeoPosition">
+            <summary>
+            地理位置
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.VisualizationResult">
+            <summary>
+            可视化结果
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.TaiwanStraitResult">
+            <summary>
+            台湾海峡漂移结果
+            </summary>
+        </member>
+        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.GeographicBounds">
+            <summary>
+            地理边界
+            </summary>
+        </member>
         <member name="T:OceanSimulation.Infrastructure.ComputeEngines.OceanAnimationInterface">
             <summary>
             海洋数据动画生成接口 - 从NetCDF时间序列生成GIF动画
@@ -53,54 +154,6 @@
             <summary>
             计算流速统计分布
             </summary>
-        </member>
-        <member name="T:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface">
-            <summary>
-            拉格朗日粒子追踪分析接口
-            提供粒子释放、轨迹追踪和结果分析的完整功能
-            </summary>
-        </member>
-        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.InitializeAsync">
-            <summary>
-            初始化粒子分析环境
-            </summary>
-        </member>
-        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.ExecuteParticleTrackingAsync(System.String,OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig)">
-            <summary>
-            执行拉格朗日粒子追踪模拟
-            </summary>
-            <param name="netcdfPath">NetCDF文件路径</param>
-            <param name="config">粒子追踪配置</param>
-            <returns>追踪结果包含轨迹数据和统计分析</returns>
-        </member>
-        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.AnalyzeDispersionPatternsAsync(System.String,System.Collections.Generic.List{System.ValueTuple{System.Double,System.Double}},OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig)">
-            <summary>
-            分析预定义位置的粒子扩散模式
-            </summary>
-            <param name="netcdfPath">NetCDF文件路径</param>
-            <param name="releasePositions">粒子释放位置列表</param>
-            <param name="analysisConfig">分析配置参数</param>
-            <returns>扩散分析结果</returns>
-        </member>
-        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.ExecuteLinearReleaseTrackingAsync(System.String,System.ValueTuple{System.Double,System.Double},System.ValueTuple{System.Double,System.Double},System.Int32,OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig)">
-            <summary>
-            执行线性释放粒子追踪分析
-            </summary>
-            <param name="netcdfPath">NetCDF文件路径</param>
-            <param name="startPosition">起始位置</param>
-            <param name="endPosition">结束位置</param>
-            <param name="particleCount">粒子数量</param>
-            <param name="analysisConfig">分析配置</param>
-            <returns>线性释放追踪结果</returns>
-        </member>
-        <member name="M:OceanSimulation.Infrastructure.ComputeEngines.ParticleAnalysisInterface.BatchTimeIntervalAnalysisAsync(System.String,OceanSimulation.Domain.ValueObjects.ParticleTrackingConfig,System.Int32[])">
-            <summary>
-            批量执行多时间段粒子追踪分析
-            </summary>
-            <param name="netcdfPath">NetCDF文件路径</param>
-            <param name="baseConfig">基础配置</param>
-            <param name="timeIntervals">时间间隔数组</param>
-            <returns>多时间段追踪结果列表</returns>
         </member>
         <member name="T:OceanSimulation.Infrastructure.Interop.OceanState">
             <summary>
