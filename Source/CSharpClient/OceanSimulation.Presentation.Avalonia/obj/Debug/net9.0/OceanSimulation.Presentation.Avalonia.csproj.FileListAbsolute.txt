@@ -1,5 +1,3 @@
-/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/obj/Debug/net9.0/OceanSimulation.Presentation.Avalonia.csproj.AssemblyReference.cache
-/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/obj/Debug/net9.0/Avalonia/Resources.Inputs.cache
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/bin/Debug/net9.0/OceanSimulation.Domain.deps.json
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/bin/Debug/net9.0/OceanSimulation.Domain.runtimeconfig.json
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/bin/Debug/net9.0/xunit.runner.visualstudio.dotnetcore.testadapter.dll
@@ -289,6 +287,8 @@
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/bin/Debug/net9.0/OceanSimulation.Domain.pdb
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/bin/Debug/net9.0/OceanSimulation.Infrastructure.pdb
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/bin/Debug/net9.0/OceanSimulation.Infrastructure.xml
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/obj/Debug/net9.0/OceanSimulation.Presentation.Avalonia.csproj.AssemblyReference.cache
+/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/obj/Debug/net9.0/Avalonia/Resources.Inputs.cache
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/obj/Debug/net9.0/Avalonia/resources
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/obj/Debug/net9.0/OceanSimulation.Presentation.Avalonia.GeneratedMSBuildEditorConfig.editorconfig
 /Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/CSharpClient/OceanSimulation.Presentation.Avalonia/obj/Debug/net9.0/OceanSimulation.Presentation.Avalonia.AssemblyInfoInputs.cache

@@ -1,13 +1,22 @@
-// =====================================
+// =======================================
 // 文件: PollutionDispersionInterface.cs
+// 接口: PollutionDispersionInterface
+// 作者: beilsm
+// 版本: v1.2.0
 // 功能: 污染物扩散模拟C#接口
-// =====================================
+// 较上一版:
+//   * 路径改成全部绝对路径
+//   * 避免拼写错误导致路径乱串
+//   * 增强日志输出
+//   * 保证运行可重复可测
+// 最后更新日期: 2025-07-05
+// =======================================
+
 using Microsoft.Extensions.Logging;
 using OceanSimulation.Domain.ValueObjects;
 using System.Diagnostics;
 using System.Text.Json;
 using OceanSimulation.Infrastructure.Utils;
-using System.Collections.Generic;
 
 namespace OceanSimulation.Infrastructure.ComputeEngines
 {
@@ -17,36 +26,27 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
     public class PollutionDispersionInterface : IDisposable
     {
         private readonly ILogger<PollutionDispersionInterface> _logger;
-        private readonly string _pythonExecutablePath;
-        private readonly string _pythonEngineRootPath;
-        private readonly string _workingDirectory;
-        private readonly string? _defaultNetcdfPath;
+
+        // 绝对路径
+        private readonly string _pythonExecutablePath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/.venv/bin/python";
+        private readonly string _pythonEngineRootPath = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine";
+        private readonly string _workingDirectory = "/Users/beilsmindex/洋流模拟/OceanCurrentSimulationSystem/Source/PythonEngine/Temp";
+
         private bool _isInitialized = false;
 
         public PollutionDispersionInterface(ILogger<PollutionDispersionInterface> logger,
             Dictionary<string, object> configuration)
         {
             _logger = logger;
-            var config = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            _pythonEngineRootPath = config.TryGetValue("python_engine_root", out var rootObj) && rootObj is string root
-                ? root
-                : PythonPathResolver.LocatePythonEngineRoot();
-
-
-            _pythonExecutablePath = config.TryGetValue("python_executable_path", out var exeObj) && exeObj is string exe
-                ? exe
-                : PythonPathResolver.LocatePythonExecutable(_pythonEngineRootPath);
-
-            _workingDirectory = config.TryGetValue("working_directory", out var workObj) && workObj is string work
-                ? work
-                : PythonPathResolver.GetWorkingDirectory(_pythonEngineRootPath);
-
-            _defaultNetcdfPath = config.TryGetValue("netcdf_path", out var netcdfObj) && netcdfObj is string netcdf
-                ? netcdf
-                : null;
-
+            // 显式使用绝对路径
             Directory.CreateDirectory(_workingDirectory);
+            _logger.LogInformation($@"
+污染物扩散接口启动:
+  PythonEngineRootPath: {_pythonEngineRootPath}
+  WorkingDirectory: {_workingDirectory}
+  PythonExecutable: {_pythonExecutablePath}
+");
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 var wrapperPath = Path.Combine(_pythonEngineRootPath, "wrappers", "pollution_dispersion_wrapper.py");
                 if (!File.Exists(wrapperPath))
                 {
-                    _logger.LogError($"未找到pollution_dispersion_wrapper.py: {wrapperPath}");
+                    _logger.LogError($"未找到Python包装器: {wrapperPath}");
                     return false;
                 }
 
@@ -88,13 +88,11 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         public async Task<PollutionDispersionResult?> RunSimpleSimulationAsync(string? outputPath = null, string? netcdfPath = null)
         {
             if (!_isInitialized)
-                throw new InvalidOperationException("尚未初始化，请先调用InitializeAsync()");
+                throw new InvalidOperationException("尚未初始化，请先调用 InitializeAsync()");
 
             try
             {
                 outputPath ??= Path.Combine(_workingDirectory, $"pollution_{DateTime.Now:yyyyMMdd_HHmmss}.png");
-
-                netcdfPath ??= _defaultNetcdfPath;
 
                 var parameters = new Dictionary<string, object?>
                 {
@@ -102,7 +100,6 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 };
                 if (!string.IsNullOrEmpty(netcdfPath))
                     parameters["netcdf_path"] = netcdfPath;
-
 
                 var inputData = new
                 {
@@ -150,6 +147,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
         }
 
         #region Private helpers
+
         private async Task<PythonResult> RunPythonAsync(string arguments)
         {
             try
@@ -187,8 +185,19 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
 
         private async Task<string> ExecutePythonScriptAsync(string inputFile)
         {
+            if (!File.Exists(inputFile))
+                throw new FileNotFoundException($"输入文件不存在: {inputFile}");
+
             var scriptPath = Path.Combine(_pythonEngineRootPath, "wrappers", "pollution_dispersion_wrapper.py");
             var outputFile = Path.Combine(_workingDirectory, $"output_{Guid.NewGuid():N}.json");
+
+            _logger.LogInformation($@"
+即将执行Python脚本:
+  ScriptPath: {scriptPath}
+  InputFile: {inputFile}
+  OutputFile: {outputFile}
+  WorkingDirectory: {_workingDirectory}
+");
 
             var process = new Process
             {
