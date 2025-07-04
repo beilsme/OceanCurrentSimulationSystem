@@ -416,12 +416,7 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = _pythonExecutablePath,
-                    Arguments = $"-c \"import sys; sys.path.append('{_pythonEngineRootPath}'); " +
-                              $"from wrappers.netcdf_particle_wrapper import handle_netcdf_particle_request; " +
-                              $"import json; " +
-                              $"with open('{inputFile}', 'r') as f: data = json.load(f); " +
-                              $"result = handle_netcdf_particle_request(data); " +
-                              $"with open('{outputFile}', 'w') as f: json.dump(result, f)\"",
+                    Arguments = $"\"{scriptPath}\" \"{inputFile}\" \"{outputFile}\"",
                     WorkingDirectory = _pythonEngineRootPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
