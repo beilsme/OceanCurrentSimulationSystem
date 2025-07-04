@@ -12,7 +12,7 @@ import json
 import traceback
 from pathlib import Path
 
-from PythonEngine.simulation import PollutionDispersionSimulator
+
 
 np = None
 plt = None
@@ -20,7 +20,7 @@ plt = None
 
 # 确保PythonEngine在路径中
 current_dir = Path(__file__).parent
-python_engine_root = current_dir.parent.parent
+python_engine_root = current_dir.parent
 if str(python_engine_root) not in sys.path:
     sys.path.insert(0, str(python_engine_root))
 
