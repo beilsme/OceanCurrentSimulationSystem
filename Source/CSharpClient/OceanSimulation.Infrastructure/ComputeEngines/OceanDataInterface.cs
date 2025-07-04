@@ -195,6 +195,8 @@ namespace OceanSimulation.Infrastructure.ComputeEngines
                 }
             };
 
+            process.StartInfo.Environment["PYTHONPATH"] = _pythonEngineRootPath;
+
             process.Start();
             var output = await process.StandardOutput.ReadToEndAsync();
             var error = await process.StandardError.ReadToEndAsync();

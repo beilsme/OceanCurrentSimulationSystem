@@ -17,10 +17,23 @@ import oceansim
 import matplotlib.ticker as ticker
 
 
+
+# 动态补
+this_dir = Path(__file__).parent
+python_engine_root = this_dir.parent
+if str(python_engine_root) not in sys.path:
+    sys.path.insert(0, str(python_engine_root))
+
+print("[DEBUG] 最终sys.path:")
+for p in sys.path:
+    print(f"  - {p}")
+
+print("[DEBUG] PYTHONPATH from env =", os.environ.get("PYTHONPATH"))
+
 # 添加Python引擎路径到sys.path
 current_dir = Path(__file__).parent
 python_engine_root = current_dir.parent
-sys.path.insert(0, str(python_engine_root.parent))
+sys.path.insert(0, str(python_engine_root))
 
 
 try:

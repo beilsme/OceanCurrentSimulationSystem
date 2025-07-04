@@ -520,16 +520,18 @@ class AdaptivePollutionAnimator:
         if colormap == "custom_pollution":
             colors = ['white', 'lightblue', 'yellow', 'orange', 'red', 'darkred', 'maroon']
             cmap = LinearSegmentedColormap.from_list('pollution', colors, N=256)
+            cmap.set_under('white', alpha=0)  # 设置低于最小值的颜色为透明
         else:
             cmap = plt.get_cmap(colormap)
 
-        # 计算浓度范围 - 关键修复：设置更合理的范围
+        # 计算浓度范围 - 修复：更合理的范围设置
         max_concentration = np.max([np.max(c) for c in self.concentration_history])
         if max_concentration == 0:
             max_concentration = 1e-6
 
-        # 使用对数范围以更好显示扩散
-        vmin = max_concentration * 1e-4  # 最小值设为峰值的万分之一
+        # 修复：使用线性归一化，设置合理的阈值
+        threshold = max_concentration * 0.001  # 0.1%作为显示阈值
+        vmin = threshold
         vmax = max_concentration
 
         # 创建图形
@@ -557,20 +559,21 @@ class AdaptivePollutionAnimator:
         # 创建网格坐标
         LON, LAT = np.meshgrid(self.sim_lon, self.sim_lat)
 
-        # 关键修复：使用LogNorm来更好显示扩散过程
-        norm = LogNorm(vmin=vmin, vmax=vmax)
+        # 修复：使用线性归一化，只显示有污染的区域
+        norm = Normalize(vmin=vmin, vmax=vmax)
 
-        # 初始化污染物显示 - 修复：确保初始数据不为零
+        # 修复：只显示超过阈值的污染区域
         initial_data = self.concentration_history[0].copy()
-        initial_data[initial_data <= 0] = vmin  # 避免对数归一化问题
+        # 创建掩码：低于阈值的区域设为NaN（不显示）
+        initial_data_masked = np.where(initial_data >= threshold, initial_data, np.nan)
 
-        im = ax.pcolormesh(LON, LAT, initial_data,
+        im = ax.pcolormesh(LON, LAT, initial_data_masked,
                            cmap=cmap, norm=norm, alpha=0.85,
                            transform=ccrs.PlateCarree(), zorder=3,
-                           shading='auto')  # 关键修复：使用auto shading
+                           shading='auto')
 
         # 颜色条
-        cbar = plt.colorbar(im, ax=ax, shrink=0.8, pad=0.02, aspect=30)
+        cbar = plt.colorbar(im, ax=ax, shrink=0.8, pad=0.02, aspect=30, extend='min')
         cbar.set_label('污染物浓度 (kg/m³)', fontsize=14, fontweight='bold')
         cbar.ax.tick_params(labelsize=12)
 
@@ -613,21 +616,29 @@ class AdaptivePollutionAnimator:
             current_concentration = self.concentration_history[frame].copy()
             current_time = frame * time_step_minutes / 60
 
-            # 关键修复：处理零值和负值
-            current_concentration = np.maximum(current_concentration, vmin)
+            # 修复：只显示超过阈值的污染区域
+            current_data_masked = np.where(current_concentration >= threshold, current_concentration, np.nan)
 
-            # 关键修复：使用ravel()并正确更新数组
-            im.set_array(current_concentration.ravel())
+            # 修复：正确更新数组，处理NaN值
+            # 将NaN转换为一个很小的值用于set_array
+            display_data = np.where(np.isnan(current_data_masked), vmin * 0.1, current_data_masked)
+            im.set_array(display_data.ravel())
 
             # 计算统计信息
             grid_area = (111320 * self.grid_resolution)**2  # 单个网格面积 m²
-            total_mass = np.sum(current_concentration) * grid_area
-            max_conc = np.max(current_concentration)
 
-            # 计算污染影响面积
-            threshold = max_conc * 0.01 if max_conc > 0 else 0
-            affected_cells = np.sum(current_concentration > threshold)
-            affected_area = affected_cells * grid_area / 1e6  # 转换为km²
+            # 只计算有效污染区域的统计
+            valid_pollution = current_concentration[current_concentration >= threshold]
+
+            if len(valid_pollution) > 0:
+                total_mass = np.sum(valid_pollution) * grid_area
+                max_conc = np.max(valid_pollution)
+                affected_cells = len(valid_pollution)
+                affected_area = affected_cells * grid_area / 1e6  # 转换为km²
+            else:
+                total_mass = 0
+                max_conc = 0
+                affected_area = 0
 
             # 更新信息文本
             if current_time < 24:
@@ -770,8 +781,7 @@ if __name__ == "__main__":
     # 测试数据文件路径（请替换为实际的NetCDF文件路径）
     netcdf_path = "../data/raw_data/merged_data.nc"
 
-   
-
+  
     try:
         print(f"\n📂 加载NetCDF数据: {netcdf_path}")
 
@@ -796,8 +806,7 @@ if __name__ == "__main__":
             print(f"🌊 中心位置: ({geo_info['center_lat']:.2f}°N, {geo_info['center_lon']:.2f}°E)")
         else:
             print(f"❌ 数据分析失败: {analysis['message']}")
-       
-
+           
         # 2. 环境初始化测试
         print("\n" + "─" * 60)
         print("⚙️  步骤2: 初始化模拟环境")
@@ -828,17 +837,17 @@ if __name__ == "__main__":
         pollution_sources = [
             {
                 "location": [23.0, 120.0],  # 台湾海峡中部海域
-                "intensity": 8000.0,
+                "intensity": 1000.0,  # 降低强度
                 "name": "海上溢油事故点"
             },
             {
                 "location": [24.5, 119.5],  # 台湾海峡北部海域
-                "intensity": 5000.0,
+                "intensity": 800.0,   # 降低强度
                 "name": "船舶排污点"
             },
             {
                 "location": [22.5, 121.5],  # 台湾东南海域
-                "intensity": 3000.0,
+                "intensity": 600.0,   # 降低强度
                 "name": "工业排放点"
             }
         ]

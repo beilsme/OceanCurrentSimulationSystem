@@ -16,7 +16,7 @@ from pathlib import Path
 # 添加Python引擎路径到sys.path
 current_dir = Path(__file__).parent
 python_engine_root = current_dir.parent
-sys.path.insert(0, str(python_engine_root.parent))
+sys.path.insert(0, str(python_engine_root))
 
 def nan_to_none(obj):
     """将NaN值转换为None，确保JSON序列化的兼容性"""
