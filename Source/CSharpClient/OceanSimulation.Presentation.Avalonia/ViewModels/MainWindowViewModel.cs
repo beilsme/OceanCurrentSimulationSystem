@@ -90,12 +90,14 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
 
-    private async Task GenerateVorticityAsync()
+
+
+    public async Task GenerateVorticityAsync(int timeIndex, int depthIndex)
     {
         if (string.IsNullOrEmpty(NetcdfPath)) return;
         await EnsureInitializedAsync();
         Status = "Calculating vorticity/divergence...";
-        var path = await _analysis!.CalculateVorticityDivergenceFieldAsync(NetcdfPath);
+        var path = await _analysis!.CalculateVorticityDivergenceFieldAsync(NetcdfPath, "", timeIndex, depthIndex);
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
             ResultImage = new Bitmap(path);
@@ -105,6 +107,12 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Status = "Calculation failed";
         }
+    }
+
+
+    private Task GenerateVorticityAsync()
+    {
+        return GenerateVorticityAsync(0, 0);
     }
 
     private async Task RunParticleAsync()

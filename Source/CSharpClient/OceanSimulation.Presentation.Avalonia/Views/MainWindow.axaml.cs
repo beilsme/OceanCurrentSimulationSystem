@@ -48,4 +48,21 @@ public partial class MainWindow : Window
             await vm.GenerateVisualizationAsync(dlg.TimeIndex, dlg.DepthIndex);
         }
     }
+
+    private async void Vorticity_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+
+        var dlg = new IndexSelectionWindow
+        {
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        var result = await dlg.ShowDialog<bool>(this);
+        if (result)
+        {
+            await vm.GenerateVorticityAsync(dlg.TimeIndex, dlg.DepthIndex);
+        }
+    }
+
 }
